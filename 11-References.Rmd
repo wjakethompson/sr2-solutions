@@ -1,0 +1,11 @@
+# References {-}
+
+```{r write-packages, include = FALSE}
+if (!file.exists("bib/pkgs.bib")) file.create("bib/pkgs.bib")
+
+pkgs <- c(unique(dplyr::pull(renv::dependencies(), Package)),
+          "bookdown", "knitr", "rmarkdown")
+suppressWarnings(knitr::write_bib(pkgs, "bib/pkgs.bib"))
+```
+
+<div id='refs'></div>
