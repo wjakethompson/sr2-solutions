@@ -1,0 +1,8 @@
+new_session: yes
+before_chapter_script: "_common.R"
+
+book_filename: "sr2-solutions"
+delete_merged_file: true
+language:
+  ui:
+    chapter_name: "Chapter "

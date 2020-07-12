@@ -1,0 +1,11 @@
+bookdown::gitbook:
+  css: style.css
+  config:
+    toc:
+      before: |
+        <li><a href="./">Statistical Rethinking (2nd Ed.)</a></li>
+      after: |
+        <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+    edit:
+      link: https://github.com/wjakethompson/sr2-solutions/edit/master/%s
+      text: "Edit"
