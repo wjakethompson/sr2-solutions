@@ -1,0 +1,20 @@
+Package: sr2solutions
+Title: Solutions for Statistical Rethinking
+Version: 0.0.0.9000
+Depends:
+  R (>= 4.0.0)
+Imports:
+  bookdown,
+  brms,
+  knitr,
+  rethinking,
+  rmarkdown,
+  rstan,
+  tidybayes,
+  tidybayes.rethinking,
+  tidyverse
+Remotes:
+  rmcelreath/rethinking,
+  mjskay/tidybayes.rethinking,
+  rstudio/bookdown,
+  rstudio/rmarkdown
