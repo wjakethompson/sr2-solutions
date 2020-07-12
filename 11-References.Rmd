@@ -1,11 +1,28 @@
 # References {-}
 
-```{r write-packages, include = FALSE}
+```{r write-packages, include = FALSE, cache = FALSE}
+library(tidyverse)
+library(renv)
+
 if (!file.exists("bib/pkgs.bib")) file.create("bib/pkgs.bib")
 
-pkgs <- c(unique(dplyr::pull(renv::dependencies(), Package)),
-          "bookdown", "knitr", "rmarkdown")
+pkgs <- unique(c(.packages(),
+                 dplyr::pull(renv::dependencies(), Package),
+                 "bookdown", "knitr", "rmarkdown"))
 suppressWarnings(knitr::write_bib(pkgs, "bib/pkgs.bib"))
+
+# Correct capitalization in packages
+read_lines("bib/pkgs.bib") %>%
+  str_replace_all(" Stan", " {Stan}") %>%
+  str_replace_all("rstan:", "{RStan}:") %>%
+  str_replace_all("rstanarm:", "{RStanArm}:") %>%
+  str_replace_all("Bayesian", "{Bayesian}") %>%
+  str_replace_all("loo:", "{loo}:") %>%
+  str_replace_all("WAIC", "{WAIC}") %>%
+  str_replace_all("brms:", "{brms}:") %>%
+  str_replace_all("'Stan'", "‘{Stan}’") %>%
+  str_replace_all("tidyverse:", "{tidyverse}:") %>%
+  write_lines("bib/pkgs.bib")
 ```
 
 <div id='refs'></div>
