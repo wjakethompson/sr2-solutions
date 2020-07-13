@@ -1,0 +1,31 @@
+# Measurement Error, etc.
+
+The tenth (and final) week covers Chapter 15 (Missing Data and Other Opportunities), Chapter 16 (Generalized Linear Models), and Chapter 17 (Horoscopes).
+
+## Lectures
+
+Lecture 19:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pwMRbt2CbSU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 20:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/UgLF0aLk85s" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 15
+
+Coming soon.
+
+### Chapter 16
+
+Coming soon.
+
+### Chapter 17
+
+There are no exercises for Chapter 17.
+
+## Homework
+
+Coming soon.

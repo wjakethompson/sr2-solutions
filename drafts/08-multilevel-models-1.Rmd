@@ -1,0 +1,23 @@
+# Multilevel Models I
+
+The eighth week covers Chapter 13 (Models With Memory).
+
+## Lectures
+
+Lecture 15:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/AALYPv5xSos" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 16:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ZG3Oe35R5sY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 13
+
+Coming soon.
+
+## Homework
+
+Coming soon.

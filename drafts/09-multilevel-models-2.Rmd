@@ -1,0 +1,23 @@
+# Multilevel Models II
+
+The ninth week covers Chapter 14 (Adventures in Covariance).
+
+## Lectures
+
+Lecture 17:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/yfXpjmWgyXU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 18:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/e5cgiAGBKzI" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 14
+
+Coming soon.
+
+## Homework
+
+Coming soon.

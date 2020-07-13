@@ -1,0 +1,27 @@
+# MCMC & GLMs
+
+The sixth week covers Chapter 9 (Markov Chain Monte Carlo), Chapter 10 (Big Entropy), and Chapter 11 (God Spiked the Integers). Chapter 11 is also covered in Week 7, so the exercises for that chapter are included under week.
+
+## Lectures
+
+Lecture 11:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-4y4X8ELcEM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 12:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/hRJtKCIDTwc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 9
+
+Coming soon.
+
+### Chapter 10
+
+Coming soon.
+
+## Homework
+
+Coming soon.
