@@ -1,7 +1,7 @@
 Package: sr2solutions
 Title: Solutions for Statistical Rethinking
 Version: 0.0.0.9000
-License: CC BY 4.0
+License: CC BY NC SA 4.0
 Depends:
   R (>= 4.0.0)
 Imports:
