@@ -1,7 +1,8 @@
 # Statistical Rethinking: Solutions (2nd Edition)
 
-Welcome to 
+Welcome to a companion project to the second edition of [Richard McElreath's](https://xcelab.net/rm/) *Statistical Rethinking: A Bayesian Course in R and Stan* (2nd Edition), available for purchase from [CRC Press](https://www.routledge.com/Statistical-Rethinking-A-Bayesian-Course-with-Examples-in-R-and-STAN/McElreath/p/book/9780367139919). This project contains solutions to the exercises and homework problems for the second edition using the {[tidyverse](https://tidyverse.tidyverse.org/)} and {[brms](https://paul-buerkner.github.io/brms/)}. This is not a translation of the examples in the text, but rather provides only solutions to the exercises presented at the end of each chapter and the homework provided in Richard McElreath's repository for the [Winter 2019](https://github.com/rmcelreath/statrethinking_winter2019) version of his course.
 
+For a translation of the text of the second edition of McElreath's text to the {tidyverse} and {brms}, see [*Statistical rethinking* with brms, ggplot2, and the tidyverse: Second edition](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse_2_ed) by [Solomon Kurz](https://twitter.com/SolomonKurz).
 
 ### License
 
