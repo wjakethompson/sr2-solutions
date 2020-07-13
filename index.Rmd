@@ -16,6 +16,8 @@ github-repo: "wjakethompson/sr2-solutions"
 
 This project is a companion to Richard McElreath's *Statistical Rethinking* [@sr2]. For each of the 10 weeks, of the course (materials provided [here](https://github.com/rmcelreath/statrethinking_winter2019)), I work through the exercises in each chapter covered that week and the associated homework. Like [Solomon Kurz](https://twitter.com/SolomonKurz), I take a {[tidyverse](https://tidyverse.tidyverse.org/)} [@R-tidyverse; @tidyverse2019] and {[brms](https://paul-buerkner.github.io/brms/)} [@R-brms; @brms2017; @brms2018] approach to solving these problems. For a translation of the actual book text to {tidyverse} and {brms} style code, please check out their project, [*Statistical rethinking* with brms, ggplot2, and the tidyverse: Second edition](https://bookdown.org/connect/#/apps/4857/access).
 
+You can purchase *Statistical Rethinking: A Bayesian Course in R and Stan* [@sr2] from [CRC Press](https://www.routledge.com/Statistical-Rethinking-A-Bayesian-Course-with-Examples-in-R-and-STAN/McElreath/p/book/9780367139919?utm_source=crcpress.com&utm_medium=referral).
+
 ## Disclaimer {-}
 
 This project is a work in progress. If you'd like to follow along, you can find the GitHub repository [here](https://github.com/wjakethompson/sr2-solutions). These solutions have not been checked by anybody, so there will undoubtedly be errors. If you find any, please contribute or let me know!
@@ -37,3 +39,4 @@ This project is licensed under a <a rel="license" href="http://creativecommons.o
 devtools::session_info()
 ```
 </details>
+
