@@ -5,4 +5,4 @@ book_filename: "sr2-solutions"
 delete_merged_file: true
 language:
   ui:
-    chapter_name: "Chapter "
+    chapter_name: "Week "
