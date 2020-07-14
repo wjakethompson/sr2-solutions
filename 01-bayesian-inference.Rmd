@@ -20,7 +20,170 @@ There are no exercises for Chapter 1.
 
 ### Chapter 2
 
-Coming soon.
+> **2E1.** Which of the expressions below correspond to the statement: *the probability of rain on Monday*?  
+>   (1) Pr(rain)  
+>   (2) Pr(rain|Monday)  
+>   (3) Pr(Monday|rain)  
+>   (4) Pr(rain, Monday) / Pr(Monday)  
+
+I take this question to mean the probability of rain given that it is Monday. That means both (2) and (4) are correct.
+
+> **2E2.** Which of the following statements corresponds to the expression: Pr(Monday|rain)?  
+>   (1) The probability of rain on Monday.  
+>   (2) The probability of rain, given that it is Monday.  
+>   (3) The probability that it is Monday, given that it is raining.  
+>   (4) The probability that it is Monday and that it is raining.
+
+Only answer (3) corresponds to the expression Pr(Monday|rain).
+
+> **2E3.** Which of the following expressions below correspond to the statement: *the probability that it is Monday, given that it is raining*?  
+>   (1) Pr(Monday|rain)  
+>   (2) Pr(rain|Monday)  
+>   (3) Pr(rain|Monday) Pr(Monday)  
+>   (4) Pr(rain|Monday) Pr(Monday) / Pr(rain)  
+>   (5) Pr(Monday|rain) Pr(rain) / Pr(Monday)
+
+There are again two correct answers. Answer option (1) is the standard notation for the conditional probability. Answer option (4) is equivalent, as this is [Bayes' Theorem](https://en.wikipedia.org/wiki/Bayes'_theorem#Statement_of_theorem).
+
+> **2E4.** The Bayesian statistician Bruno de Finetti (1906--1985) began his 1973 book on probability theory with the dedication: "PROBABILITY DOES NOT EXIST." The capitals appeared in the original, so I imagine de Finetti wanted us to shout this statement. What he meant is that probability is a device for describing uncertainty from the perspective of an observer with limited knowledge; it has no objective reality. Discuss the globe tossing example from the chapter, in light of this statement. What does it mean to say "the probability of water is 0.7"?
+
+The idea is that probability is only a subjective perception of the likelihood that something will happen. In the globe tossing example, the result will always be either "land" or "water" (i.e., 0 or 1). When we toss the globe, we don't know what the result will be, but we know it will always be "land" or "water." To express our uncertainty in the outcome, we use probability. Because we know that water is more likely than land, we may say that the probability of "water" is 0.7; however, we'll never actually observe a result of 0.7 waters, or observe any probability. We will only ever observe the two results of "land" and "water."
+
+> **2M1.** Recall the globe tossing model from the chapter. Compute and plot the grid approximate posterior distribution for each of the following sets of observations. In each case, assume a uniform prior for *p*.
+
+```{r e2m1}
+library(tidyverse)
+
+dist <- tibble(p_grid = seq(from = 0, to = 1, length.out = 20),
+               prior = rep(1, times = 20)) %>%
+  mutate(likelihood_1 = dbinom(3, size = 3, prob = p_grid),
+         likelihood_2 = dbinom(3, size = 4, prob = p_grid),
+         likelihood_3 = dbinom(5, size = 7, prob = p_grid),
+         across(starts_with("likelihood"), ~ .x * prior),
+         across(starts_with("likelihood"), ~ .x / sum(.x))) %>%
+  pivot_longer(cols = starts_with("likelihood"), names_to = "pattern",
+               values_to = "posterior") %>%
+  separate(pattern, c(NA, "pattern"), sep = "_", convert = TRUE) %>%
+  mutate(obs = case_when(pattern == 1L ~ "W, W, W",
+                         pattern == 2L ~ "W, W, W, L",
+                         pattern == 3L ~ "L, W, W, L, W, W, W"))
+
+ggplot(dist, aes(x = p_grid, y = posterior)) +
+  facet_wrap(vars(fct_inorder(obs)), nrow = 1) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Probability of Water", y = "Posterior Probability")
+```
+
+> **2M2.** Now assume a prior for *p* that is equal to zero when *p* < 0.5 and is a positive constant when *p* &ge; 0.5. Again compute and plot the grid approximate posterior distribution for each of the sets of observations in the problem just above.
+
+For this problem we can use the same code as above, just altering how the prior is defined.
+
+```{r e2m2}
+dist <- tibble(p_grid = seq(from = 0, to = 1, length.out = 20)) %>%
+  mutate(prior = case_when(p_grid < 0.5 ~ 0L,
+                           TRUE ~ 1L),
+         likelihood_1 = dbinom(3, size = 3, prob = p_grid),
+         likelihood_2 = dbinom(3, size = 4, prob = p_grid),
+         likelihood_3 = dbinom(5, size = 7, prob = p_grid),
+         across(starts_with("likelihood"), ~ .x * prior),
+         across(starts_with("likelihood"), ~ .x / sum(.x))) %>%
+  pivot_longer(cols = starts_with("likelihood"), names_to = "pattern",
+               values_to = "posterior") %>%
+  separate(pattern, c(NA, "pattern"), sep = "_", convert = TRUE) %>%
+  mutate(obs = case_when(pattern == 1L ~ "W, W, W",
+                         pattern == 2L ~ "W, W, W, L",
+                         pattern == 3L ~ "L, W, W, L, W, W, W"))
+
+ggplot(dist, aes(x = p_grid, y = posterior)) +
+  facet_wrap(vars(fct_inorder(obs)), nrow = 1) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Probability of Water", y = "Posterior Probability")
+```
+
+> **2M3.** Suppose there are two globes, one for Earth and one for Mars. The Earth globe is 70% covered in water. The Mars globe is 100% land. Further suppose that one of these globes---you don't know which---was tossed in the air and produced a "land" observatiion. Assume that each globe was equally likely to be tossed. Show that the posterior probability that the globe was the Earth, conditional on seeing "land" (Pr(Earth|land)), is 0.23.
+
+```{r e2m3}
+# probability of land, given Earth
+p_le <- 0.3
+
+# probability of land, given Mars
+p_lm <- 1.0
+
+# probability of Earth
+p_e <- 0.5
+
+# probability of land
+p_l <- (p_e * p_le) + ((1 - p_e) * p_lm)
+
+# probability of Earth, given land (using Bayes' Theorem)
+p_el <- (p_le * p_e) / p_l
+p_el
+```
+
+> **2M4.** Suppose you have a deck with only three cards. Each card has only two sides, and each side is either black or white. One card has two black sides. The second card has one black and one white side. The third card has two white sides. Now suppose all three cards are placed in a bag and shuffled. Someone reaches into the bag and pulls out a card and places it flat on a table. A black side is shown facing up, but you don't know the color of the side facing down. Show that the probability that the other side is also black is 2/3. Use the counting method (Section 2 of the chapter) to approach this problem. This means counting up the ways that each card could produce the observed data (a black side faceing up on the table).
+
+```{r e2m4}
+card_bb_likelihood <- 2
+card_bw_likelihood <- 1
+card_ww_likelihood <- 0
+
+likelihood <- c(card_bb_likelihood, card_bw_likelihood, card_ww_likelihood)
+prior <- c(1, 1, 1)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+posterior[1]
+```
+
+> **2M5.** Now suppose there are four cards: B/B, B/W, W/W, and another B/B. Again suppose a card is drawn from the bag and a black side appears face up. Again calculate teh probability that the other side is black.
+
+```{r e2m5}
+card_bb_likelihood <- 2
+card_bw_likelihood <- 1
+card_ww_likelihood <- 0
+
+likelihood <- c(card_bb_likelihood, card_bw_likelihood, card_ww_likelihood,
+                card_bb_likelihood)
+prior <- c(1, 1, 1, 1)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+posterior[1] + posterior[4]
+```
+
+> **2M6.** Imagine that black ink is heavy, and so cards with black sides are heavier than cards with white sides. As a result, it's less likely that a card with black sides is pulled from the bag. So again assume there are three cards: B/B, B/W, and W/W. After experimenting a number of times, you conclude that for every way to pull the B/B card from the bag, there are 2 ways to pull the B/W card and 3 ways to pull the W/W card. Again suppose that a card is pulled and a black side appears face up. Show that the probability the other side is black is now 0.5. Use the counting method, as before.
+
+```{r e2m6}
+card_bb_likelihood <- 2
+card_bw_likelihood <- 1
+card_ww_likelihood <- 0
+
+likelihood <- c(card_bb_likelihood, card_bw_likelihood, card_ww_likelihood)
+prior <- c(1, 2, 3)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+posterior[1]
+```
+
+> **2M7.** Assume again the original card problem, with a single card showing a black side face up. Before looking at the other side, we draw another card from the bag and lay it face up on the table. The face that is shown on the new card is white. Show that the probability that the first card, the one showing a black side, has black on its other side is now 0.75. Use the counting method, if you can. Hint: Treat this like the sequence of globe tosses, countng all the ways to see each observation, for each possiible first card.
+
+```{r e2m7}
+# 2 choices for first card, with 3 options for second card: 2 W/W + 1 W/B
+card_bb_likelihood <- 2 * 3 
+card_wb_likelihood <- 1 * 2 
+card_ww_likelihood <- 0
+
+likelihood <- c(card_bb_likelihood, card_wb_likelihood, card_ww_likelihood)
+prior <- c(1,1,1)
+posterior <- prior * likelihood
+posterior <- posterior / sum(posterior)
+
+posterior[1]
+```
+
 
 ### Chapter 3
 
