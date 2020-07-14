@@ -5,4 +5,7 @@ if (interactive()) {
   suppressMessages(require(remotes))
 }
 
+options(
+  tidyverse.quiet = TRUE
+)
 source("renv/activate.R")
