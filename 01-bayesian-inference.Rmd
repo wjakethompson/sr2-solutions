@@ -184,6 +184,94 @@ posterior <- posterior / sum(posterior)
 posterior[1]
 ```
 
+> **2H1.** Suppose there are two species of panda bear. Both are equally common in the wild and live in the sample places. They look exactly alike and eat the same food, and there is  yet no genetic assay capable of telling them apart. They differ however in their family sizes. Species A gives birth to twins 10% of the time, otherwise birthing a single infant. Species births twins 20% of the time, ottherwise birthing singleton infants. Assume these numbers are known with certainty, from many years of field research.  
+> Now suppose you are managing a captive panda breeding program. You have a newe female panda of unknown species, and she has just given birth to twins. What is the probability that her next birth will also be twins?
+
+```{r e2h1}
+# After first birth, likelihood of species A and B is equal to the rate the
+# species give birth to twins
+a_likelihood <- 0.1
+b_likelihood <- 0.2
+
+# Next calculate the posterior probability that the panda belongs to each
+# species, assume species are equally likely
+likelihood <- c(a_likelihood, b_likelihood)
+prior <- c(1, 1) 
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+posterior
+
+# The probability the next birth is twins is the probability the panda belongs
+# to each species times the likelihood each species gives birth to twins
+(posterior[1] * a_likelihood) + (posterior[2] * b_likelihood)
+```
+
+> **2H2.** Recall all the facts from the problem above. Now compute the probability that the panda we have is from species A, asssuming we have observed only the first birth at that it was twins.
+
+```{r e2h2}
+# probability of species A
+p_a <- 0.5
+
+# probability of twins, given species A
+p_ta <- 0.1
+
+# probability of twins, given species B
+p_tb <- 0.2
+
+# probability of twins
+p_t <- (p_a * p_ta) + ((1 - p_a) * p_tb)
+
+# probability of species A, given twins (using Bayes' Theorem)
+# (note this is equivalent to `posterior[1]` above)
+p_at <- (p_ta * p_a) / p_t
+p_at
+```
+
+> **2H3.** Continuing on from the previous problem, suppose the same panda mother has a second birth and that it is not twins, but a singleton infant. Compute the posterior probability that this panda is species A.
+
+```{r e2h3}
+# likelihood for each species is Pr(twins) * Pr(singleton)
+a_likelihood <- 0.1 * (1 - 0.1)
+b_likelihood <- 0.2 * (1 - 0.2)
+
+# compute posterior probabilities
+likelihood <- c(a_likelihood, b_likelihood)
+prior <- c(1, 1)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+posterior[1]
+```
+
+> **2H4.** A common boast of Bayesian statisticians is that Bayesian inference makes it easy to use all of the data, even if the data are of different types.  
+> So suppose now that a veterinarian comes along who has a new genetic test that she claims can identify the species of our mother panda. But the test, like all tests, is imperfect. This is the information you have about the test:  
+>
+>  - The probability it correctly identifies a species A panda is 0.8.  
+>  - The probability it correctly identifies a species B panda is 0.65.  
+>
+> The vet administers the test to your panda and tells you that the test is positive for species A. First ignore your previous information from the births and compute the posterior probability that your panda is species A. Then redo your calculation, now using the birth data as well.
+
+```{r e2h4}
+# use Bayes' Theorem to determine the probability of species A, given a positive
+# test
+p_ap <- (0.8 * 0.5) / ((0.5 * 0.8) + (0.5 * 0.35))
+p_ap
+
+
+# Now include test data with observed births
+# likelihood for each species is Pr(twins) * Pr(singleton)
+a_likelihood <- 0.1 * (1 - 0.1)
+b_likelihood <- 0.2 * (1 - 0.2)
+
+# compute posterior probabilities, using test result as prior
+likelihood <- c(a_likelihood, b_likelihood)
+prior <- c(p_ap, (1 - p_ap))
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+posterior[1]
+```
+
 
 ### Chapter 3
 
