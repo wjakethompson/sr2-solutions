@@ -272,7 +272,6 @@ posterior <- posterior / sum(posterior)
 posterior[1]
 ```
 
-
 ### Chapter 3
 
 Coming soon.
