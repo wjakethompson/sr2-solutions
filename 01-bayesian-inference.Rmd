@@ -274,7 +274,179 @@ posterior[1]
 
 ### Chapter 3
 
-Coming soon.
+> **Easy.** The Easy problems sue the sample from the posterior distribution for the globe tossing example. The code will give you a specific set of samples, so that you can cehck your answers exactly.
+
+```{r e3e}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, 1000)
+likelihood <- dbinom(6, size = 9, prob = p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+set.seed(100)
+samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+```
+
+> Use the values in `samples` to answer the questions that follow.
+
+> **3E1.** How much posterior probability lies below *p* = 0.2?
+
+```{r e3e1}
+mean(samples < 0.2)
+```
+
+> **3E2.** How much posterior probability lies above *p* = 0.8?
+
+```{r e3e2}
+mean(samples > 0.8)
+```
+
+> **3E3.** How much posterior probability lies between *p* = 0.2 and *p* = 0.8?
+
+```{r e3e3}
+library(tidyverse)
+mean(between(samples, 0.2, 0.8))
+```
+
+> **3E4.** 20% of the posterior probability lies below which value of *p*?
+
+```{r e3e4}
+quantile(samples, probs = 0.2)
+```
+
+> **3E5.** 20% of the posterior probability lies above which value of *p*?
+
+```{r e3e5}
+quantile(samples, probs = 0.8)
+```
+
+> **3E6.** Which values of *p* contain the narrowest interval equal to 66% of the posterior probability?
+
+```{r e3e6}
+library(rethinking)
+HPDI(samples, prob = 0.66)
+```
+
+> **3E7.** Which values of *p* contain 66% of teh posterior probability, assuming equal posterior probability both below and above the interval?
+
+```{r e3e7}
+PI(samples, prob = 0.66)
+```
+
+> **3M1.** Suppose the globe tossing data had turned out to be 8 water in 15 tosses. Constructe the posterior distribution, using grid approximation. Use the same flat prior as before.
+
+```{r e3m1}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, 1000)
+likelihood <- dbinom(8, size = 15, prob = p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+tibble(p = p_grid, posterior = posterior) %>%
+  ggplot(aes(x = p, y = posterior)) +
+  geom_point() +
+  geom_line()
+```
+
+> **3M2.** Draw 10,000 samples from the grid approximation from above. Then use the sample to calculate the 90% HPDI for *p*.
+
+```{r e3m2}
+set.seed(101)
+samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+
+HPDI(samples, prob = 0.9)
+```
+
+> **3M3.** Construct a posterior predictive check for this model and data. The means simulate the distribution of samples, averaging over the posterior uncertainty in *p*. What is the probability of observing 8 water in 15 tosses?
+
+```{r e3m3}
+w <- rbinom(1e4, size = 15, prob = samples)
+mean(w == 8)
+```
+
+> **3M4.** Using the posterior distribution constructed from the new (8/15) data, now calculate the probability of observing 6 water in 9 tosses.
+
+```{r e3m4}
+w <- rbinom(1e4, size = 9, prob = samples)
+mean(w == 6)
+```
+
+> **3M5.** Start over at **3M1**, but now use a prior that is zero below *p* = 0.5 and a constant above *p* = 0.5. This corresponds to prior information that a majority of the Earth's surface is water. Repeat each problem above and compare the inferences (using both priors) to the true value *p* = 0.7.
+
+```{r e3m5, fig.show = "asis"}
+# 3M5.1
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- case_when(p_grid < 0.5 ~ 0L,
+                   TRUE ~ 1L)
+likelihood <- dbinom(8, size = 15, prob = p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+tibble(p = p_grid, posterior = posterior) %>%
+  ggplot(aes(x = p, y = posterior)) +
+  geom_point() +
+  geom_line()
+
+# 3M5.2
+set.seed(101)
+samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+HPDI(samples, prob = 0.9)
+
+# 3M5.3
+w <- rbinom(1e4, size = 15, prob = samples)
+mean(w == 8)
+
+# 3M5.4
+w <- rbinom(1e4, size = 9, prob = samples)
+mean(w == 6)
+```
+
+The HPDI from **3M2** is much narrower with the new prior ([.501, .711] vs. [.334, 0.722]). Additionally, the probabilities of observing 8 in 15 and 6 in 9 have both increased, as value of *p* < 0.5 are no longer taking up posterior density. Thus the model with the new prior is giving us better information.
+
+> **3M6.** Suppose you want to estimate the Earth's proportion of water very precisely. Specifically, you want the 99% percentile interval of the posterior distribution of *p* to be only 0.05 wide. This means the distance between the upper and lower bound of the interval should be 0.05. How many times will you have to toss the globe to do this?
+
+```{r e3m6}
+single_sim <- function(tosses, prior_type = c("uniform", "step")) {
+  prior_type <- match.arg(prior_type)
+  obs <- rbinom(1, size = tosses, prob = 0.7)
+  
+  p_grid <- seq(from = 0, to = 1, length.out = 1000)
+  prior <- rep(1, 1000)
+  if (prior_type == "step") prior[1:500] <- 0
+  
+  likelihood <- dbinom(obs, size = tosses, prob = p_grid)
+  posterior <- likelihood * prior
+  posterior <- posterior / sum(posterior)
+  
+  samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+  interval <- PI(samples, prob = 0.99)
+  width <- interval[2] - interval[1]
+}
+single_cond <- function(tosses, prior_type, reps = 100) {
+  tibble(tosses = tosses,
+         prior_type = prior_type,
+         width = map_dbl(seq_len(reps), ~single_sim(tosses = tosses,
+                                                    prior_type = prior_type)))
+}
+
+simulation <- crossing(tosses = seq(1000, 5000, by = 100),
+                       prior_type = c("uniform", "step")) %>%
+  pmap_dfr(single_cond, reps = 100) %>%
+  group_by(tosses, prior_type) %>%
+  summarize(avg_width = mean(width), .groups = "drop") %>%
+  mutate(prior_type = case_when(prior_type == "uniform" ~ "Uniform Prior",
+                                prior_type == "step" ~ "Step Prior"),
+         prior_type = factor(prior_type,))
+
+ggplot(simulation, aes(x = tosses, y = avg_width)) +
+  facet_wrap(~prior_type, nrow = 1) +
+  geom_point() +
+  geom_line() +
+  scale_x_comma() +
+  labs(x = "Tosses", y = "Average Interval Width")
+```
+
+This figure shows the average interval width for 100 simulations for the given number of tosses. That is, if the true proportion *p* is 0.7 and we toss the globe 1,000 times, the average interval width is approximately `r sprintf("%0.3f", filter(simulation, tosses == 1000, prior_type == "Uniform Prior") %>% pull(avg_width))`. To get an interval width of .05 or smaller, we would need around `r prettyNum(filter(simulation, avg_width < .05) %>% slice_min(order_by = tosses, n = 1, with_ties = FALSE) %>% pull(tosses), big.mark = ",")` tosses.
 
 ## Homework
 
