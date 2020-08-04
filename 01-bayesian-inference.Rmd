@@ -72,7 +72,7 @@ ggplot(dist, aes(x = p_grid, y = posterior)) +
   facet_wrap(vars(fct_inorder(obs)), nrow = 1) +
   geom_line() +
   geom_point() +
-  labs(x = "Probability of Water", y = "Posterior Probability")
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
 
 > **2M2.** Now assume a prior for *p* that is equal to zero when *p* < 0.5 and is a positive constant when *p* &ge; 0.5. Again compute and plot the grid approximate posterior distribution for each of the sets of observations in the problem just above.
@@ -99,7 +99,7 @@ ggplot(dist, aes(x = p_grid, y = posterior)) +
   facet_wrap(vars(fct_inorder(obs)), nrow = 1) +
   geom_line() +
   geom_point() +
-  labs(x = "Probability of Water", y = "Posterior Probability")
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
 
 > **2M3.** Suppose there are two globes, one for Earth and one for Mars. The Earth globe is 70% covered in water. The Mars globe is 100% land. Further suppose that one of these globes---you don't know which---was tossed in the air and produced a "land" observatiion. Assume that each globe was equally likely to be tossed. Show that the posterior probability that the globe was the Earth, conditional on seeing "land" (Pr(Earth|land)), is 0.23.
@@ -345,7 +345,8 @@ posterior <- posterior / sum(posterior)
 tibble(p = p_grid, posterior = posterior) %>%
   ggplot(aes(x = p, y = posterior)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
 
 > **3M2.** Draw 10,000 samples from the grid approximation from above. Then use the sample to calculate the 90% HPDI for *p*.
@@ -385,7 +386,8 @@ posterior <- posterior / sum(posterior)
 tibble(p = p_grid, posterior = posterior) %>%
   ggplot(aes(x = p, y = posterior)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
 
 # 3M5.2
 set.seed(101)
@@ -447,6 +449,77 @@ ggplot(simulation, aes(x = tosses, y = avg_width)) +
 ```
 
 This figure shows the average interval width for 100 simulations for the given number of tosses. That is, if the true proportion *p* is 0.7 and we toss the globe 1,000 times, the average interval width is approximately `r sprintf("%0.3f", filter(simulation, tosses == 1000, prior_type == "Uniform Prior") %>% pull(avg_width))`. To get an interval width of .05 or smaller, we would need around `r prettyNum(filter(simulation, avg_width < .05) %>% slice_min(order_by = tosses, n = 1, with_ties = FALSE) %>% pull(tosses), big.mark = ",")` tosses.
+
+> **Hard.** The Hard problems here all use the data below. These data indicate the gender (male = 1, female = 0) of officially reported first and second born children in 100 two-child families. So for example, the first family in the data reported a boy (1) and then a girl (0). The second family reported a girl (0) and then a boy (1). The third family reported two girls. You can load these tow vectors into R's memory by typing:
+
+```{r e3h}
+data(homeworkch3)
+birth1
+birth2
+```
+
+> Use these vectors as data. So for example to compute the total number of boys born across all of these births, you could use:
+
+```{r e3h-boys}
+sum(birth1) + sum(birth2)
+```
+
+> **3H1.** Using grid approximation, compute the posterior distribution for the probability of a birth being a boy. Assume a uniform prior probability. Which parameter value maximizes the posterior probability?
+
+```{r e3h1}
+p_grid <- seq(from = 0, to = 1, length.out = 1000)
+prior <- rep(1, 1000)
+
+boys <- sum(birth1) + sum(birth2)
+total <- length(birth1) + length(birth2)
+likelihood <- dbinom(boys, size = total, prob = p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+
+tibble(p = p_grid, posterior = posterior) %>%
+  ggplot(aes(x = p, y = posterior)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Proportion Boys (p)", y = "Posterior Density")
+
+p_grid[which.max(posterior)]
+```
+
+> **3H2.** Using the `sample` function, draw 10,000 random parameter values from the posterior distribution you calculated above. Use these sample to estimate the 50%, 89%, and 97% highest posterior density intervals.
+
+```{r e3h2}
+samples <- sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+HPDI(samples, prob = c(0.50, 0.89, 0.97))
+```
+
+> **3H3.** Use `rbinom` to simulate 10,000 replicates of 200 births. You should end up with 10,000 numbers, each one a count of boys out of 200 births. Compare the distribution of predicted numbers of boys to the actual count in teh data (111 boys out of 200 births). There are many good ways to visualize the simulations, but the `dens` command (part of the `rethinking` package) is prbably the easiest way in this case. Does it look like hte model fits the data well? That is, does the distribution of predictions include the actual observation as a central, likely outcome?
+
+```{r e3h3}
+set.seed(300)
+b <- rbinom(1e4, size = 200, prob = samples)
+
+ggplot() +
+  geom_histogram(aes(x = b), binwidth = 1) +
+  geom_vline(aes(xintercept = boys), linetype = "dashed", color = "red") +
+  labs(x = "Number of Boys", y = "Frequency")
+```
+
+Based on this posterior predictive distribution, the model appears to fit well, with the observed value of 111 in the middle of the distribution.
+
+> **3H4.** Now compare 10,000 counts of boys from 100 simulated first borns only the number of boys in the first births, `birth1`. How does the model look in this light?
+
+```{r e3h4}
+set.seed(301)
+b <- rbinom(1e4, size = 100, prob = samples)
+
+ggplot() +
+  geom_histogram(aes(x = b), binwidth = 1) +
+  geom_vline(aes(xintercept = sum(birth1)), linetype = "dashed",
+             color = "red") +
+  labs(x = "Number of Boys", y = "Frequency")
+```
+
+Based on first births only, the model appears to fit less well. Specifically, the model appears to be overestimating the number of first births who are boys. However, it does not appear to be a large discrepancy.
 
 ## Homework
 
