@@ -1,6 +1,12 @@
 set.seed(2020)
 options(digits = 3)
 
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(rethinking))
+suppressPackageStartupMessages(library(hrbrthemes))
+
+ggplot2::theme_set(theme_ipsum())
+
 knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
