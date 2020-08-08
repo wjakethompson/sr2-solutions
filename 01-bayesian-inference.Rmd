@@ -438,7 +438,8 @@ simulation <- crossing(tosses = seq(1000, 5000, by = 100),
   summarize(avg_width = mean(width), .groups = "drop") %>%
   mutate(prior_type = case_when(prior_type == "uniform" ~ "Uniform Prior",
                                 prior_type == "step" ~ "Step Prior"),
-         prior_type = factor(prior_type,))
+         prior_type = factor(prior_type, levels = c("Uniform Prior",
+                                                    "Step Prior")))
 
 ggplot(simulation, aes(x = tosses, y = avg_width)) +
   facet_wrap(~prior_type, nrow = 1) +
