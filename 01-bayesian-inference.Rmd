@@ -547,6 +547,11 @@ ggplot() +
 
 The model is severely under estimating the number of second-born boys when the first born child is a girl. Thus, our assumption that births are independent appears to be violated.
 
-## Homework
+## Session Info {-}
 
-Coming soon.
+<details><summary>View the session information used to render this chapter.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>
+
