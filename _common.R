@@ -15,5 +15,6 @@ knitr::opts_chunk$set(
   fig.align = "center",
   fig.width = 6,
   fig.asp = 0.618,
+  fig.retina = 3,
   fig.show = "hold"
 )
