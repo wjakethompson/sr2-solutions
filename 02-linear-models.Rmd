@@ -16,8 +16,44 @@ Lecture 4:
 
 ### Chapter 4
 
-Coming soon.
+> **4E1.** In the model definition below, which line is the likelihood?
+\begin{align}
+  y_i &\sim \text{Normal}(\mu,\sigma) \\
+  \mu &\sim \text{Normal}(0,10) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
 
-## Homework
+The likelihood is given by the first line, $y_i \sim \text{Normal}(\mu,\sigma)$. The other lines represent the prior distributions for $\mu$ and $\sigma$.
 
-Coming soon.
+> **4E2.** In the model definition just above, how many parameters are in the posterior distribution?
+
+There are two parameters, $\mu$ and $\sigma$.
+
+> **4E3.** Using the model definition above, write down the appropriate form of Bayes' theorem that includes the proper likelihood and priors.
+
+$$
+\text{Pr}(\mu,\sigma|y) = \frac{\prod_i\text{Normal}(y_i|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)}{\int\int\prod_i\text{Normal}(y_i|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)d \mu d \sigma}
+$$
+
+> **4E4.** In the model definition below, which line is the linear model?
+\begin{align}
+  y_i &\sim \text{Normal}(\mu,\sigma) \\
+  \mu_i &= \alpha + \beta x_i \\
+  \alpha &\sim \text{Normal}(0,10) \\
+  \beta &\sim \text{Normal}(0,1) \\
+  \sigma &\sim \text{Exponential}(2)
+\end{align}
+
+The linear model is the second line, $\mu_i &= \alpha + \beta x_i$.
+
+> **4E5.** In the model definition just above, how many parameters are in the posterior distribution?
+
+There are now three model parameters: $\alpha$, $\beta$, and $\sigma$. The mean, $\mu$ is no longer a parameter, as it is defined deterministically, as a function of other parameters in the model.
+
+## Session Info {-}
+
+<details><summary>View the session information used to render this chapter.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>
