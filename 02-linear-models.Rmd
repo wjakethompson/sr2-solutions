@@ -50,6 +50,165 @@ The linear model is the second line, $\mu_i &= \alpha + \beta x_i$.
 
 There are now three model parameters: $\alpha$, $\beta$, and $\sigma$. The mean, $\mu$ is no longer a parameter, as it is defined deterministically, as a function of other parameters in the model.
 
+> **4M1.** For the model definition below, simulate observed *y* values from the prior (not the posterior).
+\begin{align}
+  y_i &\sim \text{Normal}(\mu,\sigma) \\
+  \mu &\sim \text{Normal}(0,10) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+```{r e4m1}
+library(tidyverse)
+
+sim <- tibble(mu = rnorm(n = 10000, mean = 0, sd = 10),
+       sigma = rexp(n = 10000, rate = 1)) %>%
+  mutate(y = rnorm(n = 10000, mean = mu, sd = sigma))
+
+ggplot(sim, aes(x = y)) +
+  geom_density() +
+  labs(x = "y", y = "Density")
+```
+
+> **4M2.** Trasnlate the model just above into a `quap` formula.
+
+```{r e4m2}
+flist <- alist(
+  y ~ dnorm(mu, sigma),
+  mu ~ dnorm(0, 10),
+  sigma ~ dexp(1)
+)
+```
+
+> **4M3.** Translate the `quap` model formula below into a mathematical model definition.
+```r
+  y ~ dnorm( mu , sigma ),
+  mu <- a + b*x,
+  a ~ dnorm( 0 , 10 ),
+  b ~ dunif( 0 , 1 ),
+  sigma ~ dexp( 1 )
+```
+
+\begin{align}
+  y_i &\sim \text{Normal}(\mu_i,\sigma) \\
+  \mu_i &= a + bx_i \\
+  a &\sim \text{Normal}(0, 10) \\
+  b &\sim \text{Uniform}(0, 1) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+> **4M4.** A sample of students is measured for height each year for 3 years. After the third year, you want to fit a linear regression predicting height using year as a predictor. Write down the mathematical model definition for this regression, using any variable names and priors you choose. Be prepared to defend your choice of priors.
+
+\begin{align}
+  h_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta(x_i - \bar{x}) \\
+  \alpha &\sim \text{Normal}(169, 20) \\
+  \beta &\sim \text{Normal}(0, 8) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+Because height is centered, $\alpha$ represents the average height in the average year (i.e., year 2). The prior of $\text{Normal}(165,20)$ was chosen assuming that height is measured in centimeters and that that sample is of adults (e.g., college students). The mean of 169cm represents the average height people aged 20 and older in the United States [@avg_height]. Further, @avg_height report the 5th and 95th percentiles for females and males as [150,174] and [163,188], respectively. A standard deviation of 20 presumes 95% of the probability between 169 $\pm$ 40, or [129,209], easily encapsulating the ranges seen in previous observed data.
+
+At this point, we have no reason to believe that year would have any effect on height, as we're assuming that all students are adults, and therefore likely done growing. Accordingly, we choose a prior centered on zero. The standard deviation of the prior of 5 represents plausible growth (or shrinkage). During growth spurts, height growth averages 6--13 cm/year. The standard deviation of 8 encompasses the range we might expect to see if growth were occurring at a high rate.
+
+Prior predictive simulations for $\alpha$ and $\beta$ also appear to give reasonably plausible regression lines, given our current assumptions.
+
+```{r e4m4}
+n <- 1000
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 169, 20),
+       beta = rnorm(n, 0, 8)) %>%
+  expand(nesting(group, alpha, beta), year = c(1, 3)) %>%
+  mutate(height = alpha + beta * (year - 2)) %>%
+  ggplot(aes(x = year, y = height, group = group)) +
+  geom_line(alpha = 1/10) +
+  geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
+  annotate(geom = "text", x = 1, y = 0, hjust = 0, vjust = 1,
+           label = "Embryo") +
+  annotate(geom = "text", x = 1, y = 272, hjust = 0, vjust = 0,
+           label = "World's tallest person (272cm)") +
+  coord_cartesian(ylim = c(-25, 300)) +
+  labs(x = "Year", y = "Height")
+```
+
+Finally, the exponential prior on $\sigma$ assumes an average deviation of 1.
+
+> **4M5.** Now suppose I remind you that every student got taller each year. Does this information lead you to change your choice of priors? How?
+
+Yes. Because we know that an increase in year will always lead to increased height, we know that $\beta$ will be positive. Therefore, our prior should reflect this by using, for example, a log-normal distribution.
+
+$$
+\beta \sim \text{Log-Normal}(2,0.5)
+$$
+
+This log-normal prior has an 89% highest density interval between about 2.3 and 14.1cm growth per year. 
+
+```{r e4m5-1, cache = TRUE}
+library(tidybayes)
+
+samples <- rlnorm(1e8, 2, 0.5)
+bounds <- median_hdi(samples, .width = 0.89)
+
+ggplot() +
+  stat_function(data = tibble(x = c(0, 30)), mapping = aes(x = x),
+                geom = "line", fun = dlnorm,
+                args = list(meanlog = 2, sdlog = 0.5)) +
+  geom_ribbon(data = tibble(x = seq(bounds$ymin, bounds$ymax, 0.01)),
+              aes(x = x, ymin = 0, ymax = dlnorm(x, 2, 0.5)),
+              alpha = 0.8) +
+  labs(x = expression(beta), y = "Density")
+```
+
+Prior predictive simulations of plausible lines using this new log-normal prior indicate that these priors still represent plausible values, while also constraining all lines to have a positive slope.
+
+```{r e4m5-2}
+n <- 1000
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 169, 20),
+       beta = rlnorm(n, 2, 0.75)) %>%
+  expand(nesting(group, alpha, beta), year = c(1, 3)) %>%
+  mutate(height = alpha + beta * (year - 2)) %>%
+  ggplot(aes(x = year, y = height, group = group)) +
+  geom_line(alpha = 1/10) +
+  geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
+  annotate(geom = "text", x = 1, y = 0, hjust = 0, vjust = 1,
+           label = "Embryo") +
+  annotate(geom = "text", x = 1, y = 272, hjust = 0, vjust = 0,
+           label = "World's tallest person (272cm)") +
+  coord_cartesian(ylim = c(-25, 300)) +
+  labs(x = "Year", y = "Height")
+```
+
+> **4M6.** Now suppose I tell you that the variance among heights for students of the same age is never more than 64cm. How does this lead you to revise your priors?
+
+A variance of 64cm corresponds to a standard deviation of 8cm. Our current prior of $\sigma \sim \text{Exponential}(1)$ gives very little probability mass to values greater than 8. However, we can also see that the vast majority of the probability mass for this prior is less than 5cm. Therefore, if we think the standard deviation could get close to 8cm, we might consider reducing the rate of the exponential prior to allow for slightly larger values.
+
+```{r e4m6}
+ggplot(tibble(x = c(0, 20)), aes(x = x)) +
+  stat_function(fun = dexp, args = list(rate = 1)) +
+  labs(x = expression(sigma), y = "Density")
+```
+
+> **4M7.** Refit model `m4.3` from the chapter, but omit the mean weight `xbar` this time. Compare the new model's posterior to that of the original model. In particular, look at the covariance among the parameters. What is different? Then compare the posterior predictions of both models.
+
+```{r}
+library(rethinking)
+
+dat <- filter(Howell1, age >= 18)
+xbar <- mean(dat$weight)
+
+m4.3 <- quap(alist(height ~ dnorm(mu, sigma),
+                   mu <- a + b * (weight - xbar),
+                   a ~ dnorm(178, 20),
+                   b ~ dlnorm(0, 1),
+                   sigma ~ dunif(0, 50)),
+             data = dat)
+```
+
+
+> **4M8.** In the chapter, we used 15 knots with the cherry blossom spline. Increase the number of know and observe what happens to the resulting spline. Then adjust also the width of the prior on the weights---change the standard deviation of the prior and watch what happens. What do you think the combination of know number and hte prior on the weights controls?
+
+
+
 ## Session Info {-}
 
 <details><summary>View the session information used to render this chapter.</summary>
