@@ -178,9 +178,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "bookdown",
       "RemoteUsername": "rstudio",
-      "RemoteRef": "HEAD",
+      "RemoteRef": "master",
       "RemoteSha": "9eb20a83fe303d643cdc1ffca21c2b228be9406a",
-      "Hash": "c02fd2bbc9e6354193c286dabacc33ab"
+      "Hash": "3564c698fc02ab5bcf7a3daedf9c7ba8"
     },
     "boot": {
       "Package": "boot",
@@ -487,6 +487,13 @@
       "Repository": "CRAN",
       "Hash": "b8cff1d1391fd1ad8b65877f4c7f2e53"
     },
+    "gganimate": {
+      "Package": "gganimate",
+      "Version": "1.0.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1a34307f6fca1bc7391586860ea0aa55"
+    },
     "ggdist": {
       "Package": "ggdist",
       "Version": "2.2.0",
@@ -514,6 +521,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "89ea5998938d1ad55f035c8a86f96b74"
+    },
+    "gifski": {
+      "Package": "gifski",
+      "Version": "0.8.6",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ca21682de4210b1c6b59fb010b94cf09"
     },
     "git2r": {
       "Package": "git2r",
@@ -978,9 +992,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "rethinking",
       "RemoteUsername": "rmcelreath",
-      "RemoteRef": "HEAD",
+      "RemoteRef": "master",
       "RemoteSha": "3b48ec8dfda4840b9dce096d0cb9406589ef7923",
-      "Hash": "2970f35f213e75c9b482b4cf84808793"
+      "Hash": "9d384553f4e18770c53a59c58b290118"
     },
     "rex": {
       "Package": "rex",
@@ -1241,6 +1255,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "a4b9662282097d1033c60420dcb83350"
+    },
+    "tweenr": {
+      "Package": "tweenr",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fc77eb5297507cccfa3349a606061030"
     },
     "usethis": {
       "Package": "usethis",
