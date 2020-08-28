@@ -7,7 +7,7 @@ Authors@R:
              role = c("aut", "cre"),
              email = "wjakethompson@gmail.com",
              comment = c(ORCID = "0000-0001-7339-0300")))
-URL: https://sr2-solutions.netlify.app/,
+URL: https://sr2-solutions.wjakethompson.com,
     https://github.com/wjakethompson/sr2-solutions
 License: CC BY NC SA 4.0
 Depends:
