@@ -22,6 +22,7 @@ read_lines("bib/pkgs.bib") %>%
   str_replace_all("brms:", "{brms}:") %>%
   str_replace_all("'Stan'", "‘{Stan}’") %>%
   str_replace_all("tidyverse:", "{tidyverse}:") %>%
+  str_replace_all("gganimate:", "{gganimate}:") %>%
   write_lines("bib/pkgs.bib")
 ```
 
