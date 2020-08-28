@@ -7,16 +7,15 @@ suppressPackageStartupMessages(library(brms))
 suppressPackageStartupMessages(library(hrbrthemes))
 suppressPackageStartupMessages(library(here))
 
-ggplot2::theme_set(theme_ipsum())
+ggplot2::theme_set(theme_minimal())
 
 knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
   cache = TRUE,
-  out.width = "90%",
+  out.width = "70%",
   fig.align = "center",
   fig.width = 6,
   fig.asp = 0.618,
-  fig.retina = 3,
   fig.show = "hold"
 )
