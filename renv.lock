@@ -44,6 +44,13 @@
       "Repository": "CRAN",
       "Hash": "3b986a53325a1d95610b8d86a284dac0"
     },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-17",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bbff70c8c0357b5b88238c83f680fcd3"
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-51.6",
@@ -250,6 +257,20 @@
       "Repository": "CRAN",
       "Hash": "a667800d5f0350371bedeb8b8b950289"
     },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-17",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9267f5dab59a4ef44229858a142bded1"
+    },
+    "classInt": {
+      "Package": "classInt",
+      "Version": "0.4-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "17bdfa3c51df4a6c82484d13b11fb380"
+    },
     "cli": {
       "Package": "cli",
       "Version": "2.0.2",
@@ -263,6 +284,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "08cf4045c149a0f0eaf405324c7495bd"
+    },
+    "cluster": {
+      "Package": "cluster",
+      "Version": "2.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "db63a44aab5aadcb6bf2f129751d129a"
     },
     "coda": {
       "Package": "coda",
@@ -378,8 +406,8 @@
       "Package": "devtools",
       "Version": "2.3.1.9000",
       "Source": "GitHub",
-      "Remotes": "r-lib/testthat",
       "RemoteType": "github",
+      "Remotes": "r-lib/testthat",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "devtools",
       "RemoteUsername": "r-lib",
@@ -421,6 +449,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "716869fffc16e282c118f8894e082a7d"
+    },
+    "e1071": {
+      "Package": "e1071",
+      "Version": "1.7-3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "728e85416ffc90743054c1ac04486d69"
     },
     "ellipsis": {
       "Package": "ellipsis",
@@ -477,6 +512,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "1cb4279e697650f0bd78cd3601ee7576"
+    },
+    "foreign": {
+      "Package": "foreign",
+      "Version": "0.8-80",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ae1b1e15cc6ccb2bc61c0ac33e86d35f"
     },
     "fs": {
       "Package": "fs",
@@ -744,6 +786,13 @@
       "Repository": "CRAN",
       "Hash": "31525c7bdf1254e185db6726b34a6eba"
     },
+    "lpSolve": {
+      "Package": "lpSolve",
+      "Version": "5.6.15",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "90c3bc497e7d5ec9dbb863621be15abb"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.7.9",
@@ -834,6 +883,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "662f52871983ff3e3ef042c62de126df"
+    },
+    "nnet": {
+      "Package": "nnet",
+      "Version": "7.3-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d87e50e11394a7151a28873637d799a"
     },
     "numDeriv": {
       "Package": "numDeriv",
@@ -1048,6 +1104,13 @@
       "Repository": "CRAN",
       "Hash": "fcd94e00cc409b25d07ca50f7bf339f5"
     },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1-15",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9787c1fcb680e655d062e7611cadf78e"
+    },
     "rprojroot": {
       "Package": "rprojroot",
       "Version": "1.3-2",
@@ -1118,6 +1181,13 @@
       "Repository": "CRAN",
       "Hash": "308013098befe37484df72c39cf90d6e"
     },
+    "sf": {
+      "Package": "sf",
+      "Version": "0.9-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5b23b3b72c0d9962a59c57b110076f9a"
+    },
     "shape": {
       "Package": "shape",
       "Version": "1.4.4",
@@ -1160,6 +1230,13 @@
       "Repository": "CRAN",
       "Hash": "947e4e02a79effa5d512473e10f41797"
     },
+    "spatial": {
+      "Package": "spatial",
+      "Version": "7.3-12",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "58a02ce0150652b96c044bc67a0df2e5"
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.4.6",
@@ -1173,6 +1250,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "0759e6b6c0957edb1311028a49a35e76"
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.1-12",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1c5bb53bd428f3c42a25b7aeb983d8c7"
     },
     "svUnit": {
       "Package": "svUnit",
@@ -1199,8 +1283,8 @@
       "Package": "testthat",
       "Version": "2.99.0.9000",
       "Source": "GitHub",
-      "Remotes": "r-lib/diffviewer",
       "RemoteType": "github",
+      "Remotes": "r-lib/diffviewer",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "testthat",
       "RemoteUsername": "r-lib",
@@ -1238,8 +1322,8 @@
       "Package": "tidybayes.rethinking",
       "Version": "2.0.3.9000",
       "Source": "GitHub",
-      "RemoteType": "github",
       "Remotes": "rmcelreath/rethinking, mjskay/tidybayes",
+      "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "tidybayes.rethinking",
       "RemoteUsername": "mjskay",
@@ -1275,12 +1359,26 @@
       "Repository": "CRAN",
       "Hash": "a4b9662282097d1033c60420dcb83350"
     },
+    "transformr": {
+      "Package": "transformr",
+      "Version": "0.1.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d554a72d831cfa946c6fa0bd9f6bc976"
+    },
     "tweenr": {
       "Package": "tweenr",
       "Version": "1.0.1",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "fc77eb5297507cccfa3349a606061030"
+    },
+    "units": {
+      "Package": "units",
+      "Version": "0.6-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "4a3df844d6d35ca2ba2b7ba95446b955"
     },
     "usethis": {
       "Package": "usethis",
