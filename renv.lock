@@ -144,10 +144,10 @@
     },
     "backports": {
       "Package": "backports",
-      "Version": "1.1.9",
+      "Version": "1.1.8",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "b29e2d989dfb2e71ca3fd7d5bb1c0d58"
+      "Hash": "3ef0eac19317fd03c0c854aed581d473"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -172,15 +172,22 @@
     },
     "bookdown": {
       "Package": "bookdown",
-      "Version": "0.20.3",
+      "Version": "0.20.2",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "bookdown",
       "RemoteUsername": "rstudio",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "9eb20a83fe303d643cdc1ffca21c2b228be9406a",
-      "Hash": "c02fd2bbc9e6354193c286dabacc33ab"
+      "RemoteRef": "master",
+      "RemoteSha": "6e649c825c9fc88f31726a2b57ec1e6708f26e3a",
+      "Hash": "fd059e3cf527d43f6b81102ca1ae27e7"
+    },
+    "boot": {
+      "Package": "boot",
+      "Version": "1.3-25",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bd51734a754b6c2baf28b2d1ebc11e91"
     },
     "brew": {
       "Package": "brew",
@@ -196,17 +203,19 @@
       "Repository": "CRAN",
       "Hash": "5d4e99b6aae5e4e90edde77e0cf28fdc"
     },
+    "brio": {
+      "Package": "brio",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8d11863c163969ab02bf34ea0c446f7b"
+    },
     "brms": {
       "Package": "brms",
-      "Version": "2.13.9",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "brms",
-      "RemoteUsername": "paul-buerkner",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "c520a8c147fb609c82b5d36a0ee587eff6d2cc77",
-      "Hash": "0945ce396bc67dda0c488ee2f3c38d66"
+      "Version": "2.13.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2ff50396abc652379d12c79859e96e47"
     },
     "broom": {
       "Package": "broom",
@@ -320,6 +329,13 @@
       "Repository": "CRAN",
       "Hash": "2b7d10581cc730804e9ed178c8374bd6"
     },
+    "dagitty": {
+      "Package": "dagitty",
+      "Version": "0.3-0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "022f9f1a55fa412ba34b3c55be3402c4"
+    },
     "dbplyr": {
       "Package": "dbplyr",
       "Version": "1.4.4",
@@ -336,10 +352,23 @@
     },
     "devtools": {
       "Package": "devtools",
-      "Version": "2.3.1",
+      "Version": "2.3.1.9000",
+      "Source": "GitHub",
+      "Remotes": "r-lib/testthat",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "devtools",
+      "RemoteUsername": "r-lib",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "df619ce29b722f34e5d5f83e336881f12ab3ed05",
+      "Hash": "13722a0d1fdb8f0c98ffc52bf9326635"
+    },
+    "diffobj": {
+      "Package": "diffobj",
+      "Version": "0.3.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "271df6a328617c64149283e98b1cd8da"
+      "Hash": "cfb12c2c0abfa12b08b4a84d6fde9792"
     },
     "digest": {
       "Package": "digest",
@@ -497,10 +526,10 @@
     },
     "glue": {
       "Package": "glue",
-      "Version": "1.4.2",
+      "Version": "1.4.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "6efd734b14c6471cfe443345f3e35e29"
+      "Hash": "f43e0d5e85ccb0a4045670c0607ee504"
     },
     "gridExtra": {
       "Package": "gridExtra",
@@ -553,15 +582,10 @@
     },
     "hrbrthemes": {
       "Package": "hrbrthemes",
-      "Version": "0.8.6",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "hrbrthemes",
-      "RemoteUsername": "hrbrmstr",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "1cc6080fb76f50c14b01b0d663ad039dd5ef1b53",
-      "Hash": "42f7e7660a4593c96e97357aae999e29"
+      "Version": "0.8.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0d1257948f016840ad90320ed19c8c7d"
     },
     "htmltools": {
       "Package": "htmltools",
@@ -943,15 +967,15 @@
     },
     "rethinking": {
       "Package": "rethinking",
-      "Version": "2.13",
+      "Version": "2.12",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "rethinking",
       "RemoteUsername": "rmcelreath",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "3b48ec8dfda4840b9dce096d0cb9406589ef7923",
-      "Hash": "2970f35f213e75c9b482b4cf84808793"
+      "RemoteRef": "master",
+      "RemoteSha": "50b82ec3f9a579af60abb2ad915e78982391285b",
+      "Hash": "27769b32940277e07537f88d9b431eac"
     },
     "rex": {
       "Package": "rex",
@@ -975,9 +999,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "rmarkdown",
       "RemoteUsername": "rstudio",
-      "RemoteRef": "HEAD",
+      "RemoteRef": "master",
       "RemoteSha": "204aa41faea12212dc80642f5a8e53e4e52e0999",
-      "Hash": "6ee20c81bb7689a65e55709513ec82b9"
+      "Hash": "a84d688a0e96cc8b2b7147a9e25e0c29"
     },
     "roxygen2": {
       "Package": "roxygen2",
@@ -1135,10 +1159,16 @@
     },
     "testthat": {
       "Package": "testthat",
-      "Version": "2.3.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "0829b987b8961fb07f3b1b64a2fbc495"
+      "Version": "2.99.0.9000",
+      "Source": "GitHub",
+      "Remotes": "r-lib/diffviewer",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "testthat",
+      "RemoteUsername": "r-lib",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "6a242759524a76968d4c0b6f7b8354c0da91a190",
+      "Hash": "20d5bbc140c33997078ca91ee40b6e5e"
     },
     "threejs": {
       "Package": "threejs",
@@ -1156,22 +1186,17 @@
     },
     "tidybayes": {
       "Package": "tidybayes",
-      "Version": "2.1.1.9000",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "tidybayes",
-      "RemoteUsername": "mjskay",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "17f4dc68b2ac7a077b5570adf7fd8f5c3ac91ce5",
-      "Hash": "489457604f22b39cbc215bf238385e75"
+      "Version": "2.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "78d5e76a7b9ee47e79815213a2e1a4e2"
     },
     "tidybayes.rethinking": {
       "Package": "tidybayes.rethinking",
       "Version": "2.0.3.9000",
       "Source": "GitHub",
-      "Remotes": "rmcelreath/rethinking, mjskay/tidybayes",
       "RemoteType": "github",
+      "Remotes": "rmcelreath/rethinking, mjskay/tidybayes",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "tidybayes.rethinking",
       "RemoteUsername": "mjskay",
@@ -1181,10 +1206,10 @@
     },
     "tidyr": {
       "Package": "tidyr",
-      "Version": "1.1.2",
+      "Version": "1.1.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "c40b2d5824d829190f4b825f4496dfae"
+      "Hash": "a0d8d887f9887f668e3d54d1b820c2a2"
     },
     "tidyselect": {
       "Package": "tidyselect",
@@ -1234,6 +1259,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ce4f6271baa94776db692f1cb2055bee"
+    },
+    "waldo": {
+      "Package": "waldo",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3ed85dea874d2932c3a51531eae957b2"
     },
     "whisker": {
       "Package": "whisker",
