@@ -15,6 +15,7 @@ Depends:
 Imports:
   bookdown,
   brms,
+  dagitty,
   here,
   hrbrthemes,
   knitr,
