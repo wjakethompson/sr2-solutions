@@ -190,6 +190,8 @@ ggplot(tibble(x = c(0, 20)), aes(x = x)) +
 
 > **4M7.** Refit model `m4.3` from the chapter, but omit the mean weight `xbar` this time. Compare the new model's posterior to that of the original model. In particular, look at the covariance among the parameters. What is different? Then compare the posterior predictions of both models.
 
+First, we'll reproduce `m4.3` using `quap()`, and then again using `brm()`. The covariance matrix from both is the same, as we would expect!
+
 ```{r e4m7-1}
 library(rethinking)
 library(brms)
@@ -207,6 +209,8 @@ m4.3 <- quap(alist(height ~ dnorm(mu, sigma),
                    sigma ~ dunif(0, 50)),
              data = dat)
 
+round(vcov(m4.3), 3)
+
 # and then with brms
 b4.3 <- brm(height ~ 1 + weight_c, data = dat, family = gaussian,
             prior = c(prior(normal(178, 20), class = Intercept),
@@ -214,6 +218,27 @@ b4.3 <- brm(height ~ 1 + weight_c, data = dat, family = gaussian,
                       prior(uniform(0, 50), class = sigma)),
             iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "b4.3-0"))
+
+posterior_samples(b4.3) %>%
+  select(-lp__) %>%
+  cov() %>%
+  round(digits = 3)
+```
+
+Now, let's using the non-centered parameterization. This time, we'll only use `brm()`.
+
+```{r e4m7-2}
+b4.3_nc <- brm(height ~ 1 + weight, data = dat, family = gaussian,
+            prior = c(prior(normal(178, 20), class = Intercept),
+                      prior(lognormal(0, 1), class = b, lb = 0),
+                      prior(uniform(0, 50), class = sigma)),
+            iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "b4.3_nc"))
+
+posterior_samples(b4.3_nc) %>%
+  select(-lp__) %>%
+  cov() %>%
+  round(digits = 3)
 ```
 
 
