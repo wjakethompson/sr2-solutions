@@ -1,6 +1,7 @@
 # Statistical Rethinking: Solutions (2nd Edition)
 
 <!-- badges: start -->
+![Build Status](https://github.com/wjakethompson/sr2-solutions/workflows/bookdown/badge.svg)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/a5641c13-d838-4313-88e5-17324b486cfd/deploy-status)](https://app.netlify.com/sites/sr2-solutions/deploys)
 <!-- badges: end -->
 
