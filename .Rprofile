@@ -1,3 +1,4 @@
+source("renv/activate.R")
 if (interactive()) {
   suppressMessages(require(devtools))
   suppressMessages(require(usethis))
@@ -8,4 +9,3 @@ if (interactive()) {
 options(
   tidyverse.quiet = TRUE
 )
-source("renv/activate.R")
