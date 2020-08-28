@@ -144,10 +144,10 @@
     },
     "backports": {
       "Package": "backports",
-      "Version": "1.1.8",
+      "Version": "1.1.9",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "3ef0eac19317fd03c0c854aed581d473"
+      "Hash": "b29e2d989dfb2e71ca3fd7d5bb1c0d58"
     },
     "base64enc": {
       "Package": "base64enc",
@@ -172,15 +172,15 @@
     },
     "bookdown": {
       "Package": "bookdown",
-      "Version": "0.20.2",
+      "Version": "0.20.3",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "bookdown",
       "RemoteUsername": "rstudio",
-      "RemoteRef": "master",
-      "RemoteSha": "6e649c825c9fc88f31726a2b57ec1e6708f26e3a",
-      "Hash": "fd059e3cf527d43f6b81102ca1ae27e7"
+      "RemoteRef": "HEAD",
+      "RemoteSha": "9eb20a83fe303d643cdc1ffca21c2b228be9406a",
+      "Hash": "c02fd2bbc9e6354193c286dabacc33ab"
     },
     "boot": {
       "Package": "boot",
@@ -212,10 +212,15 @@
     },
     "brms": {
       "Package": "brms",
-      "Version": "2.13.5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "2ff50396abc652379d12c79859e96e47"
+      "Version": "2.13.9",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "brms",
+      "RemoteUsername": "paul-buerkner",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "c520a8c147fb609c82b5d36a0ee587eff6d2cc77",
+      "Hash": "0945ce396bc67dda0c488ee2f3c38d66"
     },
     "broom": {
       "Package": "broom",
@@ -526,10 +531,10 @@
     },
     "glue": {
       "Package": "glue",
-      "Version": "1.4.1",
+      "Version": "1.4.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "f43e0d5e85ccb0a4045670c0607ee504"
+      "Hash": "6efd734b14c6471cfe443345f3e35e29"
     },
     "gridExtra": {
       "Package": "gridExtra",
@@ -967,15 +972,15 @@
     },
     "rethinking": {
       "Package": "rethinking",
-      "Version": "2.12",
+      "Version": "2.13",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "rethinking",
       "RemoteUsername": "rmcelreath",
-      "RemoteRef": "master",
-      "RemoteSha": "50b82ec3f9a579af60abb2ad915e78982391285b",
-      "Hash": "27769b32940277e07537f88d9b431eac"
+      "RemoteRef": "HEAD",
+      "RemoteSha": "3b48ec8dfda4840b9dce096d0cb9406589ef7923",
+      "Hash": "2970f35f213e75c9b482b4cf84808793"
     },
     "rex": {
       "Package": "rex",
@@ -1167,8 +1172,8 @@
       "RemoteRepo": "testthat",
       "RemoteUsername": "r-lib",
       "RemoteRef": "HEAD",
-      "RemoteSha": "6a242759524a76968d4c0b6f7b8354c0da91a190",
-      "Hash": "20d5bbc140c33997078ca91ee40b6e5e"
+      "RemoteSha": "b3f2203b4786d056e2b8b19a3dd7388427d43864",
+      "Hash": "52591b76b26d8c0ced2b058f69a3251c"
     },
     "threejs": {
       "Package": "threejs",
@@ -1186,10 +1191,15 @@
     },
     "tidybayes": {
       "Package": "tidybayes",
-      "Version": "2.1.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "78d5e76a7b9ee47e79815213a2e1a4e2"
+      "Version": "2.1.1.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "tidybayes",
+      "RemoteUsername": "mjskay",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "17f4dc68b2ac7a077b5570adf7fd8f5c3ac91ce5",
+      "Hash": "489457604f22b39cbc215bf238385e75"
     },
     "tidybayes.rethinking": {
       "Package": "tidybayes.rethinking",
@@ -1206,10 +1216,10 @@
     },
     "tidyr": {
       "Package": "tidyr",
-      "Version": "1.1.1",
+      "Version": "1.1.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "a0d8d887f9887f668e3d54d1b820c2a2"
+      "Hash": "c40b2d5824d829190f4b825f4496dfae"
     },
     "tidyselect": {
       "Package": "tidyselect",
@@ -1248,10 +1258,10 @@
     },
     "vctrs": {
       "Package": "vctrs",
-      "Version": "0.3.2",
+      "Version": "0.3.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "5ba3006888ac62fd5e97b208d00d3317"
+      "Hash": "d2c91a9aeb376a26b16c72d6ab888923"
     },
     "viridisLite": {
       "Package": "viridisLite",

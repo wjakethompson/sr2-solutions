@@ -27,7 +27,6 @@ Imports:
   tidyverse
 Remotes:
   paul-buerkner/brms,
-  hrbrmstr/hrbrthemes,
   rmcelreath/rethinking,
   mjskay/tidybayes,
   mjskay/tidybayes.rethinking,
