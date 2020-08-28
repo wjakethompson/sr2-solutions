@@ -285,6 +285,13 @@
       "Repository": "CRAN",
       "Hash": "08cf4045c149a0f0eaf405324c7495bd"
     },
+    "clisymbols": {
+      "Package": "clisymbols",
+      "Version": "1.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "96c01552bfd5661b9bbdefbc762f4bcd"
+    },
     "cluster": {
       "Package": "cluster",
       "Version": "2.1.0",
@@ -981,6 +988,19 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "a8730dcbdd19f9047774909f0ec214a4"
+    },
+    "prompt": {
+      "Package": "prompt",
+      "Version": "1.0.0",
+      "Source": "GitHub",
+      "Remotes": "gaborcsardi/httrmock",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "prompt",
+      "RemoteUsername": "gaborcsardi",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "b332c42631c16eb8701f3efbe6efd5794a922ab4",
+      "Hash": "4408242ae62656160b1db143edf478ad"
     },
     "ps": {
       "Package": "ps",
