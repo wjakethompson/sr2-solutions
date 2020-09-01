@@ -346,6 +346,13 @@
       "Repository": "CRAN",
       "Hash": "0f22be39ec1d141fd03683c06f3a6e67"
     },
+    "conflicted": {
+      "Package": "conflicted",
+      "Version": "1.0.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "43c5107cc96f47043a56736768ecc59d"
+    },
     "covr": {
       "Package": "covr",
       "Version": "3.5.0",
@@ -736,6 +743,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "2657f20b9a74c996c602e74ebe540b06"
+    },
+    "kableExtra": {
+      "Package": "kableExtra",
+      "Version": "1.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bd48a6f2a7902156d2a905c94d2529a6"
     },
     "knitr": {
       "Package": "knitr",
@@ -1434,6 +1448,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "3ed85dea874d2932c3a51531eae957b2"
+    },
+    "webshot": {
+      "Package": "webshot",
+      "Version": "0.5.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e99d80ad34457a4853674e89d5e806de"
     },
     "whisker": {
       "Package": "whisker",
