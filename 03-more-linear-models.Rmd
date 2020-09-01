@@ -16,12 +16,61 @@ Lecture 6:
 
 ### Chapter 5
 
-Coming soon.
+> **5E1.** Which of the linear models below are multiple linear regressions?
+\begin{align}
+  (1)\ \ \mu_i &= \alpha + \beta x_i \\
+  (2)\ \ \mu_i &= \beta_x x_i + \beta_z z_i \\
+  (3)\ \ \mu_i &= \alpha + \beta(x_i - z_i) \\
+  (4)\ \ \mu_i &= \alpha + \beta_x x_i + \beta_z z_i
+\end{align}
+
+Numbers 2 and 4 are multiple regressions. Number 1 contains only one predictor variable. Number 3, although two variables appear in the model, also only uses the difference of $x$ and $z$ as a single predictor. Only numbers 2 and 4 contain multiple predictor variables.
+
+> **5E2.** Write down a multiple regression to evaluate the claim: *Animal diversity is linearly related to latitude, but only after controlling for plant diversity*. You just need to write down the model definition.
+
+We will denote animal diversity as $A$, latitude as $L$, and plant diversity as $P$. The linear model can then be defined as follows:
+
+\begin{align}
+  A_i &\sim \text{Normal}(\mu, \sigma) \\
+  \mu_i &= \alpha + \beta_L L_i + \beta_P P_i
+\end{align}
+
+> **5E3.** Write down a multiple regression to evaluate the claim: *Neither amount of funding nor size of laboratory is by itself a good predictor of time to PhD degree; but together these variables are both positively associated with time to degree*. Write down the model definition and indicate which side of zero each slope parameter should be on.
+
+We will denote time to PhD degree as $T$, amount of funding as $F$, and size of laboratory as $L$. The linear model can then be defined in three pieces. The first two pieces are bivariate regressions to assess the first part of the claim that neither predictor is itself a good predictor of time to PhD degree. The third piece evaluate the second half of the claim that together, both variables have a positive relationship with time to PhD degree. We would expect $\beta_{F(F)}$ and $\beta_{L(L)}$ to have positive slopes that are close to zero (i.e., in the bivariate regressions, we should see little effect of funding or laboratory size). We would expect to see larger positive slopes for both $\beta_F$ and $\beta_L$, as we expect to see funding and laboratory size to have a sizable impact when both are included in the model.
+
+\begin{align}
+  T_i &\sim \text{Normal}(\mu_{i(F)}, \sigma_F) \\
+  \mu_{i(F)} &= \alpha_F + \beta_{F(F)} F_i \\ \\
+  
+  T_i &\sim \text{Normal}(\mu_{i(L)}, \sigma_L) \\
+  \mu_{i(L)} &= \alpha_L + \beta_{L(L)} L_i \\ \\
+  
+  T_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_F F_i + \beta_L L_i
+\end{align}
+
+> **5E4.** Suppose you have a single categorical predictor with 4 levels (unique values), labeled A, B, C and D. Let $A_i$ be an indicator variable that is 1 where case $i$ is in category $A$. Also suppose $B_i$, $C_i$, and $D_i$ for the other categories. Now which of the following linear models are inferentially equivalent ways to include the categorical variable in a regression? Model are inferentially equivalent when it's possible to compute one posterior distribution from the posterior distribution of another model.
+\begin{align}
+  (1)\ \ \mu_i &= \alpha + \beta_A A_i + \beta_B B_i + \beta_D D_i \\
+  (2)\ \ \mu_i &= \alpha + \beta_A A_i + \beta_B B_i + \beta_C C_i + \beta_D D_i \\
+  (3)\ \ \mu_i &= \alpha + \beta_B B_i + \beta_C C_i + \beta_D D_i \\
+  (4)\ \ \mu_i &= \alpha_A A_i + \alpha_B B_i + \alpha_C C_i + \alpha_D D_i \\
+  (5)\ \ \mu_i &= \alpha_A (1 - B_i - C_i - D_i) + \alpha_B B_i + \alpha_C C_i + \alpha_D D_i
+\end{align}
+
+Numbers 1, 3, 4, and 5 are all inferentially equivalent. Numbers 1 and 3 both use 3 of the 4 indicator variables, meaning that you can always calculate the 4th from the three that are estimated and the intercept. Number 4 is equivalent to an index variable approach, which is inferentially equivalent to the indicator variable approach. Finally, Number 5 is mathematically equivalent to Number 4, assuming that each observation can belong to only 1 of the 4 groups.
+
+Number 2 is not a valid model representation, as the model should only contain $k-1$ indicator variables with an intercept (when using an indicator variable approach). Because all 4 are included in the definition of Number 2, we should expect to have estimation problems (if the model will estimate at all).
 
 ### Chapter 6
 
 Coming soon.
 
-## Homework
+## Session Info {-}
 
-Coming soon.
+<details><summary>View the session information used to render this chapter.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>
