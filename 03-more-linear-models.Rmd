@@ -63,6 +63,129 @@ Numbers 1, 3, 4, and 5 are all inferentially equivalent. Numbers 1 and 3 both us
 
 Number 2 is not a valid model representation, as the model should only contain $k-1$ indicator variables with an intercept (when using an indicator variable approach). Because all 4 are included in the definition of Number 2, we should expect to have estimation problems (if the model will estimate at all).
 
+> **5M1.** Invent your own example of a spurious correlation. An outcome variable should be correlated with both predictor variables. But when both predictors are entered in the same model, the correlation between the outcome and one of the predictors should mostly vanish (or at least be greatly reduced).
+
+In this (simulated) example, we'll predict ice cream sales from the temperature and the number of shark attacks. First, we'll fit two bivariate regressions, `mod_t` and `mod_s`, which include only temperature and shark attacks as predictors, respectively. Then we'll estimate multivariate regression, `mod_all`, which includes both predictors.
+
+```{r e5m1-1}
+# Generate data ----------------------------------------------------------------
+set.seed(2020)
+n <- 100
+temp <- rnorm(n)
+shark <- rnorm(n, temp)
+ice_cream <- rnorm(n, temp)
+
+spur_exp <- tibble(ice_cream, temp, shark) %>%
+  mutate(across(everything(), standardize))
+
+# Fit models -------------------------------------------------------------------
+mod_t <- brm(ice_cream ~ 1 + temp, data = spur_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m1-t"))
+
+mod_s <- brm(ice_cream ~ 1 + shark, data = spur_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m1-s"))
+
+mod_all <- brm(ice_cream ~ 1 + temp + shark, data = spur_exp, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp5", "b5m1-all"))
+```
+
+The plot below shows the posterior distributions of the $\beta$ coefficients for temperature and shark attacks. As expected, both have a positive relationship with ice cream sales in the bivariate models. However, when both predictors are included in `mod_all`, the posterior distribution for `b_shark` moves down to zero, whereas the distribution of `b_temp` remains basically the same. Thus, the relationship between ice cream sales and shark attacks is a spurious correlation, as both are informed by the temperature.
+
+```{r e5m1-2}
+bind_rows(
+  spread_draws(mod_t, b_temp) %>%
+    mutate(model = "mod_t"),
+  spread_draws(mod_s, b_shark) %>%
+    mutate(model = "mod_s"),
+  spread_draws(mod_all, b_temp, b_shark) %>%
+    mutate(model = "mod_all")
+) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  drop_na(value) %>%
+  mutate(model = factor(model, levels = c("mod_t", "mod_s", "mod_all")),
+         parameter = factor(parameter, levels = c("b_temp", "b_shark"))) %>%
+  ggplot(aes(x = value, y = fct_rev(model))) +
+  facet_wrap(~parameter, nrow = 1) +
+  stat_halfeye(.width = 0.89) +
+  labs(x = "Parameter Value", y = "Model")
+```
+
+> **5M2.** Invent your own example of a masked relationship. An outcome variable should be correlated with both predictor variables, but in opposite directions. And the two predictor variables should be correlated with one another.
+
+For this (also simulated) example, we'll predict an academic test score from the amount of instruction a student received and the number of days they missed class. First, we'll fit two bivariate regressions, `mod_i` and `mod_d`, which include only instruction and days away as predictors, respectively. Then we'll estimate multivariate regression, `mod_test`, which includes both predictors.
+
+```{r e5m2-1}
+# Generate data ----------------------------------------------------------------
+set.seed(2020)
+n <- 100
+u <- rnorm(n)
+days_away <- rnorm(n, u)
+instruction <- rnorm(n, u)
+test_score <- rnorm(n, instruction - days_away)
+
+mask_exp <- tibble(test_score, instruction, days_away) %>%
+  mutate(across(everything(), standardize))
+
+# Fit models -------------------------------------------------------------------
+mod_i <- brm(test_score ~ 1 + instruction, data = mask_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m2-i"))
+
+mod_d <- brm(test_score ~ 1 + days_away, data = mask_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m2-d"))
+
+mod_test <- brm(test_score ~ 1 + instruction + days_away, data = mask_exp,
+                family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp5", "b5m2-test"))
+```
+
+The figure below shows the posterior distributions of the $\beta$ parameters from each of the models. We can see that in full model, `mod_test`, `b_instruction` gets more positive and `b_days_away` gets more negative.
+
+```{r e5m2-2}
+bind_rows(
+  spread_draws(mod_i, b_instruction) %>%
+    mutate(model = "mod_i"),
+  spread_draws(mod_d, b_days_away) %>%
+    mutate(model = "mod_d"),
+  spread_draws(mod_test, b_instruction, b_days_away) %>%
+    mutate(model = "mod_test")
+) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  drop_na(value) %>%
+  mutate(model = factor(model, levels = c("mod_i", "mod_d", "mod_test")),
+         parameter = factor(parameter, levels = c("b_instruction",
+                                                  "b_days_away"))) %>%
+  ggplot(aes(x = value, y = fct_rev(model))) +
+  facet_wrap(~parameter, nrow = 1) +
+  stat_halfeye(.width = 0.89) +
+  labs(x = "Parameter Value", y = "Model")
+```
+
 ### Chapter 6
 
 Coming soon.
