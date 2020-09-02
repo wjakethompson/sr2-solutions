@@ -6,7 +6,7 @@ p, div {
   font-size: 1.6rem;
 }
 
-li, h1, h2, h3 {
+li.chapter, h1, h2, h3 {
   font-family: 'Oxygen', sans-serif;
   font-size: 1.6rem;
 }
