@@ -186,6 +186,87 @@ bind_rows(
   labs(x = "Parameter Value", y = "Model")
 ```
 
+> **5M3.** It is sometimes observed that the best predictor of fire risk is the presence of firefighters---State and localities with many firefighters also have more fires. Presumably firefighters do not *cause* fires. Nevertheless, this is not a spurious correlation. Instead fires cause firefighters. Consider the same reversal of causal inference in the context of the divorce and marriage data. How might a high divorce rate cause a higher marriage rate? Can you think of a way to evaluate this relationship, using multiple regression?
+
+A high divorce rate means that there are more people available in the population of single-people that are available to marry. Additionally, people may be getting divorced for the specific purpose of marrying someone else. To evaluate this, we could add marriage number, or a "re-marry" indicator. We would then expect the coefficient for marriage rate to get closer to zero once this predictor is added to the model.
+
+> **5M4.** In the divorce data, States with high numbers of members of the Church of Jesus Christ of Latter-day Saints (LDS) have much lower divorce rates than the regression models expected. Find a list of LDS population by State and use those numbers as a predictor variable, predicting divorce rate using marriage rate, median age at marriage, and percent LDS population (possibly standardized). You may want to consider transformations of the raw percent LDS variable.
+
+We can pull the LDS membership from the official LDS website, and state populations from the United States census website. Conveniently, this is all pulled together on [Wikipedia](https://en.wikipedia.org/wiki/The_Church_of_Jesus_Christ_of_Latter-day_Saints_membership_statistics_(United_States)) (copied on September 1, 2020). The data is saved in `data/lds-data.csv`. We can then combine this with our existing divorce data from `data("WaffleDivorce")`. For this analysis, I'll use LDS membership per capita. Specifically, the number of LDS members per 100,000 in the state's population. This will then be standardized, along with the other predictor variables, as was done in the chapter examples.
+
+```{r e5m4-1}
+lds <- read_csv(here("data", "lds-data.csv"),
+                col_types = cols(.default = col_integer(),
+                                 state = col_character())) %>%
+  mutate(lds_prop = members / population,
+         lds_per_capita = lds_prop * 100000)
+
+data("WaffleDivorce")
+lds_divorce <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(Location, Divorce, Marriage, MedianAgeMarriage) %>%
+  left_join(select(lds, state, lds_per_capita),
+            by = c("Location" = "state")) %>%
+  mutate(lds_per_capita = log(lds_per_capita)) %>%
+  mutate(across(where(is.numeric), standardize))
+
+lds_divorce
+```
+
+We're now ready to estimate our model.
+
+```{r e5m4-2}
+lds_mod <- brm(Divorce ~ 1 + Marriage + MedianAgeMarriage + lds_per_capita,
+               data = lds_divorce, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b, coef = Marriage),
+                         prior(normal(0, 0.5), class = b, coef = MedianAgeMarriage),
+                         prior(normal(0, 0.5), class = b, coef = lds_per_capita),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp5", "b5m4"))
+```
+
+Finally, we can visualize our estimates. The intercept and coefficients for `Marriage` and `MedianAgeMarriage` are nearly identical to those from model `m5.3` in the text. Thus, it appears that our new predictor, LDS per capita, is contributing unique information. As expected, a higher population of LDS members in a state is associated with a lower divorce rate.
+
+```{r e5m4-3}
+spread_draws(lds_mod, `b_.*`, regex = TRUE) %>%
+  pivot_longer(starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  ggplot(aes(x = value, y = parameter)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Value", y = "Parameter")
+```
+
+> **5M5.** One way to reason through multiple causation hypotheses is to imagine detailed mechanisms through which predictor variables may influence outcomes. For example, it is sometimes argued that the price of gasoline (predictor variable) is positively associated with lower obesity rates (outcome variable). However, there are at least two important mechanisms by which the price of gas could reduce obesity. First, it could lead to less driving and therefore more exercise. Second, it could lead to less driving, which leads to less eating out, which leds to less consumption of huge restaurant meals. Can you outline one or more multiple regressions that address these two mechanisms? Assume you can have any predictor data you need.
+
+Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($G$), average exercise ($E$), and restaurant revenue ($R$). Given these variables, we can define the linear model as follows:
+
+\begin{align}
+  O_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_G G_i + \beta_E E_i + \beta_R R_i
+\end{align}
+
+> **5H1.** In the divorce example, suppose the DAG is: M -> A -> D. What are the implied conditional independencies of the graph? Are the data consistent with it?
+
+We can use {dagitty} to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
+
+```{r e5h1-1}
+library(dagitty)
+
+mad_dag <- dagitty("dag{ M -> A -> D}")
+impliedConditionalIndependencies(mad_dag)
+```
+
+As shown in model `m5.3`, the data is consistent with this implied conditional independency. Thus this data is consistent with multiple DAGs. Specific, it would support all Markov Equivalent DAGs. The second DAG in this list, `D <- A -> M`, is the DAG that was investigated in the text.
+
+```{r e5h1-2}
+equivalentDAGs(mad_dag)
+```
+
+> **5H2.** Assuming that the DAG for the divorce example is indeed M -> A -> D. 
+
+
 ### Chapter 6
 
 Coming soon.
