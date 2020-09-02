@@ -249,7 +249,7 @@ Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($
 
 > **5H1.** In the divorce example, suppose the DAG is: M -> A -> D. What are the implied conditional independencies of the graph? Are the data consistent with it?
 
-We can use {dagitty} to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
+We can use {dagitty} [@R-dagitty] to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
 
 ```{r e5h1-1}
 library(dagitty)
@@ -399,7 +399,65 @@ As we can see in the plot below, because mass is log-transformed in the model, t
 
 > **5H4.** Here is an open practice problem th engage your imagination. In the divorce data, States in the southern United States have many of the highest divorce rates. Add the `South` indicator variable to the analysis. First, draw one or more DAGs that represent your ideas for how Southern American culture might influence any of the other three variables ($D$, $M$, or $A$). Then list the testable implications of your DAGs, if there are any, and fit one or more models to evaluate the implications. What do you think the influence of "Southerness" is?
 
-[TO DO]
+First, let's draw a DAG using {ggdag} [@R-ggdag]. 
+
+```{r e5h4-1, out.width = "40%"}
+dag_coords <-
+  tibble(name = c("S", "A", "M", "D"),
+         x = c(1, 1, 2, 3),
+         y = c(3, 1, 2, 1))
+
+dagify(D ~ A + M,
+       M ~ A + S,
+       A ~ S,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+In this proposed model, we are hypothesizing that southerness influences the median age at marriage and the marriage rate. We can use {dagitty} to view the testable implications:
+
+```{r e5h4-2}
+div_dag <- dagitty("dag{S -> M -> D; S -> A -> D; A -> M}")
+impliedConditionalIndependencies(div_dag)
+```
+
+Given the DAG, divorce rate should be independent of southerness when we condition on median age at marriage and marriage rate. Let's estimate a model to test this. We'll include median age at marriage ($A$), marriage rate ($M$), and southerness ($S$) in the model. Because both $A$ and $M$ are included, we would expect the coefficient for $S$ to be zero, if the implied conditional independency holds.
+
+```{r e5h4-3}
+data("WaffleDivorce")
+
+south_divorce <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(D = Divorce,
+         A = MedianAgeMarriage,
+         M = Marriage,
+         S = South) %>%
+  drop_na(everything()) %>%
+  mutate(across(where(is.double), standardize))
+
+b5h4 <- brm(D ~ A + M + S, data = south_divorce, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h4"))
+```
+
+Now we can look at the posterior distribution for the $\beta$ coefficient for southerness.
+
+```{r e5h4-4}
+spread_draws(b5h4, b_S) %>%
+  ggplot(aes(x = b_S)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = expression(beta[S]), y = "Density")
+```
+
+The effect of southerness is close to zero, but slightly larger than we might have expected. Thus, we have some preliminary evidence that being in the south does not cause a higher divorce rate, but we would want to consider adding additional variables (e.g., religiosity) that we know also influence divorce rates and may also be correlated with southerness.
 
 ### Chapter 6
 
