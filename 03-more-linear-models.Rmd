@@ -264,12 +264,146 @@ As shown in model `m5.3`, the data is consistent with this implied conditional i
 equivalentDAGs(mad_dag)
 ```
 
-> **5H2.** Assuming that the DAG for the divorce example is indeed M -> A -> D. 
+> **5H2.** Assuming that the DAG for the divorce example is indeed M -> A -> D, fit a new model and use it ot estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
 
+First, we'll estimate a model consistent this this DAG. Because there are two regressions here, we'll use {brms}'s multivariate syntax (i.e., `bf()`; see [here](https://paul-buerkner.github.io/brms/articles/brms_multivariate.html)).
+
+```{r e5h2-1}
+dat <- WaffleDivorce %>%
+  select(A = MedianAgeMarriage,
+         D = Divorce,
+         M = Marriage) %>%
+  mutate(across(everything(), standardize))
+
+d_model <- bf(D ~ 1 + A + M)
+a_model <- bf(A ~ 1 + M)
+
+b5h2 <- brm(d_model + a_model + set_rescor(FALSE),
+            data = dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept, resp = D),
+                      prior(normal(0, 0.5), class = b, resp = D),
+                      prior(exponential(1), class = sigma, resp = D),
+                      
+                      prior(normal(0, 0.2), class = Intercept, resp = A),
+                      prior(normal(0, 0.5), class = b, resp = A),
+                      prior(exponential(1), class = sigma, resp = A)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h2"))
+```
+
+We can then simulation our counterfactuals and plot with {ggplot2}.
+
+```{r e5h2-2}
+posterior_samples(b5h2) %>%
+  as_tibble() %>%
+  rowid_to_column(var = "iter") %>%
+  expand(nesting(iter, b_D_Intercept, b_A_Intercept, b_D_A, b_D_M, b_A_M,
+                 sigma_D, sigma_A),
+         m = seq(from = -2, to = 2, length.out = 30)) %>%
+  mutate(a_sim = rnorm(n(), mean = b_A_Intercept + b_A_M * m, sd = sigma_A),
+         d_sim = rnorm(n(), mean = b_D_Intercept + b_D_A * a_sim + b_D_M * m,
+                       sd = sigma_D)) %>%
+  pivot_longer(ends_with("_sim"), names_to = "name", values_to = "value") %>%
+  group_by(m, name) %>%
+  mean_qi(value, .width = c(0.89)) %>%
+  ungroup() %>%
+  mutate(name = case_when(name == "a_sim" ~ "Counterfactual effect M -> A",
+                          TRUE ~ "Total Counterfactual effect of M on D")) %>%
+  ggplot(aes(x = m, y = value, ymin = .lower, ymax = .upper)) +
+  facet_wrap(~name, nrow = 1) +
+  geom_smooth(stat = "identity") +
+  labs(x = "Manipulated M", y = "Counterfactual")
+```
+
+> **5H3.** Return to the milk energy model, `m5.7`. Suppose that the true causal relationship among the variables is:
+
+```{r e5h3-into, out.width = "40%", echo = FALSE}
+suppressPackageStartupMessages(library(ggdag))
+
+dag_coords <-
+  tibble(name = c("M", "K", "N"),
+         x    = c(1, 2, 3),
+         y    = c(2, 1, 2))
+
+dagify(K ~ M + N, N ~ M,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+> Now compute the counterfactual effect on $K$ of doubling $M$. You will need to account for both the direct and indirect paths of causation. Use the counterfactual example from the chapter (starting on page 140) as a template.
+
+First, we need to estimate our model.
+
+```{r e5h3-1}
+data(milk)
+
+new_milk <- milk %>%
+  select(kcal.per.g,
+         neocortex.perc,
+         mass) %>%
+  drop_na(everything()) %>%
+  mutate(log_mass = log(mass),
+         K = standardize(kcal.per.g),
+         N = standardize(neocortex.perc),
+         M = standardize(log_mass))
+
+K_model <- bf(K ~ 1 + M + N)
+N_model <- bf(N ~ 1 + M)
+
+b5h3 <- brm(K_model + N_model + set_rescor(FALSE),
+            data = new_milk, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept, resp = K),
+                      prior(normal(0, 0.5), class = b, resp = K),
+                      prior(exponential(1), class = sigma, resp = K),
+                      
+                      prior(normal(0, 0.2), class = Intercept, resp = N),
+                      prior(normal(0, 0.5), class = b, resp = N),
+                      prior(exponential(1), class = sigma, resp = N)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h3"))
+```
+
+Now we can calculate the counterfactual. $M$ represents the mass, so we'll use evenly spaced values from 0.5 to 80, which captures the range of observed mass in the data. We'll then predict new values of $K$ from these masses. 
+
+```{r e5h3-2}
+milk_cf <- posterior_samples(b5h3) %>%
+  as_tibble() %>%
+  rowid_to_column(var = "iter") %>%
+  expand(nesting(iter, b_K_Intercept, b_N_Intercept, b_K_M, b_K_N, b_N_M,
+                 sigma_K, sigma_N),
+         mass = seq(from = 0.5, to = 80, by = 0.5)) %>%
+  mutate(log_mass = log(mass),
+         M = (log_mass - mean(new_milk$log_mass)) / sd(new_milk$log_mass),
+         n_sim = rnorm(n(), mean = b_N_Intercept + b_N_M * M, sd = sigma_N),
+         k_sim = rnorm(n(), mean = b_K_Intercept + b_K_N * n_sim + b_K_M * M,
+                       sd = sigma_K)) %>%
+  pivot_longer(ends_with("_sim"), names_to = "name", values_to = "value") %>%
+  group_by(mass, name) %>%
+  mean_qi(value, .width = c(0.89)) %>%
+  ungroup() %>%
+  filter(name == "k_sim") %>%
+  mutate(name = case_when(name == "n_sim" ~ "Counterfactual effect M -> N",
+                          TRUE ~ "Total Counterfactual effect of M on K"))
+
+ggplot(milk_cf, aes(x = mass, y = value, ymin = .lower, ymax = .upper)) +
+  geom_smooth(stat = "identity") +
+  labs(x = "Manipulated Mass", y = "Counterfactual K")
+```
+
+As we can see in the plot below, because mass is log-transformed in the model, there is a non-linear relationship between the manipulated mass and our counterfactual. Thus, the impact of doubling mass depends on the original mass. For example, expected causal effect of increasing the mass from 2 to 4 is a `r sprintf("%0.3f", pull(filter(milk_cf, mass == 2), value) - pull(filter(milk_cf, mass == 4), value))` standard deviation decrease in $K$, whereas the expected causal effect of increasing the mass from 20 to 40 is a `r sprintf("%0.3f", pull(filter(milk_cf, mass == 20), value) - pull(filter(milk_cf, mass == 40), value))` standard deviation decrease in $K$. 
+
+> **5H4.** Here is an open practice problem th engage your imagination. In the divorce data, States in the southern United States have many of the highest divorce rates. Add the `South` indicator variable to the analysis. First, draw one or more DAGs that represent your ideas for how Southern American culture might influence any of the other three variables ($D$, $M$, or $A$). Then list the testable implications of your DAGs, if there are any, and fit one or more models to evaluate the implications. What do you think the influence of "Southerness" is?
+
+[TO DO]
 
 ### Chapter 6
 
-Coming soon.
+> **6E1.** 
 
 ## Session Info {-}
 
