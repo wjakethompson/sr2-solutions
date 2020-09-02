@@ -1,6 +1,11 @@
 bookdown::gitbook:
   css: style.css
   config:
+    download: null
+    sharing:
+      facebook: no
+      twitter: yes
+      github: yes
     toc:
       collapse: section
       scroll_highlight: true

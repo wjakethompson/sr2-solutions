@@ -15,9 +15,35 @@ li, h1, h2, h3 {
   font-family: 'Source Code Pro', monospace;
 }
 
+/* ---------- Links ---------- */
+.book .book-body .page-wrapper .page-inner section.normal a {
+  color: #009fb7;
+}
+
+
+/* ---------- TOC ---------- */
+.book .book-summary ul.summary li a, 
+.book .book-summary ul.summary li span {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 15px;
+  padding-right: 15px;
+  color: #272727;
+}
+
+.summary a:hover {
+  color: #009fb7d9 !important;
+} 
+
+.book .book-summary ul.summary li.active>a { /*active TOC links*/
+  color: #009fb7 !important;
+  border-left: solid 4px;
+  border-color: #009fb7;
+  padding-left: 11px !important;
+} 
+
 
 /* The next two rules make the horizontal line go straight across in top navbar */
-
 .summary > li:first-child {
     height: 50px;
     padding-top: 10px;
@@ -27,6 +53,17 @@ li, h1, h2, h3 {
 .book .book-summary ul.summary li.divider {
     height: 0px;
 }
+
+
+/* ---------- Code Chunks ---------- */
+.sourceCode {
+  margin-bottom: 0.85em; /* adds same amount of margin as a <p> would */
+}
+
+.sourceCode pre {
+  margin: 0 !important; /* makes space above and below symmetrical*/
+}
+
 
 /* ---------- Bookdown defaults ---------- */
 p.caption {
