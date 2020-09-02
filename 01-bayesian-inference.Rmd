@@ -549,7 +549,7 @@ The model is severely under estimating the number of second-born boys when the f
 
 ## Session Info {-}
 
-<details><summary>View the session information used to render this chapter.</summary>
+<details><summary>View the session information used to render this week.</summary>
 ```{r 01-session-info}
 devtools::session_info()
 ```

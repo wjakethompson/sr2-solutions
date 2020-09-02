@@ -813,7 +813,7 @@ fitted_draws(no_int2, cb_dat) %>%
 
 ## Session Info {-}
 
-<details><summary>View the session information used to render this chapter.</summary>
+<details><summary>View the session information used to render this week.</summary>
 ```{r 01-session-info}
 devtools::session_info()
 ```
