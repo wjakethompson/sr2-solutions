@@ -247,7 +247,7 @@ Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($
   \mu_i &= \alpha + \beta_G G_i + \beta_E E_i + \beta_R R_i
 \end{align}
 
-> **5H1.** In the divorce example, suppose the DAG is: M -> A -> D. What are the implied conditional independencies of the graph? Are the data consistent with it?
+> **5H1.** In the divorce example, suppose the DAG is: $M \rightarrow A \rightarrow D$. What are the implied conditional independencies of the graph? Are the data consistent with it?
 
 We can use {dagitty} [@R-dagitty] to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
 
@@ -264,7 +264,7 @@ As shown in model `m5.3`, the data is consistent with this implied conditional i
 equivalentDAGs(mad_dag)
 ```
 
-> **5H2.** Assuming that the DAG for the divorce example is indeed M -> A -> D, fit a new model and use it ot estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
+> **5H2.** Assuming that the DAG for the divorce example is indeed $M \rightarrow A \rightarrow D$, fit a new model and use it ot estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
 
 First, we'll estimate a model consistent this this DAG. Because there are two regressions here, we'll use {brms}'s multivariate syntax (i.e., `bf()`; see [here](https://paul-buerkner.github.io/brms/articles/brms_multivariate.html)).
 
@@ -461,7 +461,209 @@ The effect of southerness is close to zero, but slightly larger than we might ha
 
 ### Chapter 6
 
-> **6E1.** 
+> **6E1.** List three mechanisms by which multiple regression can produce false inferences about causal effects.
+
+The three mechanisms are:
+
+1. *Multicollinearity*. This occurs when two or more variables are strongly assocaited, conditional on the other variables in the model.
+2. *Post-treatment Bias*. This occurs when the inclusion of a variable "blocks" the effect of another.
+3. *Collider Bias*. This occurs when two variables are unrelated to each other, but are both related to a third variable. The inclusion of the third variable creates a statistical association in the model between the first two.
+
+> **6E2.** For one of the mechanisms in the previous problem, provide an example of your choice, perhaps from your own research.
+
+TODO
+
+> **6E3.** List the four elemental confounds. Can you explain the conditional dependencies of each?
+
+1. *The Fork*. The classic "confounder" example. A variable $Z$ is a common cause to both $X$ and $Y$, resulting in a correlation between $X$ and $Y$. In other words, $X$ is independent of $Y$, conditional on $Z$, or, in math notation, $X \!\perp\!\!\!\perp Y | Z$.
+
+```{r e6e3-1, echo = FALSE, out.width = "25%"}
+fork_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(3, 3, 1))
+
+dagify(X ~ Z,
+       Y ~ Z,
+       coords = fork_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+2. *The Pipe*. A variable $X$ influences, another variable $Z$, which in turn influences the outcome $Y$. A good example is the post-treatment bias described above. The treatment ($X$) is meant to influence some outcome ($Y$), but does so through an intermediary ($Z$). Including both $X$ and $Z$ can then make it appear as though $X$ has no effect on $Y$. Thus, as in the the fork, $X$ is independent of $Y$, conditional on $Z$. And in math again: $X \!\perp\!\!\!\perp Y | Z$.
+
+```{r e6e3-2, echo = FALSE, out.width = "25%"}
+pipe_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(3, 1, 2))
+
+dagify(Z ~ X,
+       Y ~ Z,
+       coords = pipe_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+3. *The Collider*. Unlike the fork and the pipe, the collider induces a correlation between otherwise unassociated variables. Thus, $X$ is *not* independent from $Y$, conditional on $Z$. In math notation, this can be written as $X \not\!\perp\!\!\!\perp Y|Z$.
+
+```{r e6e3-3, echo = FALSE, out.width = "25%"}
+coll_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(1, 1, 3))
+
+dagify(Z ~ X,
+       Z ~ Y,
+       coords = coll_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+4. *The Descendant*. In this final case, the descendant, $D$, is influenced by another variable in the DAG, in this case $Z$. Conditioning on the descendant has the impact of partially conditioning on the parent variable. In this example, $Z$ is a collider. Thus, if we kept $Z$ out of the model, but included $D$, we would get a partial collider bias, because $D$ contains some of the information that is in $Z$. How much bias is introduced depends on the strength of the relationship between the the descendant and its parent. 
+
+```{r e6e3-4, echo = FALSE, out.width = "25%"}
+desc_coords <- tibble(name = c("X", "Y", "Z", "D"),
+                      x = c(1, 3, 2, 2),
+                      y = c(1, 1, 3, 1.2))
+
+dagify(Z ~ X,
+       Z ~ Y,
+       D ~ Z,
+       coords = desc_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+> **6E4.** How is a biased sample like conditioning on a collider? Think of the example at the open of the chapter.
+
+With a collider, an association is introduced between two variables when a third is added. A biased sample is like an un-measured collider. In the example that started the chapter, there was no association between trustworthiness and and newsworthiness. However, when selection status is added to the model, there appears to be a negative association. Now imagine that you only have data for the funded proposals. Here, there is an implicit conditioning on selection status, because you only have funded proposals. This is potentially more nefarious, because the collider isn't explicitly in your data, or has no variance (i.e., all proposals in your data have a selection score of `1`).
+
+> **6M1.** Modify the DAG on page 186 to include the variable $V$, an unobserved cause of $C$ and $Y$: $C \leftarrow V \rightarrow Y$. Reanalyze the DAG. How many paths connect $X$ to $Y$? Which must be closed? Which variables should you condition on now?
+
+The new DAG looks like this:
+
+```{r e6m1-1, out.width = "40%"}
+dag_coords <- tibble(name = c("X", "U", "A", "B", "C", "Y", "V"),
+                     x = c(1, 1, 2, 2, 3, 3, 3.5),
+                     y = c(1, 2, 2.5, 1.5, 2, 1, 1.5))
+
+dagify(Y ~ X + C + V,
+       X ~ U,
+       U ~ A,
+       B ~ U + C,
+       C ~ A + V,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(data = . %>% filter(name %in% c("U", "V")),
+                 shape = 1, stroke = 2, color = "black") +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+There are now 4 paths from $X$ to $Y$. The two paths from the original DAG, and 2 new paths introduced by $V$.
+
+1. `X <- U <- A -> C -> Y`
+2. `X <- U -> B <- C -> Y`
+3. `X <- U <- A -> C <- V -> Y`
+4. `X <- U -> B <- C <- V -> Y`
+
+Paths 2 and 4 are already closed, because $B$ is a collider. Paths 1 and 3 are open because $A$ is a fork. In the original DAG, we could close either $A$ or $C$; however, in the new DAG, $C$ is a collider. Therefore, if we conditioned on $C$, we'd be opening up a new path through $V$. Therefore, if we want to make inferences about the causal effect of $X$ on $Y$, we must only condition on $A$ (assuming our DAG is correct). We can confirm using `dagitty::adjustmentSets()`.
+
+```{r e6m1-2}
+new_dag <- dagitty("dag { U [unobserved]
+                          V [unobserved]
+                          X -> Y
+                          X <- U <- A -> C -> Y
+                          U -> B <- C
+                          C <- V -> Y }")
+
+adjustmentSets(new_dag, exposure = "X", outcome = "Y")
+```
+
+> **6M2.** Sometimes, in order to avoid multicollinearity, people inspect pairwise correlations among predictors before including them in a model. This is a bad procedure, because what matters is the conditional association, not the association before the variables are included in the model. To highlight this, consider the DAG $X \rightarrow Z \rightarrow Y$. Simulate data from this DAG so that the correlation between $X$ and $Z$ is very large. Then include both in a model prediction $Y$. Do you observe any multicollinearity? Why or why not? What is different from the legs example in the chapter?
+
+First, we'll generate some data and confirm that `x` and `z` are highly correlated in our simulation.
+
+```{r e6m2-1}
+set.seed(1984)
+
+n <- 100
+dat <- tibble(x = rnorm(n)) %>%
+  mutate(z = rnorm(n, mean = x, sd = 0.4),
+         y = rnorm(n, x + z),
+         across(everything(), standardize))
+
+sim_cor <- cor(dat$x, dat$z)
+sim_cor
+```
+
+In our generated data of `r prettyNum(nrow(dat), big.mark = ",")` observations, there is a correlation of `r fmt_prop(sim_cor, 3)` between `x` and `z`. Now let's estimate a model regressing `y` and both `x` and `z`.
+
+```{r e6m2-2}
+b5m2 <- brm(y ~ 1 + x + z, data = dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp6", "b5m2"))
+
+summary(b5m2)
+```
+
+In the model summary, we can see that both `x` and `z` have estimates with relatively narrow posterior distributions. This is in contrast to the example of legs in the chapter, where the estimated standard deviations of the $beta$ parameters were much larger than the magnitudes of the parameters. Thus, it does not appear as though we are observing multicollinearity.
+
+This is due to the causal model that gave rise to this (simulated) data. In the legs example from the chapter, both legs predicted height (left DAG below). In this example, only $Z$ predicts the outcome. In DAG language, $Z$ is a pipe. Therefore, when the model is estimated, the golem is looking at what $X$ tells us, conditional on $Z$. The answer is "not a whole lot," because $X$ and $Z$ are highly correlated, which is why the posterior for $X$ is close to zero. The leg model does not condition on either of the predictors, as both have direct paths to the outcome variable. Thus, whether or not a model has multicollinearity depends not only on the pairwise relationship, but also the causal model.
+
+```{r e6m2-3, out.width = "40%", echo = FALSE, fig.show = "hold", fig.cap = ""}
+leg_coords <- tibble(name = c("R", "L", "H"),
+                     x = c(1, 3, 2),
+                     y = c(2, 2, 1))
+leg_dag <- dagify(H ~ R + L,
+                  coords = leg_coords)
+
+new_coords <- tibble(name = c("X", "Y", "Z"),
+                     x = c(1, 3, 2),
+                     y = c(3, 1, 2))
+new_dag <- dagify(Y ~ Z,
+                  Z ~ X,
+                  coords = new_coords)
+
+padding <- 30
+ggplot(leg_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"))
+ggplot(new_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
+```
+
+> **6M3.** Learning to 
+
 
 ## Session Info {-}
 
