@@ -8,6 +8,7 @@ suppressPackageStartupMessages(library(tidybayes))
 suppressPackageStartupMessages(library(tidybayes.rethinking))
 suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(hrbrthemes))
+suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
 
 ggplot2::theme_set(theme_minimal())

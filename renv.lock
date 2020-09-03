@@ -975,6 +975,13 @@
       "Repository": "CRAN",
       "Hash": "2ebd34a38f4248281096cc723535b66d"
     },
+    "patchwork": {
+      "Package": "patchwork",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d6b817898a400e82e6777d4f7e027100"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.4.6",
@@ -1078,6 +1085,18 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "97def703420c8ab10d8f0e6c72101e02"
+    },
+    "ratlas": {
+      "Package": "ratlas",
+      "Version": "0.0.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "ratlas",
+      "RemoteUsername": "atlas-aai",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "746bf9cf029865babe53e35bbab8c2bd6b914518",
+      "Hash": "79af69019ec3596ff0322368892f81bc"
     },
     "rcmdcheck": {
       "Package": "rcmdcheck",
@@ -1257,6 +1276,13 @@
       "Repository": "CRAN",
       "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
     },
+    "servr": {
+      "Package": "servr",
+      "Version": "0.18",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "50d06ac0ec97386d9fd470d36f45bfe5"
+    },
     "sessioninfo": {
       "Package": "sessioninfo",
       "Version": "1.1.1",
@@ -1357,10 +1383,10 @@
     },
     "systemfonts": {
       "Package": "systemfonts",
-      "Version": "0.2.3",
+      "Version": "0.3.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "86e3c704ca4e498330d0d8730b437a4d"
+      "Hash": "6c10cf7e91f1caf8786fa379f784b4f9"
     },
     "testthat": {
       "Package": "testthat",
@@ -1486,10 +1512,10 @@
     },
     "vctrs": {
       "Package": "vctrs",
-      "Version": "0.3.3",
+      "Version": "0.3.4",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "d2c91a9aeb376a26b16c72d6ab888923"
+      "Hash": "0bc90078aeee42f2520b1d0a33bd6758"
     },
     "viridis": {
       "Package": "viridis",
@@ -1532,6 +1558,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ecd17882a0b4419545691e095b74ee89"
+    },
+    "xaringan": {
+      "Package": "xaringan",
+      "Version": "0.16",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "7168ed8f41f3597c6c570477c0d0bf15"
     },
     "xfun": {
       "Package": "xfun",
