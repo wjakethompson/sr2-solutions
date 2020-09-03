@@ -15,6 +15,12 @@ li.chapter, h1, h2, h3 {
   font-family: 'Source Code Pro', monospace;
 }
 
+.book .book-header h1 {
+  opacity: 1;
+  text-align: left;
+}
+
+
 /* ---------- Links ---------- */
 .book .book-body .page-wrapper .page-inner section.normal a {
   color: #009fb7;
