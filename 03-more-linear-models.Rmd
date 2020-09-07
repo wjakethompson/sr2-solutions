@@ -607,7 +607,7 @@ set.seed(1984)
 n <- 100
 dat <- tibble(x = rnorm(n)) %>%
   mutate(z = rnorm(n, mean = x, sd = 0.4),
-         y = rnorm(n, x + z),
+         y = rnorm(n, mean = z),
          across(everything(), standardize))
 
 sim_cor <- cor(dat$x, dat$z)
@@ -617,21 +617,27 @@ sim_cor
 In our generated data of `r prettyNum(nrow(dat), big.mark = ",")` observations, there is a correlation of `r fmt_prop(sim_cor, 3)` between `x` and `z`. Now let's estimate a model regressing `y` and both `x` and `z`.
 
 ```{r e6m2-2}
-b5m2 <- brm(y ~ 1 + x + z, data = dat, family = gaussian,
+b6m2 <- brm(y ~ 1 + x + z, data = dat, family = gaussian,
             prior = c(prior(normal(0, 0.2), class = Intercept),
                       prior(normal(0, 0.5), class = b),
                       prior(exponential(1), class = sigma)),
             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-            file = here("fits", "chp6", "b5m2"))
+            file = here("fits", "chp6", "b6m2"))
 
-summary(b5m2)
+posterior_samples(b6m2) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97))
 ```
 
-In the model summary, we can see that both `x` and `z` have estimates with relatively narrow posterior distributions. This is in contrast to the example of legs in the chapter, where the estimated standard deviations of the $beta$ parameters were much larger than the magnitudes of the parameters. Thus, it does not appear as though we are observing multicollinearity.
+In the model summary, we can see that both `x` and `z` have estimates with relatively narrow posterior distributions. This is in contrast to the example of legs in the chapter, where the estimated standard deviations of the $beta$ parameters were much larger than the magnitudes of the parameters, and the posterior distributions had significant overlap. Thus, it does not appear as though we are observing multicollinearity.
 
-This is due to the causal model that gave rise to this (simulated) data. In the legs example from the chapter, both legs predicted height (left DAG below). In this example, only $Z$ predicts the outcome. In DAG language, $Z$ is a pipe. Therefore, when the model is estimated, the golem is looking at what $X$ tells us, conditional on $Z$. The answer is "not a whole lot," because $X$ and $Z$ are highly correlated, which is why the posterior for $X$ is close to zero. The leg model does not condition on either of the predictors, as both have direct paths to the outcome variable. Thus, whether or not a model has multicollinearity depends not only on the pairwise relationship, but also the causal model.
+This is due to the causal model that gave rise to this (simulated) data. In the legs example from the chapter, both legs predicted height (left DAG below). In this example, only $Z$ predicts the outcome. In DAG language, $Z$ is a pipe. Therefore, when the model is estimated, the golem is looking at what $X$ tells us, conditional on $Z$. The answer in this case is "no" because $X$ and $Z$ are highly correlated, which is why the posterior for $X$ is centered on zero. The leg model does not condition on either of the predictors, as both have direct paths to the outcome variable. Thus, whether or not a model has multicollinearity depends not only on the pairwise relationship, but also the causal model.
 
-```{r e6m2-3, out.width = "40%", echo = FALSE, fig.show = "hold", fig.cap = ""}
+<div class="figure" style="text-align: center">
+```{r e6m2-3, out.width = "40%", echo = FALSE, fig.align = ""}
 leg_coords <- tibble(name = c("R", "L", "H"),
                      x = c(1, 3, 2),
                      y = c(2, 2, 1))
@@ -661,8 +667,370 @@ ggplot(new_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
   theme_void() +
   theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
 ```
+</div>
 
-> **6M3.** Learning to 
+> **6M3.** Learning to analyze DAGs requires practice. For each of the four DAGs below, state which variables, if any, you must adjust for (condition on) to estimate the total causal influence of $X$ on $Y$.
+
+<div class="figure" style="text-align: center">
+```{r e6m3-1, out.width = "40%", echo = FALSE, fig.align = ""}
+dag1 <- dagitty("dag{ X <- Z <- A -> Y <- X; Y <- Z }")
+coordinates(dag1) <- list(x = c(X = 1, Y = 3, Z = 2, A = 3),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag2 <- dagitty("dag{ X -> Z <- A -> Y <- X; Y <- Z }")
+coordinates(dag2) <- list(x = c(X = 1, Y = 3, Z = 2, A = 3),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag3 <- dagitty("dag{ Y -> Z <- A -> X -> Y; X -> Z }")
+coordinates(dag3) <- list(x = c(X = 1, Y = 3, Z = 2, A = 1),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag4 <- dagitty("dag{ Y <- Z <- A -> X -> Y; X -> Z }")
+coordinates(dag4) <- list(x = c(X = 1, Y = 3, Z = 2, A = 1),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+# Plots -----
+padding <- 30
+ggplot(dag1, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"))
+ggplot(dag2, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
+ggplot(dag3, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"))
+ggplot(dag4, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
+```
+</div>
+
+*Upper Left*: There are two back-door paths from $X$ to $Y$: $X \leftarrow Z \rightarrow Y$ and $X \leftarrow Z \leftarrow A \rightarrow Y$. In the first path $Z$ is a fork, and in the second, $Z$ is a pipe and $A$ is a fork. Thus, in both cases, conditioning on $Z$ would close the path. We can confirm with `dagitty::adjustmentSets()`.
+
+```{r e6m3-2}
+dag1 <- dagitty("dag{ X <- Z <- A -> Y <- X; Y <- Z }")
+adjustmentSets(dag1, exposure = "X", outcome = "Y")
+```
+
+*Upper Right*: Again, there are two paths from $X$ to $Y$: $X \rightarrow Z \rightarrow Y$ and $X \rightarrow Z \leftarrow A \rightarrow Y$. The first path is an indirect causal effect for $X$ on $Y$, which should be included when estimating the total causal effect of $X$ on $Y$. In the second path, $Z$ is a collider, so the path is already closed and therefore no action is needed. Thus, no adjustments are needed to estimate the total effect of $X$ of $Y$.
+
+```{r e6m3-3}
+dag2 <- dagitty("dag{ X -> Z <- A -> Y <- X; Y <- Z }")
+adjustmentSets(dag2, exposure = "X", outcome = "Y")
+```
+
+*Lower Left*: There are two paths from $X$ to $Y$: $X \leftarrow A \rightarrow Z \leftarrow Y$ and $X \rightarrow Z \leftarrow Y$. There is only one causal path from $X$ to $Y$, the direct path. In both back-door paths, $Z$ is a collider so the paths are closed unless we include it, so no additional variables need to be added to the model.
+
+```{r e6m3-4}
+dag3 <- dagitty("dag{ Y -> Z <- A -> X -> Y; X -> Z }")
+adjustmentSets(dag3, exposure = "X", outcome = "Y")
+```
+
+*Lower Right*: Finally, this DAG also has two causal paths from $X$ to $Y$. The direct effect, and an indirect effect through $Z$. There is one additional path, $X \leftarrow A \rightarrow Z \rightarrow Y$. Conditioning on $A$ will close the path.
+
+```{r e6m3-5}
+dag4 <- dagitty("dag{ Y <- Z <- A -> X -> Y; X -> Z }")
+adjustmentSets(dag4, exposure = "X", outcome = "Y")
+```
+
+> **6H1.** Use the Waffle House data, `data(WaffleDivorce)`, to find the total causal influence of number of Waffle Houses on divorce rate. Justify your model or models with a causal graph.
+
+For this problem, we'll use the DAG given the chapter example:
+
+```{r e6h1-1, out.width = "40%"}
+waffle_dag <- dagitty("dag { S -> W -> D <- A <- S -> M -> D; A -> M }")
+coordinates(waffle_dag) <- list(x = c(A = 1, S = 1, M = 2, W = 3, D = 3),
+                                y = c(A = 1, S = 3, M = 2, W = 3, D = 1))
+
+ggplot(waffle_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+In order to estimate the total causal effect of Waffle Houses ($W$) on divorce rate ($D$), we have to condition on either $S$ or both $A$ and $M$. For simplicity, we'll condition on only $S$.
+
+```{r e6h1-2}
+adjustmentSets(waffle_dag, exposure = "W", outcome = "D")
+```
+
+We can use `brms::brm()` to estimate the model.
+
+```{r e6h1-3}
+data("WaffleDivorce")
+waffle <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(D = Divorce,
+         A = MedianAgeMarriage,
+         M = Marriage,
+         S = South,
+         W = WaffleHouses) %>%
+  mutate(across(-S, standardize),
+         S = factor(S))
+
+waff_mod <- brm(D ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h1"))
+```
+
+Finally, we can see the causal estimate of Waffle Houses on divorce rate by looking at the posterior distribution of the `b_W` parameter. Here, we can see that the estimate is very small, indicating that the number of Waffle Houses has little to no causal impact on the divorce rate in a state.
+
+```{r e6h1-4}
+spread_draws(waff_mod, b_W) %>%
+  ggplot(aes(x = b_W)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = expression(beta[W]), y = "Density")
+```
+
+> **6H2.** Build a series of models to test the implied conditional independencies of the causal graph you used in the previous problem. If any of the tests fail, how do you think the graph needs to be ammended? Does the graph need more or fewer arrows? Feel free to nominate variables that aren't in the data.
+
+First we need to get the conditional independencies implied by our DAG.
+
+```{r e6h2-1}
+impliedConditionalIndependencies(waffle_dag)
+```
+
+There are three models we need to estimate to evaluate the implied conditional independencies. Each one can be estimated with `brms::brm()`.
+
+```{r e6h2-2}
+waff_ci1 <- brm(A ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-1"))
+
+waff_ci2 <- brm(D ~ 1 + S + A + M + W, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-2"))
+
+waff_ci3 <- brm(M ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-3"))
+```
+
+Finally, we can example the posterior distributions for the implied conditional independencies. The implied conditional independency tested in the first model, $A \!\perp\!\!\!\perp W | S$, appears to be met, as the $beta_W$ coefficient from the model is centered on zero. The same is true for the third implied conditional independency, $M \!\perp\!\!\!\perp W | S$. The second implied conditional independency, $D \!\perp\!\!\!\perp S | A, M, W$, is less clear, as the posterior distribution overlaps zero, but does indicate a slightly positive relationship between divorce rate a state's "southern" status, even after adjusting for median age of marriage, marriage rate, and the number of waffle houses. This is likely because there are other variables missing from the model that are related to both divorce rate and also southerness. For example, religiosity, family size, and education could all plausibly impact divorce rates and show regional differences in the United States.
+
+```{r e6h2-3}
+lbls <- c(expression("Model 1:"~beta[W]),
+          expression("Model 2:"~beta[S]),
+          expression("Model 3:"~beta[W]))
+
+bind_rows(
+  gather_draws(waff_ci1, b_W) %>%
+    ungroup() %>%
+    mutate(model = "ICI 1"),
+  gather_draws(waff_ci2, b_S1) %>%
+    ungroup() %>%
+    mutate(model = "ICI 2"),
+  gather_draws(waff_ci3, b_W) %>%
+    ungroup() %>%
+    mutate(model = "ICI 3")
+) %>%
+  ggplot(aes(x = .value, y= model)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  scale_y_discrete(labels = lbls) +
+  labs(x = "Parameter Estimate", y = "Implied Conditional Independency")
+```
+
+> All three problems below are based on the same data. The data in `data(foxes)` are 116 foxes from 30 different urban groups in England. These foxes are like street gangs. Group size varies from 2 to 8 individuals. Each group maintains its own urban territory. Some territories are larger than others. The `area` variable encodes this information. Some territories also have more `avgfood` than others. We want to model the `weight` of ehac fox. For the problems below, assume the following DAG:
+
+```{r e6h-fox, out.width = "40%", echo = FALSE}
+suppressPackageStartupMessages(library(tidygraph))
+suppressPackageStartupMessages(library(ggraph))
+
+fox_dag <- dagitty("dag{ area -> avgfood -> groupsize -> weight <- avgfood }")
+coordinates(fox_dag) <- list(x = c(area = 2, avgfood = 1, weight = 2,
+                                   groupsize = 3),
+                             y = c(area = 3, avgfood = 2, weight = 1,
+                                   groupsize = 2))
+
+fox_dag %>%
+  tidy_dagitty() %>%
+  as_tbl_graph() %>%
+  mutate(x = c(2, 1, 3, 2),
+         y = c(3, 2, 2, 1)) %>%
+  ggraph(x = x, y = y) +
+  geom_node_text(aes(label = name), color = "black", size = 10) + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name, fontsize = 30),
+                     end_cap = label_rect(node2.name, fontsize = 30)),
+                 edge_color = "black", edge_width = 2,
+                 arrow = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  expand_limits(x = c(0.75, 3.25), y = c(0.9)) +
+  theme_graph()
+```
+
+> **6H3.** Use a model to infer the total causal influence of `area` on `weight`. Would increasing the area available to each fox make it heavier (healthier)? You might want to standardize the variables. Regardless, use prior predictive simulation to show that your model's prior predictions stay within the possible outcome range.
+
+First, let's load the data and standardize the variables.
+
+```{r e6h3-1}
+data(foxes)
+
+fox_dat <- foxes %>%
+  as_tibble() %>%
+  select(area, avgfood, weight, groupsize) %>%
+  mutate(across(everything(), standardize))
+
+fox_dat
+```
+
+For this first question, there are no back-door paths from area to weight. All of the arrows represent indirect effects of area on weight. Therefore, we do not want to condition on `avgfood` or `groupsize`, as this would close one or more of these indirect paths which are needed to estimate the total causal effect. We can confirm with `dagitty::adjustmentSets()`.
+
+```{r e6h3-2}
+fox_dag <- dagitty("dag{ area -> avgfood -> groupsize -> weight <- avgfood }")
+adjustmentSets(fox_dag, exposure = "area", outcome = "weight")
+```
+
+Thus, our model for this question can be written as:
+
+\begin{align}
+  W_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_A \\
+  \alpha &\sim \text{Normal}(0, 0.2) \\
+  \beta_A &\sim \text{Normal}(0, 0.5) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+Now, let's do some prior predictive simulations to makes sure we're within the bounds of what might be expected. Nearly all the lines are within the bounds of what might be expected.
+
+```{r e6h3-3, message = FALSE}
+set.seed(2020)
+
+n <- 1000
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 0, 0.2),
+       beta = rnorm(n, 0, 0.5)) %>%
+  expand(nesting(group, alpha, beta),
+         area = seq(from = -2, to = 2, length.out = 100)) %>%
+  mutate(weight = alpha + beta * area) %>%
+  ggplot(aes(x = area, y = weight, group = group)) +
+  geom_line(alpha = 1 / 10) +
+  geom_hline(yintercept = c((0 - mean(foxes$weight)) / sd(foxes$weight),
+                            (max(foxes$weight) - mean(foxes$weight)) /
+                              sd(foxes$weight)),
+             linetype = c("dashed", "solid"), color = "red") +
+  annotate(geom = "text", x = -2, y = -3.83, hjust = 0, vjust = 1,
+           label = "No weight") +
+  annotate(geom = "text", x = -2, y = 2.55, hjust = 0, vjust = 0,
+           label = "Maximum weight") +
+  expand_limits(y = c(-4, 4)) +
+  labs(x = "Standardized Area", y = "Standardized Weight")
+```
+
+Finally, we can estimate the model. Conditional on this DAG and our data, it doesn't appear as though area size has any causal effect on the weight of foxes.
+
+```{r e6h3-4}
+area_mod <- brm(weight ~ 1 + area, data = fox_dat, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b,),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h3"))
+
+posterior_samples(area_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_area", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+> **6H4.** Now infer the causal impact of adding food to a territory. Would this make foxes heavier? Which covariates do you need to adjust for to estimate the total causal influence of food?
+
+To estimate the total causal impact of food, we don't need to adjust for any variables. There is a direct path from average food to weight and an indirect path through group size. If we condition on group size, then that path would be closed and we would be left with only the direct effect. However, as we want the total effect, there is no adjustment to be made.
+
+```{r e6h4-1}
+adjustmentSets(fox_dag, exposure = "avgfood", outcome = "weight")
+```
+
+When we estimate the model regressing weight on average food available, we see that there is no effect of food on weight. Given the DAG, this is expected. If there were an impact of food on weight, then we would have expected to see an impact of area on weight in the previous problem, as area is upstream up average food in the causal model.
+
+```{r e6h4-2}
+food_mod <- brm(weight ~ 1 + avgfood, data = fox_dat, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b,),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h4"))
+
+posterior_samples(food_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_avgfood", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+> **6H5.** Now infer the causal impact of group size. Which covariates do you need to adjust for? Looking at the posterior distribution of the resulting model, what do you think explains these data? That is, can you explain the estimates for all three problems? How do they go together?
+
+When assessing the causal impact of group size, there is one back-door path: $G \leftarrow F \rightarrow W$. In this path, average food, $F$, is a fork, so we have to condition on it to isolate the effect of group size.
+
+```{r e6h5-1}
+adjustmentSets(fox_dag, exposure = "groupsize", outcome = "weight")
+```
+
+When we estimate this model, we see a negative effect for group size when controlling for food. We also now see a positive effect for average food when controlling for group size. Thus, the causal effect of group size is to decrease weight. Logically this makes sense, as there would be less food for each fox. This model also indicates that the direct effect of average food is to increase weight. That is, if group size is held constant, more food results in more weight. However, the total causal effect of food on weight, as we saw in the last problem, is nothing. This is because more food also leads to larger groups, which in turn decreases weight. This is a masking effect, also called a post-treatment bias.
+
+```{r e6h5-2}
+grp_mod <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
+               family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b,),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp6", "b6h5"))
+
+posterior_samples(grp_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_avgfood",
+                                        "b_groupsize", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+> **6H6.** Consider your own research question. Draw a DAG to represent it. What are the testable implications of your DAG? Are there any variables you could condition on to close all backdoor paths? Are there unobserved variables that you have omitted? Would a reasonable  colleague imagine additional threats to causal inference that you have ignored?
+
+
+
+> **6H7.** For the DAG you made in the previous problem, can you write a data generating simulation for it? Can you design one or more statistical models to produce causal estimates? If so, try to calculate interesting counterfactuals. If not, use the simulation to estimate the size f the ibas you might expect. Under what conditions would you, for example, infer the opposite of a true causal effect?
+
 
 
 ## Session Info {-}
