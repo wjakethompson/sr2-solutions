@@ -471,7 +471,21 @@ The three mechanisms are:
 
 > **6E2.** For one of the mechanisms in the previous problem, provide an example of your choice, perhaps from your own research.
 
-TODO
+In educational research, we are often interested in instructional interventions. For example, we might provide teacher with professional development ($P$). We expect the professional development to have a positive impact on instruction the teacher provides, which in turn should improve student performance. However, student performance is also influence by the pre-existing knowledge state of the teacher's students. This is a post-treatment bias, where the quality of the instruction masks the effect of the professional development as shown in the DAG.
+
+```{r e6e2}
+ed_dag <- dagitty("dag { D -> I -> P <- K }")
+coordinates(ed_dag) <- list(x = c(D = 1, I = 1.5, P = 2, K = 2.5),
+                            y = c(D = 3, I = 2, P = 1, K = 2))
+
+ggplot(ed_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
 
 > **6E3.** List the four elemental confounds. Can you explain the conditional dependencies of each?
 
@@ -1026,6 +1040,21 @@ posterior_samples(grp_mod) %>%
 ```
 
 > **6H6.** Consider your own research question. Draw a DAG to represent it. What are the testable implications of your DAG? Are there any variables you could condition on to close all backdoor paths? Are there unobserved variables that you have omitted? Would a reasonable  colleague imagine additional threats to causal inference that you have ignored?
+
+For this question, we'll use the same instructional intervention described for question **6E2**. The DAG is shown below. In this DAG, we're interested in the effect of a new professional development intervention ($D$) on student performance ($P$). However, the professional development works by improving the teacher's instruction ($I$), and student performance is also affected by the students' pre-existing knowledge ($K$).
+
+```{r e6h6-1}
+ed_dag <- dagitty("dag { D -> I -> P <- K }")
+coordinates(ed_dag) <- list(x = c(D = 1, I = 1.5, P = 2, K = 2.5),
+                            y = c(D = 3, I = 2, P = 1, K = 2))
+
+ggplot(ed_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
 
 
 
