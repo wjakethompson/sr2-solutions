@@ -10,6 +10,7 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(hrbrthemes))
 suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
+suppressPackageStartupMessages(library(glue))
 
 ggplot2::theme_set(theme_minimal())
 
