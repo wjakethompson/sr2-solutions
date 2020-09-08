@@ -1,0 +1,88 @@
+/* ---------- Fonts ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Oxygen:wght@400;700&family=Source+Code+Pro:wght@400;700&family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400&display=swap');
+
+p, div {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.6rem;
+}
+
+li.chapter, h1, h2, h3 {
+  font-family: 'Oxygen', sans-serif;
+  font-size: 1.6rem;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal code, .book .book-body .page-wrapper .page-inner section.normal pre {
+  font-family: 'Source Code Pro', monospace;
+}
+
+.book .book-header h1 {
+  opacity: 1;
+  text-align: left;
+}
+
+
+/* ---------- Links ---------- */
+.book .book-body .page-wrapper .page-inner section.normal a {
+  color: #009fb7;
+}
+
+
+/* ---------- TOC ---------- */
+.book .book-summary ul.summary li a, 
+.book .book-summary ul.summary li span {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 15px;
+  padding-right: 15px;
+  color: #272727;
+}
+
+.summary a:hover {
+  color: #009fb7d9 !important;
+} 
+
+.book .book-summary ul.summary li.active>a { /*active TOC links*/
+  color: #009fb7 !important;
+  border-left: solid 4px;
+  border-color: #009fb7;
+  padding-left: 11px !important;
+} 
+
+
+/* The next two rules make the horizontal line go straight across in top navbar */
+.summary > li:first-child {
+    height: 50px;
+    padding-top: 10px;
+    border-bottom: 1px solid rgba(0,0,0,.07);
+}
+
+.book .book-summary ul.summary li.divider {
+    height: 0px;
+}
+
+
+/* ---------- Code Chunks ---------- */
+.sourceCode {
+  margin-bottom: 0.85em; /* adds same amount of margin as a <p> would */
+}
+
+.sourceCode pre {
+  margin: 0 !important; /* makes space above and below symmetrical*/
+}
+
+
+/* ---------- Bookdown defaults ---------- */
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}

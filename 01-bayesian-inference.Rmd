@@ -407,7 +407,7 @@ The HPDI from **3M2** is much narrower with the new prior ([.501, .711] vs. [.33
 
 > **3M6.** Suppose you want to estimate the Earth's proportion of water very precisely. Specifically, you want the 99% percentile interval of the posterior distribution of *p* to be only 0.05 wide. This means the distance between the upper and lower bound of the interval should be 0.05. How many times will you have to toss the globe to do this?
 
-```{r e3m6}
+```{r e3m6, cache = TRUE}
 single_sim <- function(tosses, prior_type = c("uniform", "step")) {
   prior_type <- match.arg(prior_type)
   obs <- rbinom(1, size = tosses, prob = 0.7)
@@ -549,7 +549,7 @@ The model is severely under estimating the number of second-born boys when the f
 
 ## Session Info {-}
 
-<details><summary>View the session information used to render this chapter.</summary>
+<details><summary>View the session information used to render this week.</summary>
 ```{r 01-session-info}
 devtools::session_info()
 ```

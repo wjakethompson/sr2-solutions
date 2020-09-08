@@ -217,7 +217,7 @@ b4.3 <- brm(height ~ 1 + weight_c, data = how_dat, family = gaussian,
                       prior(lognormal(0, 1), class = b, lb = 0),
                       prior(uniform(0, 50), class = sigma)),
             iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
-            file = here("fits", "b4.3-0"))
+            file = here("fits", "chp4", "b4.3-0"))
 
 posterior_samples(b4.3) %>%
   select(-lp__) %>%
@@ -233,7 +233,7 @@ b4.3_nc <- brm(height ~ 1 + weight, data = how_dat, family = gaussian,
                          prior(lognormal(0, 1), class = b, lb = 0),
                          prior(uniform(0, 50), class = sigma)),
                iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
-               file = here("fits", "b4.3_nc"))
+               file = here("fits", "chp4", "b4.3_nc"))
 
 posterior_samples(b4.3_nc) %>%
   select(-lp__) %>%
@@ -243,7 +243,7 @@ posterior_samples(b4.3_nc) %>%
 
 We now see non-zero covariances between the parameters. Lets compare the posterior predictions. We'll generate hypothetical outcome plots which are animated to show the uncertainty in estimates [see @hops1; @hops2]. Here we'll just animate the estimated regression line using {[gganimate](https://gganimate.com/)} [@R-gganimate]. We can see that the predictions from the two models are nearly identical.
 
-```{r e4m7-3}
+```{r e4m7-3, cache = TRUE}
 library(gganimate)
 
 weight_seq <- tibble(weight = seq(25, 70, length.out = 100)) %>%
@@ -418,7 +418,7 @@ b4h2 <- brm(height ~ 1 + weight_c, data = young_how, family = gaussian,
                       prior(lognormal(0, 1), class = b, lb = 0),
                       prior(exponential(1), class = sigma)),
             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-            file = here("fits", "b4h2.rds"))
+            file = here("fits", "chp4", "b4h2.rds"))
 
 summary(b4h2)
 ```
@@ -473,7 +473,7 @@ b4h3 <- brm(height ~ 1 + log_weight_c, data = full_how, family = gaussian,
                       prior(lognormal(0, 1), class = b, lb = 0),
                       prior(exponential(1), class = sigma)),
             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-            file = here("fits", "b4h3"))
+            file = here("fits", "chp4", "b4h3"))
 summary(b4h3)
 ```
 
@@ -594,7 +594,7 @@ lin_mod <- brm(doy ~ 1 + temp_c, data = cb_temp, family = gaussian,
                          prior(normal(0, 10), class = b),
                          prior(exponential(1), class = sigma)),
                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-               file = here("fits", "b4h5-linear"))
+               file = here("fits", "chp4", "b4h5-linear"))
 
 # quadratic model
 qad_mod <- brm(doy ~ 1 + temp_s + temp_s2, data = cb_temp, family = gaussian,
@@ -603,7 +603,7 @@ qad_mod <- brm(doy ~ 1 + temp_s + temp_s2, data = cb_temp, family = gaussian,
                          prior(normal(0, 1), class = b, coef = "temp_s2"),
                          prior(exponential(1), class = sigma)),
                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-               file = here("fits", "b4h5-quadratic"))
+               file = here("fits", "chp4", "b4h5-quadratic"))
 
 # cubic model
 cub_mod <- brm(doy ~ 1 + temp_s + temp_s2 + temp_s3, data = cb_temp,
@@ -614,7 +614,7 @@ cub_mod <- brm(doy ~ 1 + temp_s + temp_s2 + temp_s3, data = cb_temp,
                          prior(normal(0, 1), class = b, coef = "temp_s3"),
                          prior(exponential(1), class = sigma)),
                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-               file = here("fits", "b4h5-cubic"))
+               file = here("fits", "chp4", "b4h5-cubic"))
 
 # spline model
 spl_mod <- brm(doy ~ 1 + s(temp, bs = "bs"), data = cb_temp, family = gaussian,
@@ -624,7 +624,7 @@ spl_mod <- brm(doy ~ 1 + s(temp, bs = "bs"), data = cb_temp, family = gaussian,
                          prior(exponential(1), class = sigma)),
                iter = 10000, warmup = 8000, chains = 4, cores = 4, seed = 1234,
                control = list(adapt_delta = 0.99),
-               file = here("fits", "b4h5-spline"))
+               file = here("fits", "chp4", "b4h5-spline"))
 ```
 
 Now let's visualize the predictions from each model.
@@ -713,7 +713,7 @@ B <- bs(cb_dat$year,
 
 Finally, we can generate data from the priors, and combine those parameters with the basis functions to get the prior predictive distributions.
 
-```{r e4h6-2}
+```{r e4h6-2, cache = TRUE}
 n <- 1000
 tibble(.draw = seq_len(n),
        alpha = rnorm(n, 100, 10),
@@ -742,7 +742,7 @@ tibble(.draw = seq_len(n),
 
 Now let's tighten the prior on `w` to $\text{Normal}(0,2)$, as we used for exercise **4M8.** Now the lines are much less wiggly, which is consistent with what we found in the previous exercise, which used the observed data.
 
-```{r e4h6-3}
+```{r e4h6-3, cache = TRUE}
 n <- 1000
 tibble(.draw = seq_len(n),
        alpha = rnorm(n, 100, 10),
@@ -773,7 +773,7 @@ tibble(.draw = seq_len(n),
 
 We can remove the intercept by removing the `a` parameter from the model.
 
-```{r e4h8-1}
+```{r e4h8-1, cache = TRUE}
 no_int <- quap(alist(D ~ dnorm(mu, sigma),
                      mu <- B %*% w,
                      w ~ dnorm(0, 10),
@@ -793,7 +793,7 @@ fitted_draws(no_int, cb_dat) %>%
 
 This looks a lot like our original model, except the left hand side of the spline is pulled down. This is likely due to the prior on `w`. The prior is centered on 0, but that assumes an intercept is present (i.e., the curves of the spline average a deviation of 0 from the mean). However, with the intercept, the prior drags the line down to actual zero when the first basis function in non-zero. By changing the prior of `w` to the same prior originally used for the intercept, we get almost our original model back.
 
-```{r e4h8-2}
+```{r e4h8-2, cache = TRUE}
 no_int2 <- quap(alist(D ~ dnorm(mu, sigma),
                       mu <- B %*% w,
                       w ~ dnorm(100, 10),
@@ -813,7 +813,7 @@ fitted_draws(no_int2, cb_dat) %>%
 
 ## Session Info {-}
 
-<details><summary>View the session information used to render this chapter.</summary>
+<details><summary>View the session information used to render this week.</summary>
 ```{r 01-session-info}
 devtools::session_info()
 ```
