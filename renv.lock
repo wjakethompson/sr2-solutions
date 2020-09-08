@@ -1147,6 +1147,13 @@
       "Repository": "CRAN",
       "Hash": "1c3ef87cbb81c23ac96797781ec7aecc"
     },
+    "repr": {
+      "Package": "repr",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "466aee1b69232becb73769daa894c171"
+    },
     "reprex": {
       "Package": "reprex",
       "Version": "0.3.0",
@@ -1331,6 +1338,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "8f047210d7d68ea4860a3c0d8cced272"
+    },
+    "skimr": {
+      "Package": "skimr",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1771d7c2061c3608c9d149cd36024eb5"
     },
     "sourcetools": {
       "Package": "sourcetools",
