@@ -1035,7 +1035,7 @@ posterior_samples(grp_mod) %>%
   labs(x = "Parameter Estimate", y = "Parameter")
 ```
 
-> **6H6.** Consider your own research question. Draw a DAG to represent it. What are the testable implications of your DAG? Are there any variables you could condition on to close all backdoor paths? Are there unobserved variables that you have omitted? Would a reasonable  colleague imagine additional threats to causal inference that you have ignored?
+> **6H6.** Consider your own research question. Draw a DAG to represent it. What are the testable implications of your DAG? Are there any variables you could condition on to close all backdoor paths? Are there unobserved variables that you have omitted? Would a reasonable colleague imagine additional threats to causal inference that you have ignored?
 
 For this question, we'll use the same instructional intervention described for question **6E2**. The DAG is shown below. In this DAG, we're interested in the effect of a new professional development intervention ($D$) on student performance ($P$). However, the professional development works by improving the teacher's instruction ($I$), and student performance is also affected by the students' pre-existing knowledge ($K$).
 
@@ -1052,11 +1052,72 @@ ggplot(ed_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
   theme_void()
 ```
 
+Based on this DAG, there are three testable implications:
 
+1. $D \!\perp\!\!\!\perp K$
+2. $D \!\perp\!\!\!\perp P | I$
+3. $I \!\perp\!\!\!\perp K$
 
-> **6H7.** For the DAG you made in the previous problem, can you write a data generating simulation for it? Can you design one or more statistical models to produce causal estimates? If so, try to calculate interesting counterfactuals. If not, use the simulation to estimate the size f the ibas you might expect. Under what conditions would you, for example, infer the opposite of a true causal effect?
+```{r e6h6-2}
+impliedConditionalIndependencies(ed_dag)
+```
 
+If we are interested in the causal impact of the professional development intervention $D$ on student performance $P$, then there are no back-door paths to close. Conditioning on the quality of instruction would introduce a post-treatment bias that would mask the effect of the professional development on the student performance.
 
+```{r e6h6-3}
+adjustmentSets(ed_dag, exposure = "D", outcome = "P")
+```
+
+There are many other factors not included in this DAG that are known to have an impact both on quality of instruction and student performance. These could include the socioeconomic and socioemotional state of the student, student motivation, school funding, class size, and at-home educational support, to name just a few. Students are also grouped into classes and schools, so there are likely group-level effects that are not accounted for here.
+
+> **6H7.** For the DAG you made in the previous problem, can you write a data generating simulation for it? Can you design one or more statistical models to produce causal estimates? If so, try to calculate interesting counterfactuals. If not, use the simulation to estimate the size of the bias you might expect. Under what conditions would you, for example, infer the opposite of a true causal effect?
+
+Given the DAG, we can generate data and estimate some causal models to test it. First, let's generate data. For the sake of this example, we'll assume there are no group level effects and that all teachers are equally effective. These assumptions wouldn't hold in real data, but will suffice for this exercise.
+
+```{r e6h7-1}
+set.seed(2010)
+
+students <- 500
+
+ed_dat <- tibble(k = rnorm(students, mean = 0, sd = 2),
+                 d = sample(0L:1L, students, replace = TRUE),
+                 i = rnorm(students, mean = 1 + 3 * d),
+                 p = k + rnorm(students, 0.8 * i)) %>%
+  mutate(across(where(is.double), standardize))
+
+skimr::skim(ed_dat)
+```
+
+Now let's estimate a model to find the causal effect of professional development on student performance.
+
+\begin{align}
+  P_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_D \\
+  \alpha &\sim \text{Normal}(0,0.2) \\
+  \beta_D &\sim \text{Normal}(0,0.5) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+```{r e6h7-2}
+ed_mod <- brm(p ~ 1 + d, data = ed_dat, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp6", "b6h7-causal"))
+
+posterior_samples(ed_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  scale_y_discrete(labels = c(expression(beta[D]), expression(alpha),
+                              expression(sigma))) +
+  labs(x = "Parameter Value", y = "Parameter")
+```
+
+Here we can see that, as expected given the data is simulated, there is a strong effect of professional development on student performance. With students whose teachers received the professional development showing a 0.88 standard deviation increase in performance compared to students whose teachers did not receive the professional development.
 
 ## Session Info {-}
 
