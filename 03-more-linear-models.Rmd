@@ -650,8 +650,7 @@ In the model summary, we can see that both `x` and `z` have estimates with relat
 
 This is due to the causal model that gave rise to this (simulated) data. In the legs example from the chapter, both legs predicted height (left DAG below). In this example, only $Z$ predicts the outcome. In DAG language, $Z$ is a pipe. Therefore, when the model is estimated, the golem is looking at what $X$ tells us, conditional on $Z$. The answer in this case is "no" because $X$ and $Z$ are highly correlated, which is why the posterior for $X$ is centered on zero. The leg model does not condition on either of the predictors, as both have direct paths to the outcome variable. Thus, whether or not a model has multicollinearity depends not only on the pairwise relationship, but also the causal model.
 
-<div class="figure" style="text-align: center">
-```{r e6m2-3, out.width = "40%", echo = FALSE, fig.align = ""}
+```{r e6m2-3, out.width = "40%", echo = FALSE, fig.cap = " "}
 leg_coords <- tibble(name = c("R", "L", "H"),
                      x = c(1, 3, 2),
                      y = c(2, 2, 1))
@@ -681,12 +680,10 @@ ggplot(new_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
   theme_void() +
   theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
 ```
-</div>
 
 > **6M3.** Learning to analyze DAGs requires practice. For each of the four DAGs below, state which variables, if any, you must adjust for (condition on) to estimate the total causal influence of $X$ on $Y$.
 
-<div class="figure" style="text-align: center">
-```{r e6m3-1, out.width = "40%", echo = FALSE, fig.align = ""}
+```{r e6m3-1, out.width = "40%", echo = FALSE, fig.cap = " "}
 dag1 <- dagitty("dag{ X <- Z <- A -> Y <- X; Y <- Z }")
 coordinates(dag1) <- list(x = c(X = 1, Y = 3, Z = 2, A = 3),
                           y = c(X = 1, Y = 1, Z = 2, A = 2))
@@ -734,7 +731,6 @@ ggplot(dag4, aes(x = x, y = y, xend = xend, yend = yend)) +
   theme_void() +
   theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
 ```
-</div>
 
 *Upper Left*: There are two back-door paths from $X$ to $Y$: $X \leftarrow Z \rightarrow Y$ and $X \leftarrow Z \leftarrow A \rightarrow Y$. In the first path $Z$ is a fork, and in the second, $Z$ is a pipe and $A$ is a fork. Thus, in both cases, conditioning on $Z$ would close the path. We can confirm with `dagitty::adjustmentSets()`.
 
