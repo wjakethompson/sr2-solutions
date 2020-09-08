@@ -1085,7 +1085,7 @@ ed_dat <- tibble(k = rnorm(students, mean = 0, sd = 2),
                  p = k + rnorm(students, 0.8 * i)) %>%
   mutate(across(where(is.double), standardize))
 
-skimr::skim(ed_dat)
+ed_dat
 ```
 
 Now let's estimate a model to find the causal effect of professional development on student performance.
