@@ -77,6 +77,30 @@ probs
 calc_entropy(probs)
 ```
 
+> **7M1.** Write down and compare the definitions of AIC and WAIC. Which of these criteria is most general? Which assumptions are required to transform the more general criterion into a less general one?
+
+
+
+> **7M2.** Explain the difference between model *selection* and model *comparison*. What information is lost under model selection?
+
+
+
+> **7M3.** When comparing models with an information criterion, why must all models be fit to exactly the same observations? What would happen to the information criterion values, if the models were fit to different numbers of observations? Perform some experiments, if you are not sure.
+
+
+
+> **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
+
+
+
+> **7M5.** Provide an informal explanation of why informative priors reduce overfitting.
+
+
+
+> **7M6.** Provide an informal explanation of why overly informative priors result in underfitting.
+
+
+
 ## Session Info {-}
 
 <details><summary>View the session information used to render this week.</summary>
