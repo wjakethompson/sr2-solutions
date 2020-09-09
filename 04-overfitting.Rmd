@@ -16,7 +16,66 @@ Lecture 8:
 
 ### Chapter 7
 
-Coming soon.
+> **7E1.** State the three motivating criteria that define information entropy. Try to express each in your own words.
+
+Information is defined as *the reduction in uncertainty when we learn and outcome*. The motivating criteria for defining information entropy revolve around the measure of uncertainty that is used to derive information.
+
+The first is that the measure of uncertainty must be continuous. This prevents large changes in the uncertainty measure resulting from relatively small changes in probabilities. Such a phenomenon often occurs when researchers use a *p*-value cutoff of .05 to claim "significance." Often, the difference between "significant" and "non-significant" results is itself non-significant `r emo::ji("exploding_head")`.
+
+The second is that the measure of uncertainty should increase as the number of possible events increases. When there are more potential outcomes, there are more predictions that have to be made, and therefore more uncertainty about which outcome will be observed. For example, if your friend asks you to guess a number between 1 and 100, you are much less likely to guess correctly than if you were guessing a number between 1 and 2.
+
+The third and final criteria is that the measure of uncertainty should be additive. These means that if we calculate the uncertainty for two sets of outcomes (e.g., heads or tail on a coin flip and the results of a thrown die), then the uncertainty of combinations of events (e.g., heads and "3") should be equal to the sum of the uncertainties from the two separate events. 
+
+Information entropy is the only function that satisfies all three criteria.
+
+> **7E2.** Suppose a coin is weighted such that, when it is tossed and lands on a table, it comes up heads 70% of the time. What is the entropy of this coin?
+
+Entropy is the average log-probability of an event. The formula is given as
+
+\begin{equation}
+  H(p) = -\text{E}\log(p_i) = -\sum_{i=1}^np_i\log(p_i)
+\end{equation}
+
+Thus, for each probability $p_i$, we multiply $p_i$ by $\log(p_i)$, sum all the values, and then multiply the sum by negative one. To implement this, we'll first write a couple of functions to do the calculations. We could do this without functions, but functions will allow us to handle cases where $p_i = 0$, as will be the case in a couple of problems. The first function, `p_logp()`, returns `0` if `p` is 0, and returns `p * log(p)` otherwise. The `calc_entropy()` function is a wrapper around `p_logp()`, applying `p_logp()` to each element of a vector of probabilities, summing the results, and multiplying the sum by -1.
+
+```{r e7e2-1}
+p_logp <- function(p) {
+  if (p == 0) return(0)
+  p * log(p)
+}
+calc_entropy <- function(x) {
+  avg_logprob <- sum(map_dbl(x, p_logp))
+  -1 * avg_logprob
+}
+```
+
+Applying these functions to the probabilities in this problem results in an entropy of about 0.61. Note this is the same as the weather example in the text, because in both cases there were two events with probabilities of 0.3 and 0.7.
+
+```{r e7e2-2}
+probs <- c(0.7, 0.3)
+calc_entropy(probs)
+```
+
+> **7E3.** Suppose a four-sided die is loaded such that, when tossed onto a table, it shows "1" 20%, "2" 25%, "3" 25%, and "4" 30% of the time. What is the entropy of this die?
+
+Now we have four outcomes. We can reuse our code from above, substituting the new probabilities into the vector `probs`. This results in an entropy of about 1.38. As expected, because there are now more outcomes, the entropy is higher than what was observed in the previous problem.
+
+```{r e7e3}
+probs <- c(0.20, 0.25, 0.25, 0.30)
+calc_entropy(probs)
+```
+
+> **7E4.** Suppose another four-sided die is loaded such that it never shows "4." The other three sides show equally often. What is the entropy of this die?
+
+Again, we can copy our code from above, replace the probabilities. Even though there are four outcomes specified, there are effectively three outcomes, as the outcome "4" has probability 0. Thus, we would expect entropy to decrease, as there are fewer possible outcomes than in the previous problem. This is indeed what we find, as this die's entropy is about 1.1.
+
+```{r e7e4}
+probs <- c(1, 1, 1, 0)
+probs <- probs / sum(probs)
+probs
+
+calc_entropy(probs)
+```
 
 ## Session Info {-}
 
