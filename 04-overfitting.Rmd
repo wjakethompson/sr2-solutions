@@ -79,15 +79,31 @@ calc_entropy(probs)
 
 > **7M1.** Write down and compare the definitions of AIC and WAIC. Which of these criteria is most general? Which assumptions are required to transform the more general criterion into a less general one?
 
+The AIC is defined as follows, where $\text{lppd}$ is the log-pointwise-predictive density, and $p$ is the number of free parameters in the posterior distribution.
 
+$$
+\text{AIC} = -2\text{lppd} + 2p
+$$
+
+In contrast, the WAIC is defined as:
+
+$$
+\text{WAIC}(y,\Theta) = -2\Big(\text{lppd} - \sum_i \text{var}_{\theta}\log p(y_i | \theta)\Big)
+$$
+
+If we distribute the $-2$ through, this looks remarkably similar to the AIC formula, with the exception of the final $p$ term. Whereas the AIC uses 2 times the number of free parameters, the WAIC uses 2 times the sum of the log-probability variances from each observation.
+
+The WAIC is more general than the AIC, as the AIC assumes that priors are flat or overwhelmed by the likelihood, the posterior distribution is approximately multivariate Gaussian, and the sample size is much greater than the number of parameters. If all of these assumptions are met, then we would expect the AIC and WAIC to be about the same.
 
 > **7M2.** Explain the difference between model *selection* and model *comparison*. What information is lost under model selection?
 
+Model selection refers to just picking the model that has the lowest (i.e., best) criterion value and discarding other models. When we take this approach, we lose information about the relative model accuracy that can be seen across the criterion values for the candidate models. This information can inform how confident we are in the models. Additionally, the model selection paradigm cares only about predictive accuracy and ignores causal inference. Thus, a model may be selected that has confounds or that would not correctly inform an intervention.
 
+In contrast, model comparison uses multiple models to understand how the variables included influence prediction and affect implied conditional independencies in a causal model. Thus, we preserve information and can make more holistic judgments about our data and models.
 
 > **7M3.** When comparing models with an information criterion, why must all models be fit to exactly the same observations? What would happen to the information criterion values, if the models were fit to different numbers of observations? Perform some experiments, if you are not sure.
 
-
+All of the 
 
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
 
