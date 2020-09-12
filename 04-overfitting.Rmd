@@ -103,7 +103,64 @@ In contrast, model comparison uses multiple models to understand how the variabl
 
 > **7M3.** When comparing models with an information criterion, why must all models be fit to exactly the same observations? What would happen to the information criterion values, if the models were fit to different numbers of observations? Perform some experiments, if you are not sure.
 
-All of the 
+All of the information criteria are defined based on the log-pointwise-predictive density, defined as follows, where $y$ is the data, $\Theta$ is the posterior distribution, $S$ is the number of samples, and $I$ is the number of samples.
+
+$$
+\text{lppd}(y,\Theta) = \sum_i\log\frac{1}{S}\sum_sp(y_i|\Theta_s)
+$$
+
+In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a larger log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent. More observations are entered into the sum, leading to a larger final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets, estiamte a linear model, and then calculate the LPPD, WAIC, and PSIS for each.
+
+```{r e7m3-1}
+set.seed(2020)
+
+sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
+  mutate(
+    sample_data = map(sample_size,
+                      function(n) {
+                        tibble(x1 = rnorm(n = n)) %>%
+                          mutate(y = rnorm(n = n, mean = 0.8 * x1),
+                                 across(everything(), standardize))
+                      }),
+    model = map(sample_data,
+                function(df) {
+                  mod <- quap(alist(y ~ dnorm(mu, sigma),
+                                    mu <- alpha + beta * x1,
+                                    alpha ~ dnorm(0, 0.2),
+                                    beta ~ dnorm(0, 0.5),
+                                    sigma ~ dexp(1)),
+                              data = df, start = list(alpha = 0, beta = 0))
+                  return(mod)
+                }),
+    lppd = map_dbl(model, ~sum(rethinking::lppd(.x))),
+    infc = map(model,
+               function(mod) {
+                 w <- rethinking::WAIC(mod)
+                 p <- suppressMessages(rethinking::PSIS(mod))
+                 tibble(waic = w$WAIC, psis = p$PSIS)
+               })
+  ) %>%
+  unnest(infc)
+
+sample_sim
+```
+
+Now, we can visualize the distribution
+
+```{r e7m3-2}
+sample_sim %>%
+  pivot_longer(cols = c(lppd, waic, psis)) %>%
+  mutate(sample_size = glue("N = {sample_size}"),
+         sample_size = fct_inorder(sample_size),
+         name = str_to_upper(name),
+         name = fct_inorder(name)) %>%
+ggplot(aes(x = value)) +
+  facet_grid(rows = vars(sample_size), cols = vars(name)) +
+  geom_histogram(aes(y = stat(density))) +
+  labs(x = "Value", y = "Density") +
+  theme(panel.border = element_rect(fill = NA))
+```
+
 
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
 
