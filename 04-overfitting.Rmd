@@ -111,7 +111,7 @@ $$
 
 In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a smaller log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent (i.e., when the LPPD values are negative, the sum will get more negative as the sample size increases). More observations are entered into the sum, leading to a smaller final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets, estimate a linear model, and then calculate the LPPD, WAIC, and PSIS for each.
 
-```{r e7m3-1, cache = TRUE}
+```{r e7m3-1, eval = FALSE}
 set.seed(2020)
 
 sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
@@ -141,13 +141,15 @@ sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
                })
   ) %>%
   unnest(infc)
+```
 
-sample_sim
+```{r e7m3-2, include = FALSE, cache = TRUE}
+sample_sim <- read_rds(here("fits", "chp7", "sim-7m3-small.rds"))
 ```
 
 Now, we can visualize the distribution of the LPPD, WAIC, and PSIS. As predicted, the LPPD gets more negative as the sample size increases, even though the data generation process and estimated model are identical. Accordingly, the WAIC and PSIS increase. Note that the WAIC and PSIS values are approximately $-2 \times \text{lppd}$. Thus, if we fit one model with 100 observations and second model with 1,000 observations, we might conclude from the WAIC and PSIS that the first model with 100 observations has much better predictive accuracy, because the WAIC and PSIS values are lower. However, this would be only an artifact of different sample sizes, and may not actually represent true differences between the models.
 
-```{r e7m3-2}
+```{r e7m3-3}
 sample_sim %>%
   pivot_longer(cols = c(lppd, waic, psis)) %>%
   mutate(sample_size = glue("N = {sample_size}"),
@@ -162,6 +164,14 @@ ggplot(aes(x = value)) +
 ```
 
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
+
+The penalty term of the WAIC, $p_{\Tiny\text{WAIC}}$ is defined as shown in the WAIC formula. Specifically, the penalty term is sum of the variances of the log probabilities for each observation.
+
+$$
+\text{WAIC}(y,\Theta) = -2\Big(\text{lppd} - \underbrace{\sum_i \text{var}_{\theta}\log p(y_i | \theta)}_{\text{penalty term}}\Big)
+$$
+
+Smaller variances in log probabilities will results in a lower penalty. If we restrict the prior to become more concentrated, we restrict the plausible range of the parameters. In other words, we restrict the variability in the posterior distribution. As the parameters become more consistent, the log probability of each observation will necessarily become more consistent also. Thus, the penalty term, or effective number of parameters, becomes smaller. We can again confirm with a small simulation.
 
 ```{r e7m4-1, eval = FALSE}
 set.seed(2020)
@@ -201,31 +211,257 @@ prior_sim <- tibble(prior_sd = rep(c(0.1, 1, 10), each = 100)) %>%
 ```
 
 ```{r e7m4-2, include = FALSE, cache = TRUE}
-prior_sim <- read_rds(here("fits", "chp7", "sim-7m4.rds"))
+prior_sim <- read_rds(here("fits", "chp7", "sim-7m4-small.rds"))
 ```
 
+Visualizing the results, we can see that the more constricted prior does indeed result in a smaller penalty or effective number of parameters.
 
-```{r e7m3-2}
+```{r e7m4-3}
 prior_sim %>%
-  pivot_longer(cols = c(p_waic, p_psis)) %>%
-  mutate(prior_sd = glue("sd = {prior_sd}"),
+  pivot_longer(cols = c(p_waic, p_loo)) %>%
+  mutate(prior_sd = glue("sd~'='~{prior_sd}"),
          prior_sd = fct_inorder(prior_sd),
-         name = str_to_upper(name),
-         name = fct_inorder(name)) %>%
+         name = factor(name, levels = c("p_waic", "p_loo"),
+                       labels = c("p[WAIC]", "p[PSIS]"))) %>%
 ggplot(aes(x = value)) +
-  facet_grid(rows = vars(prior_sd), cols = vars(name)) +
-  geom_histogram(aes(y = stat(density))) +
+  facet_grid(rows = vars(prior_sd), cols = vars(name),
+             labeller = label_parsed) +
+  geom_histogram(aes(y = stat(density)), binwidth = 0.2) +
   labs(x = "Value", y = "Density") +
   theme(panel.border = element_rect(fill = NA))
 ```
 
 > **7M5.** Provide an informal explanation of why informative priors reduce overfitting.
 
-
+Informative priors restrict the plausible values for parameters. By using informative priors, we can limit the values of parameters to values that are reasonable, given our scientific knowledge. Thus, we can keep the model from learning too much from our specific sample.
 
 > **7M6.** Provide an informal explanation of why overly informative priors result in underfitting.
 
+In contrast to the previous question, making the prior too informative can be too restrictive on the parameter space. This prevents our model from learning enough from our sample. We basically just get our prior distributions back, without learning anything from the data that could help make future predictions.
 
+> **7H1.** In 2007, *The Wall Street Journal* published an editorial ("We're Number One, Alas") with a graph of corportate tax rates in 29 countries plotted against tax revenue. A badly fit curve was drawn in (reconstructed at right), seemingly by hand, to make the argument that the relationship between tax rate and tax revenue increases and then declines, such that higher tax rates can actually produce less tax revenue. I want you to actually fit a curve to these data, found in `data(Laffer)`. Consider models that use tax rate to predict tax revenue. Compare, using WAIC or PSIS, a straight-line model to any curved models you like. What do you conclude about the relationship between tax rate and tax revenue.
+
+First, let's standardize the data and fit a straight line, a quadratic line, and a spline model.
+
+```{r e7h1-1}
+data(Laffer)
+
+laf_dat <- Laffer %>%
+  mutate(tax_rate2 = tax_rate ^ 2,
+         across(everything(), standardize))
+
+laf_line <- brm(tax_revenue ~ 1 + tax_rate, data = laf_dat, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp7", "b7h1-line.rds"))
+
+laf_quad <- brm(tax_revenue ~ 1 + tax_rate + tax_rate2, data = laf_dat,
+                family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp7", "b7h1-quad.rds"))
+
+laf_spln <- brm(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), data = laf_dat,
+                family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(normal(0, 0.5), class = sds),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                control = list(adapt_delta = 0.99),
+                file = here("fits", "chp7", "bh71-spln.rds"))
+```
+
+Let's visualize the models:
+
+```{r e7h1-2, echo = FALSE}
+tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
+  mutate(tax_rate2 = tax_rate ^ 2,
+         tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
+         tax_rate2 = (tax_rate2 - mean(Laffer$tax_rate ^ 2)) /
+           sd(Laffer$tax_rate ^ 2))
+
+predictions <- bind_rows(
+  predicted_draws(laf_line, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Linear"),
+  predicted_draws(laf_quad, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Quadratic"),
+  predicted_draws(laf_spln, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Spline")
+)
+
+fits <- bind_rows(
+  fitted_draws(laf_line, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Linear"),
+  fitted_draws(laf_quad, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Quadratic"),
+  fitted_draws(laf_spln, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Spline")
+)
+
+ggplot() +
+  facet_wrap(~type, ncol = 2) +
+  geom_ribbon(data = predictions,
+              aes(x = tax_rate, ymin = .lower, ymax = .upper),
+              alpha = 0.2) +
+  geom_lineribbon(data = fits,
+                  aes(x = tax_rate, y = .value, ymin = .lower, ymax = .upper),
+                  size = 0.6) +
+  geom_point(data = laf_dat, aes(x = tax_rate, y = tax_revenue),
+             alpha = 0.5) +
+  scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
+  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue") +
+  theme(legend.position = "bottom")
+```
+
+They all look pretty similar, but the spline does show a slight curve. Next, we can look at the PSIS (called LOO in {brms} and {rstan}) and WAIC comparisons. Both the PSIS and WAIC prefer the spline model. However, the standard error of the difference in PSIS and WAIC is larger than the actual difference for all models. Thus, neither the PSIS or WAIC is really able to differentiate the models in a meaningful way. However, it should be noted that both the PSIS and WAIC have Pareto or penalty values that are exceptionally large, which could make the criteria unreliable.
+
+```{r e7h1-3}
+library(loo)
+
+laf_line <- add_criterion(laf_line, criterion = c("loo", "waic"),
+                          overwrite = TRUE, force_save = TRUE)
+laf_quad <- add_criterion(laf_quad, criterion = c("loo", "waic"),
+                          overwrite = TRUE, force_save = TRUE)
+laf_spln <- add_criterion(laf_spln, criterion = c("loo", "waic"),
+                          overwrite = TRUE, force_save = TRUE)
+
+loo_compare(laf_line, laf_quad, laf_spln, criterion = "waic")
+loo_compare(laf_line, laf_quad, laf_spln, criterion = "loo")
+```
+
+> **7H2.** In the `Laffer` data, there is one country with a high tax revenue that is an outlier. Use PSIS and WAIC to measure the importance of this outlier in the models you fit in the previous problem. Then use robust regression with a Student's t distribution to revist the curve fitting problem. How much does a curved relationship depend upon the outlier point.
+
+Because I used `brms::brm()` to estimate the models, we can use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models, and observation 1 is also problematic in the spline model.
+
+```{r e7h2-1}
+library(gghighlight)
+
+criteria_influence <- function(mod) {
+  tibble(pareto_k = mod$criteria$loo$diagnostics$pareto_k,
+         p_waic = mod$criteria$waic$pointwise[, "p_waic"]) %>%
+    rowid_to_column(var = "obs")
+}
+
+influ <- bind_rows(
+  criteria_influence(laf_line) %>%
+    mutate(type = "Linear"),
+  criteria_influence(laf_quad) %>%
+    mutate(type = "Quadratic"),
+  criteria_influence(laf_spln) %>%
+    mutate(type = "Spline")
+)
+
+ggplot(influ, aes(x = pareto_k, y = p_waic)) +
+  facet_wrap(~type, ncol = 2) +
+  geom_vline(xintercept = 0.7, linetype = "dashed") +
+  geom_hline(yintercept = 0.4, linetype = "dashed") +
+  geom_point() +
+  gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = obs,
+              label_params = list(size = 3)) +
+  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC])) +
+  theme(panel.border = element_rect(fill = NA))
+```
+
+Let's refit the model using a Student's t distribution to put larger tails on our outcome distribution, and then visualize our new models.
+
+```{r e7h2-2}
+laf_line2 <- brm(bf(tax_revenue ~ 1 + tax_rate, nu = 1),
+                 data = laf_dat, family = student,
+                 prior = c(prior(normal(0, 0.2), class = Intercept),
+                           prior(normal(0, 0.5), class = b),
+                           prior(exponential(1), class = sigma)),
+                 iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                 file = here("fits", "chp7", "b7h2-line.rds"))
+
+laf_quad2 <- brm(bf(tax_revenue ~ 1 + tax_rate + tax_rate2, nu = 1),
+                 data = laf_dat, family = student,
+                 prior = c(prior(normal(0, 0.2), class = Intercept),
+                           prior(normal(0, 0.5), class = b),
+                           prior(exponential(1), class = sigma)),
+                 iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                 file = here("fits", "chp7", "b7h2-quad.rds"))
+
+laf_spln2 <- brm(bf(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), nu = 1),
+                 data = laf_dat, family = student,
+                 prior = c(prior(normal(0, 0.2), class = Intercept),
+                           prior(normal(0, 0.5), class = b),
+                           prior(normal(0, 0.5), class = sds),
+                           prior(exponential(1), class = sigma)),
+                 iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                 control = list(adapt_delta = 0.99),
+                 file = here("fits", "chp7", "bh72-spln.rds"))
+```
+
+```{r e7h2-3, echo = FALSE}
+tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
+  mutate(tax_rate2 = tax_rate ^ 2,
+         tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
+         tax_rate2 = (tax_rate2 - mean(Laffer$tax_rate ^ 2)) /
+           sd(Laffer$tax_rate ^ 2))
+
+predictions <- bind_rows(
+  predicted_draws(laf_line2, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Linear"),
+  predicted_draws(laf_quad2, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Quadratic"),
+  predicted_draws(laf_spln2, newdata = tr_seq) %>%
+    median_qi(.width = 0.89) %>%
+    mutate(type = "Spline")
+)
+
+fits <- bind_rows(
+  fitted_draws(laf_line2, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Linear"),
+  fitted_draws(laf_quad2, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Quadratic"),
+  fitted_draws(laf_spln2, newdata = tr_seq) %>%
+    median_qi(.width = c(0.67, 0.89, 0.97)) %>%
+    mutate(type = "Spline")
+)
+
+ggplot() +
+  facet_wrap(~type, ncol = 2) +
+  geom_ribbon(data = predictions,
+              aes(x = tax_rate, ymin = .lower, ymax = .upper),
+              alpha = 0.2) +
+  geom_lineribbon(data = fits,
+                  aes(x = tax_rate, y = .value, ymin = .lower, ymax = .upper),
+                  size = 0.6) +
+  geom_point(data = laf_dat, aes(x = tax_rate, y = tax_revenue),
+             alpha = 0.5) +
+  scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
+  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue") +
+  theme(legend.position = "bottom")
+```
+
+The prediction intervals are a little bit narrower, which makes sense as the predictions are no longer being as influenced by the outlier. When we look at the new PSIS and WAIC estimates, we are no longer getting warning messages about large Pareto *k* values; however, we do still see warnings about large $p_{\Tiny\text{WAIC}}$ values. The comparisons also tell the same story as before, with the spline as the preferred model, but no distinguishable differences between the models.
+
+```{r 7h2-4}
+laf_line2 <- add_criterion(laf_line2, criterion = c("loo", "waic"),
+                           overwrite = TRUE, force_save = TRUE)
+laf_quad2 <- add_criterion(laf_quad2, criterion = c("loo", "waic"),
+                           overwrite = TRUE, force_save = TRUE)
+laf_spln2 <- add_criterion(laf_spln2, criterion = c("loo", "waic"),
+                           overwrite = TRUE, force_save = TRUE)
+
+loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "waic")
+loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
+```
 
 ## Session Info {-}
 

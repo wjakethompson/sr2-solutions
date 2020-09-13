@@ -243,7 +243,7 @@ posterior_samples(b4.3_nc) %>%
 
 We now see non-zero covariances between the parameters. Lets compare the posterior predictions. We'll generate hypothetical outcome plots which are animated to show the uncertainty in estimates [see @hops1; @hops2]. Here we'll just animate the estimated regression line using {[gganimate](https://gganimate.com/)} [@R-gganimate]. We can see that the predictions from the two models are nearly identical.
 
-```{r e4m7-3, cache = TRUE}
+```{r e4m7-3, dev = "png", cache = TRUE}
 library(gganimate)
 
 weight_seq <- tibble(weight = seq(25, 70, length.out = 100)) %>%
