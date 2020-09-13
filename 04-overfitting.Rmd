@@ -109,9 +109,9 @@ $$
 \text{lppd}(y,\Theta) = \sum_i\log\frac{1}{S}\sum_sp(y_i|\Theta_s)
 $$
 
-In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a larger log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent. More observations are entered into the sum, leading to a larger final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets, estiamte a linear model, and then calculate the LPPD, WAIC, and PSIS for each.
+In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a smaller log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent (i.e., when the LPPD values are negative, the sum will get more negative as the sample size increases). More observations are entered into the sum, leading to a smaller final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets, estimate a linear model, and then calculate the LPPD, WAIC, and PSIS for each.
 
-```{r e7m3-1}
+```{r e7m3-1, cache = TRUE}
 set.seed(2020)
 
 sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
@@ -119,7 +119,7 @@ sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
     sample_data = map(sample_size,
                       function(n) {
                         tibble(x1 = rnorm(n = n)) %>%
-                          mutate(y = rnorm(n = n, mean = 0.8 * x1),
+                          mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1),
                                  across(everything(), standardize))
                       }),
     model = map(sample_data,
@@ -145,7 +145,7 @@ sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
 sample_sim
 ```
 
-Now, we can visualize the distribution
+Now, we can visualize the distribution of the LPPD, WAIC, and PSIS. As predicted, the LPPD gets more negative as the sample size increases, even though the data generation process and estimated model are identical. Accordingly, the WAIC and PSIS increase. Note that the WAIC and PSIS values are approximately $-2 \times \text{lppd}$. Thus, if we fit one model with 100 observations and second model with 1,000 observations, we might conclude from the WAIC and PSIS that the first model with 100 observations has much better predictive accuracy, because the WAIC and PSIS values are lower. However, this would be only an artifact of different sample sizes, and may not actually represent true differences between the models.
 
 ```{r e7m3-2}
 sample_sim %>%
@@ -155,16 +155,69 @@ sample_sim %>%
          name = str_to_upper(name),
          name = fct_inorder(name)) %>%
 ggplot(aes(x = value)) +
-  facet_grid(rows = vars(sample_size), cols = vars(name)) +
-  geom_histogram(aes(y = stat(density))) +
+  facet_grid(rows = vars(sample_size), cols = vars(name), scales = "free_x") +
+  geom_histogram(aes(y = stat(density)), binwidth = 50) +
   labs(x = "Value", y = "Density") +
   theme(panel.border = element_rect(fill = NA))
 ```
 
-
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
 
+```{r e7m4-1, eval = FALSE}
+set.seed(2020)
 
+prior_sim <- tibble(prior_sd = rep(c(0.1, 1, 10), each = 100)) %>%
+  mutate(
+    sample_data = map(1:n(),
+                      function(x) {
+                        n <- 20
+                        tibble(x1 = rnorm(n = n),
+                               x2 = rnorm(n = n),
+                               x3 = rnorm(n = n)) %>%
+                          mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1 +
+                                             0.6 * x2 + 1.2 * x3),
+                                 across(everything(), standardize))
+                      }),
+    model = map2(sample_data, prior_sd,
+                function(df, p_sd) {
+                  mod <- brm(y ~ 1 + x1 + x2 + x3, data = df,
+                             family = gaussian,
+                             prior = c(prior(normal(0, 0.2), class = Intercept),
+                                       prior_string(glue("normal(0, {p_sd})"), class = "b"),
+                                       prior(exponential(1), class = sigma)),
+                             iter = 4000, warmup = 3000, chains = 4, cores = 4,
+                             seed = 1234)
+                  return(mod)
+                }),
+    infc = map(model,
+               function(mod) {
+                 w <- suppressWarnings(brms::waic(mod))
+                 p <- suppressWarnings(brms::loo(mod))
+                 
+                 tibble(p_waic = w$estimates["p_waic", "Estimate"],
+                        p_loo = p$estimates["p_loo", "Estimate"])
+               })) %>%
+  unnest(infc)
+```
+
+```{r e7m4-2, include = FALSE, cache = TRUE}
+prior_sim <- read_rds(here("fits", "chp7", "sim-7m4.rds"))
+```
+
+
+```{r e7m3-2}
+prior_sim %>%
+  pivot_longer(cols = c(p_waic, p_psis)) %>%
+  mutate(prior_sd = glue("sd = {prior_sd}"),
+         prior_sd = fct_inorder(prior_sd),
+         name = str_to_upper(name),
+         name = fct_inorder(name)) %>%
+ggplot(aes(x = value)) +
+  facet_grid(rows = vars(prior_sd), cols = vars(name)) +
+  geom_histogram(aes(y = stat(density))) +
+  labs(x = "Value", y = "Density") +
+  theme(panel.border = element_rect(fill = NA))
+```
 
 > **7M5.** Provide an informal explanation of why informative priors reduce overfitting.
 
