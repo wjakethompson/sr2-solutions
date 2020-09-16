@@ -463,6 +463,275 @@ loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "waic")
 loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
 ```
 
+> **7H3.** Consider three fictional Polynesian islands. On each there is a Royal Ornithologist charged by the king with surveying the bird population. They have each found the following proportions of 5 important bird species:
+
+```{r e7h3-intro, message = FALSE, echo = FALSE}
+library(kableExtra)
+tibble(island = paste("Island", 1:3),
+       a = c(0.2, 0.8, 0.05),
+       b = c(0.2, 0.1, 0.15),
+       c = c(0.2, 0.05, 0.7),
+       d = c(0.2, 0.025, 0.05),
+       e = c(0.2, 0.025, 0.05)) %>%
+  mutate(across(where(is.double), fmt_prop, digits = 3)) %>%
+  kbl(align = c("l", rep("c", 5)), linesep = "",
+      col.names = c(" ", paste("Species", LETTERS[1:5]))) %>%
+  kable_styling()
+```
+
+> Notice that each row sums to 1, all the birds. This problem has two parts. It is not computationally complicated. But it is conceptually tricky. First, compute the entropy of each island's bird distribution. Interpret these entropy values. Second, use each island's bird distribution to predict the other two. This means to compute the KL divergence of each island from the others, treating each island as if it were a statistical model of the other islands. You should end up with 6 different KL divergence values. Which island predicts the others best? Why?
+
+First, lets compute the entropy for each each island.
+
+```{r e7h3-1}
+islands <- tibble(island = paste("Island", 1:3),
+       a = c(0.2, 0.8, 0.05),
+       b = c(0.2, 0.1, 0.15),
+       c = c(0.2, 0.05, 0.7),
+       d = c(0.2, 0.025, 0.05),
+       e = c(0.2, 0.025, 0.05)) %>%
+  pivot_longer(-island, names_to = "species", values_to = "prop")
+
+islands %>%
+  group_by(island) %>%
+  summarize(prop = list(prop), .groups = "drop") %>%
+  mutate(entropy = map_dbl(prop, calc_entropy))
+```
+
+The first island has the highest entropy. This is expected, because it has the most even distribution of bird species. All species are equally likely, so the observation of any one species is not surprising. In contrast, Island 2 has the lowest entropy. This is because the vast majority of birds on this island are Species A. Therefore, observing a bird that is not from Species A would be surprising.
+
+For the second part of the question, we need to compute the KL divergence for each pair of islands. The KL divergence is defined as:
+
+$$
+D_{KL} = \sum_i p_i(\log(p_i) - \log(q_i))
+$$
+We'll write a function to do this calculation.
+
+```{r e7h3-2}
+d_kl <- function(p, q) {
+  sum(p * (log(p) - log(q)))
+}
+```
+
+Now, let's calculate $D_{KL}$ for each set of islands.
+
+```{r e7h3-3}
+crossing(model = paste("Island", 1:3),
+         predicts = paste("Island", 1:3)) %>%
+  filter(model != predicts) %>%
+  left_join(islands, by = c("model" = "island")) %>%
+  rename(model_prop = prop) %>%
+  left_join(islands, by = c("predicts" = "island", "species")) %>%
+  rename(predict_prop = prop) %>%
+  group_by(model, predicts) %>%
+  summarize(q = list(model_prop),
+            p = list(predict_prop),
+            .groups = "drop") %>%
+  mutate(kl_distance = map2_dbl(p, q, d_kl))
+```
+
+These results show us that when using Island 1 to predict Island 2, the KL divergence is about 0.87. When we use Island 1 to predict Island 3, the KL divergence is about 0.63, and so on. Overall, the distances are shorter when we used Island 1 as the model. This is because Island 1 has the highest entropy. Thus, we are less surprised by the other islands, so there's a shorter distance. In contrast, Island 2 and Island 3 have very concentrated distributions, so predicting the other islands leads to more surprises, and therefore greater distances.
+
+> **7H4.** Recall the marriage, age, and happiness collider bias example from Chapter 6. Run models `m6.9` and `m6.10` again (page 178). Compare these two models using WAIC (or PSIS, they will produce identical results). Which model is expected to make better predictions? Which model provides the correct causal inference about the influence of age on happiness? Can you explain why the answers to these two questions disagree?
+
+As a reminder, here is the DAG for this example, where $H$ is happiness, $M$ is marriage, and $A$ is age.
+
+```{r e7h4-1, message = FALSE, out.width = "40%"}
+library(dagitty)
+library(ggdag)
+
+hma_dag <- dagitty("dag{H -> M <- A}")
+coordinates(hma_dag) <- list(x = c(H = 1, M = 2, A = 3),
+                             y = c(H = 1, M = 1, A = 1))
+
+ggplot(hma_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+First, let's regenerate the data and estimate the models.
+
+```{r e7h4-2, cache = TRUE}
+d <- sim_happiness(seed = 1977, N_years = 1000)
+dat <- d %>%
+  filter(age > 17) %>%
+  mutate(a = (age - 18) / (65 - 18),
+         mid = factor(married + 1, labels = c("single", "married")))
+
+b6.9 <- brm(happiness ~ 0 + mid + a, data = dat, family = gaussian,
+            prior = c(prior(normal(0, 1), class = b, coef = midmarried),
+                      prior(normal(0, 1), class = b, coef = midsingle),
+                      prior(normal(0, 2), class = b, coef = a),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp7", "b7h4-6.9"))
+
+b6.10 <- brm(happiness ~ 1 + a, data = dat, family = gaussian,
+             prior = c(prior(normal(0, 1), class = Intercept),
+                       prior(normal(0, 2), class = b, coef = a),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp7", "b7h4-6.10"))
+```
+
+For the model comparison we'll use PSIS.
+
+```{r e7h4-3}
+b6.9 <- add_criterion(b6.9, criterion = "loo")
+b6.10 <- add_criterion(b6.10, criterion = "loo")
+
+loo_compare(b6.9, b6.10)
+```
+
+PSIS shows a strong preference for `b6.9`, which is the model that includes both age and marriage status. However, `b6.10` provides the correct causal inference, as no additional conditioning is needed.
+
+```{r e7h4-4}
+adjustmentSets(hma_dag, exposure = "A", outcome = "H")
+```
+
+The reason is that in this model, marital status is a collider. Adding this variable to the model add a real statistical association between happiness and age, which improves the predictions that are made. However, the association is not causal, so intervening on age (if that were possible), would not actually change happiness. Therefore it's important to consider the causal implications of your model before selecting one based on PSIS or WAIC alone.
+
+> **7H5.** Revisit the urban fox data, `data(foxes)`, from the previous chapter's practice problems. Use WAIC or PSIS based model comparison on five different models, each using `weight` as the outcome, and containing these sets of predictor variables:  
+> (1) `avgfood + groupsize + area`  
+> (2) `avgfood + groupsize`  
+> (3) `groupsize + area`  
+> (4) `avgfood`  
+> (5) `area`  
+> Can you explain the relative differences in WAIC scores, using the fox DAG from teh previous chapter? Be sure to pay attention to teh standard error of the score differences (`dSE`).
+
+First, let's estimate the five models.
+
+```{r e7h5-1}
+data(foxes)
+
+fox_dat <- foxes %>%
+  as_tibble() %>%
+  select(area, avgfood, weight, groupsize) %>%
+  mutate(across(everything(), standardize))
+
+b7h5_1 <- brm(weight ~ 1 + avgfood + groupsize + area, data = fox_dat,
+              family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp7", "b7h5_1"))
+
+b7h5_2 <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
+              family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp7", "b7h5_2"))
+
+b7h5_3 <- brm(weight ~ 1 + groupsize + area, data = fox_dat,
+              family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp7", "b7h5_3"))
+
+b7h5_4 <- brm(weight ~ 1 + avgfood, data = fox_dat,
+              family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp7", "b7h5_4"))
+
+b7h5_5 <- brm(weight ~ 1 + area, data = fox_dat,
+              family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp7", "b7h5_5"))
+```
+
+Then we can calculate the WAIC for each model and the model comparisons.
+
+```{r e7h5-2, warning = FALSE}
+b7h5_1 <- add_criterion(b7h5_1, criterion = "waic")
+b7h5_2 <- add_criterion(b7h5_2, criterion = "waic")
+b7h5_3 <- add_criterion(b7h5_3, criterion = "waic")
+b7h5_4 <- add_criterion(b7h5_4, criterion = "waic")
+b7h5_5 <- add_criterion(b7h5_5, criterion = "waic")
+
+comp <- loo_compare(b7h5_1, b7h5_2, b7h5_3, b7h5_4, b7h5_5, criterion = "waic")
+comp
+```
+
+Overall, the WAIC values are very similar, and the differences all fall within the 99% intervals for the differences. 
+
+```{r e7h5-3, echo = FALSE}
+plot_comp <- comp %>%
+  as_tibble(rownames = "model") %>%
+  mutate(across(-model, as.numeric),
+         model = factor(model, levels = paste0("b7h5_", 1:5)))
+
+waic_val <- plot_comp %>%
+  select(model, waic, se = se_waic) %>%
+  mutate(lb = waic - (se * 2.6),
+         ub = waic + (se * 2.6),
+         type = "waic")
+
+diff_val <- plot_comp %>%
+  select(model, waic, se = se_diff) %>%
+  mutate(se = se * 2) %>%
+  mutate(lb = waic - (se * 2.6),
+         ub = waic + (se * 2.6),
+         type = "diff") %>%
+  filter(se != 0)
+
+all_val <- bind_rows(waic_val, diff_val)
+
+ggplot() +
+  geom_pointrange(data = waic_val, mapping = aes(x = waic, xmin = lb, xmax = ub,
+                                                 y = fct_rev(model))) +
+  geom_pointrange(data = diff_val, mapping = aes(x = waic, xmin = lb, xmax = ub,
+                                                 y = fct_rev(model)),
+                  position = position_nudge(y = 0.2), shape = 2,
+                  color = palette_okabeito[2]) +
+  labs(x = "Deviance", y = NULL)
+```
+
+However, there does seem to be two groups of model: `b7h5_1`, `b7h5_2`, and `b7h5_3` are all nearly identical; and `b7h5_4` and `b7h5_5` are nearly identical. To understand why this is, we can return to the DAG for this example.
+
+```{r e7h5-fox-dag, out.width = "40%", echo = FALSE}
+suppressPackageStartupMessages(library(tidygraph))
+suppressPackageStartupMessages(library(ggraph))
+
+fox_dag <- dagitty("dag{ area -> avgfood -> groupsize -> weight <- avgfood }")
+coordinates(fox_dag) <- list(x = c(area = 2, avgfood = 1, weight = 2,
+                                   groupsize = 3),
+                             y = c(area = 3, avgfood = 2, weight = 1,
+                                   groupsize = 2))
+
+fox_dag %>%
+  tidy_dagitty() %>%
+  as_tbl_graph() %>%
+  mutate(x = c(2, 1, 3, 2),
+         y = c(3, 2, 2, 1)) %>%
+  ggraph(x = x, y = y) +
+  geom_node_text(aes(label = name), color = "black", size = 10) + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name, fontsize = 30),
+                     end_cap = label_rect(node2.name, fontsize = 30)),
+                 edge_color = "black", edge_width = 2,
+                 arrow = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  expand_limits(x = c(0.75, 3.25), y = c(0.9)) +
+  theme_graph()
+```
+
+The first three models (`b7h5_1`, `b7h5_2`, and `b7h5_3`) all contains `groupsize` and one or both of `area` and `avgfood`. The reason these models is the same is that there are no back-door path from `area` or `avgfood` to `weight`. In other words, the effect of `area` adjusting for `groupsize` is the same as the effect of `avgfood` adjusting for `groupsize`, because the effect of `area` is routed entirely through `avgfood`.
+
+Similarly, the last two models (`b7h5_4` and `b7h5_5`) are also nearly identical because of the relationship of `area` to `avgfood`. Because the effect of `area` is routed entirely through `avgfood`, including only `avgfood` or `area` should result in the same inferences.
+
 ## Session Info {-}
 
 <details><summary>View the session information used to render this week.</summary>
