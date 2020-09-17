@@ -16,13 +16,15 @@ Lecture 6:
 
 ### Chapter 5
 
-> **5E1.** Which of the linear models below are multiple linear regressions?
+:::question
+**5E1.** Which of the linear models below are multiple linear regressions?
 \begin{align}
   (1)\ \ \mu_i &= \alpha + \beta x_i \\
   (2)\ \ \mu_i &= \beta_x x_i + \beta_z z_i \\
   (3)\ \ \mu_i &= \alpha + \beta(x_i - z_i) \\
   (4)\ \ \mu_i &= \alpha + \beta_x x_i + \beta_z z_i
 \end{align}
+:::
 
 Numbers 2 and 4 are multiple regressions. Number 1 contains only one predictor variable. Number 3, although two variables appear in the model, also only uses the difference of $x$ and $z$ as a single predictor. Only numbers 2 and 4 contain multiple predictor variables.
 

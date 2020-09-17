@@ -86,3 +86,13 @@ pre {
 pre code {
   white-space: inherit;
 }
+
+/* -----------div tips------------- */
+
+div.question {
+  padding: 1em;
+  margin: 1em 0;
+  color: #272727;
+  /* background-color: #BFF0FF; */
+    background-color: #ADF4FF;
+}

@@ -20,11 +20,13 @@ There are no exercises for Chapter 1.
 
 ### Chapter 2
 
-> **2E1.** Which of the expressions below correspond to the statement: *the probability of rain on Monday*?  
->   (1) Pr(rain)  
->   (2) Pr(rain|Monday)  
->   (3) Pr(Monday|rain)  
->   (4) Pr(rain, Monday) / Pr(Monday)  
+:::question
+**2E1.** Which of the expressions below correspond to the statement: *the probability of rain on Monday*?  
+    (1) Pr(rain)  
+    (2) Pr(rain|Monday)  
+    (3) Pr(Monday|rain)  
+    (4) Pr(rain, Monday) / Pr(Monday)  
+:::
 
 I take this question to mean the probability of rain given that it is Monday. That means both (2) and (4) are correct.
 
