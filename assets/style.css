@@ -63,7 +63,7 @@ li.chapter, h1, h2, h3 {
 
 /* ---------- Code Chunks ---------- */
 .sourceCode {
-  margin-bottom: 0.85em; /* adds same amount of margin as a <p> would */
+  margin-bottom: 0.85em;
 }
 
 .sourceCode pre {
@@ -85,4 +85,60 @@ pre {
 }
 pre code {
   white-space: inherit;
+}
+
+/* -----------div tips------------- */
+
+div.question {
+  padding: 1em 1em 0.15em 1em;
+  margin: 1em 0;
+  color: #272727;
+  background-color: #d6faff;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question blockquote {
+  margin-bottom: 0;
+  padding-bottom: 0.01em;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  color: #272727;
+  opacity: 1;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question blockquote:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  color: #272727;
+  opacity: 1;
+}
+
+div.question .sourceCode {
+  margin-bottom: 0;
+  margin-top: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  padding: 0 0 0.85em 0.85em;
+}
+
+div.question.code-question .sourceCode {
+  margin-bottom: 0.85em;
+  margin-top: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  padding: 0 0 0 0.85em;
+}
+
+div.table-question {
+  padding-left: 0.85em;
+  border-left: 4px solid #009fb7;
+}
+
+div.question.code-question div.table-question {
+  padding-bottom: 0.01em;
 }

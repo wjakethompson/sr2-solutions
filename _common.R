@@ -4,6 +4,7 @@ options(digits = 3,
 
 suppressPackageStartupMessages(library(rethinking))
 suppressPackageStartupMessages(library(brms))
+suppressPackageStartupMessages(library(loo))
 suppressPackageStartupMessages(library(tidybayes))
 suppressPackageStartupMessages(library(tidybayes.rethinking))
 suppressPackageStartupMessages(library(tidyverse))
@@ -18,9 +19,21 @@ knitr::opts_chunk$set(
   comment = "#>",
   collapse = TRUE,
   cache = FALSE,
-  out.width = "70%",
+  dev = "ragg_png",
+  dpi = 96L,
+  fig.ext = "png",
+  fig.width = 700 / 96,
+  fig.retina = 3L,
+  fig.asp = 1 / 1.618,
+  fig.show = "hold",
   fig.align = "center",
-  fig.width = 6,
-  fig.asp = 0.618,
-  fig.show = "hold"
+  out.width = "70%"
 )
+
+knitr::knit_hooks$set(wrap = function(before, options, envir){
+  if (before){
+    paste0('<div class="', options$wrap, '">')
+  } else {
+    paste0('</div>')
+  }
+})
