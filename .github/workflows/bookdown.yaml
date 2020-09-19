@@ -1,6 +1,10 @@
 on:
   push:
-    branches: main
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 name: bookdown
 
@@ -18,9 +22,7 @@ jobs:
         uses: r-lib/actions/setup-r@master
 
       - name: Install pandoc and pandoc citeproc
-        run: |
-          brew install pandoc
-          brew install pandoc-citeproc
+        uses: r-lib/actions/setup-pandoc@master
       
       - name: Cache Renv packages
         uses: actions/cache@v1
@@ -42,6 +44,11 @@ jobs:
         run: |
           if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
           renv::restore()
+          
+      - name: Configure Git user
+        run: |
+          git config --local user.name "$GITHUB_ACTOR"
+          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
           
       - name: Build site
         run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
