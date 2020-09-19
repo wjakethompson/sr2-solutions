@@ -16,7 +16,9 @@ Lecture 8:
 
 ### Chapter 7
 
+:::question
 > **7E1.** State the three motivating criteria that define information entropy. Try to express each in your own words.
+:::
 
 Information is defined as *the reduction in uncertainty when we learn and outcome*. The motivating criteria for defining information entropy revolve around the measure of uncertainty that is used to derive information.
 
@@ -28,7 +30,9 @@ The third and final criteria is that the measure of uncertainty should be additi
 
 Information entropy is the only function that satisfies all three criteria.
 
+:::question
 > **7E2.** Suppose a coin is weighted such that, when it is tossed and lands on a table, it comes up heads 70% of the time. What is the entropy of this coin?
+:::
 
 Entropy is the average log-probability of an event. The formula is given as
 
@@ -56,7 +60,9 @@ probs <- c(0.7, 0.3)
 calc_entropy(probs)
 ```
 
+:::question
 > **7E3.** Suppose a four-sided die is loaded such that, when tossed onto a table, it shows "1" 20%, "2" 25%, "3" 25%, and "4" 30% of the time. What is the entropy of this die?
+:::
 
 Now we have four outcomes. We can reuse our code from above, substituting the new probabilities into the vector `probs`. This results in an entropy of about 1.38. As expected, because there are now more outcomes, the entropy is higher than what was observed in the previous problem.
 
@@ -65,7 +71,9 @@ probs <- c(0.20, 0.25, 0.25, 0.30)
 calc_entropy(probs)
 ```
 
+:::question
 > **7E4.** Suppose another four-sided die is loaded such that it never shows "4." The other three sides show equally often. What is the entropy of this die?
+:::
 
 Again, we can copy our code from above, replace the probabilities. Even though there are four outcomes specified, there are effectively three outcomes, as the outcome "4" has probability 0. Thus, we would expect entropy to decrease, as there are fewer possible outcomes than in the previous problem. This is indeed what we find, as this die's entropy is about 1.1.
 
@@ -77,7 +85,9 @@ probs
 calc_entropy(probs)
 ```
 
+:::question
 > **7M1.** Write down and compare the definitions of AIC and WAIC. Which of these criteria is most general? Which assumptions are required to transform the more general criterion into a less general one?
+:::
 
 The AIC is defined as follows, where $\text{lppd}$ is the log-pointwise-predictive density, and $p$ is the number of free parameters in the posterior distribution.
 
@@ -95,13 +105,17 @@ If we distribute the $-2$ through, this looks remarkably similar to the AIC form
 
 The WAIC is more general than the AIC, as the AIC assumes that priors are flat or overwhelmed by the likelihood, the posterior distribution is approximately multivariate Gaussian, and the sample size is much greater than the number of parameters. If all of these assumptions are met, then we would expect the AIC and WAIC to be about the same.
 
+:::question
 > **7M2.** Explain the difference between model *selection* and model *comparison*. What information is lost under model selection?
+:::
 
 Model selection refers to just picking the model that has the lowest (i.e., best) criterion value and discarding other models. When we take this approach, we lose information about the relative model accuracy that can be seen across the criterion values for the candidate models. This information can inform how confident we are in the models. Additionally, the model selection paradigm cares only about predictive accuracy and ignores causal inference. Thus, a model may be selected that has confounds or that would not correctly inform an intervention.
 
 In contrast, model comparison uses multiple models to understand how the variables included influence prediction and affect implied conditional independencies in a causal model. Thus, we preserve information and can make more holistic judgments about our data and models.
 
+:::question
 > **7M3.** When comparing models with an information criterion, why must all models be fit to exactly the same observations? What would happen to the information criterion values, if the models were fit to different numbers of observations? Perform some experiments, if you are not sure.
+:::
 
 All of the information criteria are defined based on the log-pointwise-predictive density, defined as follows, where $y$ is the data, $\Theta$ is the posterior distribution, $S$ is the number of samples, and $I$ is the number of samples.
 
@@ -163,7 +177,9 @@ ggplot(aes(x = value)) +
   theme(panel.border = element_rect(fill = NA))
 ```
 
+:::question
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
+:::
 
 The penalty term of the WAIC, $p_{\Tiny\text{WAIC}}$ is defined as shown in the WAIC formula. Specifically, the penalty term is sum of the variances of the log probabilities for each observation.
 
@@ -231,15 +247,21 @@ ggplot(aes(x = value)) +
   theme(panel.border = element_rect(fill = NA))
 ```
 
+:::question
 > **7M5.** Provide an informal explanation of why informative priors reduce overfitting.
+:::
 
 Informative priors restrict the plausible values for parameters. By using informative priors, we can limit the values of parameters to values that are reasonable, given our scientific knowledge. Thus, we can keep the model from learning too much from our specific sample.
 
+:::question
 > **7M6.** Provide an informal explanation of why overly informative priors result in underfitting.
+:::
 
 In contrast to the previous question, making the prior too informative can be too restrictive on the parameter space. This prevents our model from learning enough from our sample. We basically just get our prior distributions back, without learning anything from the data that could help make future predictions.
 
+:::question
 > **7H1.** In 2007, *The Wall Street Journal* published an editorial ("We're Number One, Alas") with a graph of corportate tax rates in 29 countries plotted against tax revenue. A badly fit curve was drawn in (reconstructed at right), seemingly by hand, to make the argument that the relationship between tax rate and tax revenue increases and then declines, such that higher tax rates can actually produce less tax revenue. I want you to actually fit a curve to these data, found in `data(Laffer)`. Consider models that use tax rate to predict tax revenue. Compare, using WAIC or PSIS, a straight-line model to any curved models you like. What do you conclude about the relationship between tax rate and tax revenue.
+:::
 
 First, let's standardize the data and fit a straight line, a quadratic line, and a spline model.
 
@@ -340,9 +362,11 @@ loo_compare(laf_line, laf_quad, laf_spln, criterion = "waic")
 loo_compare(laf_line, laf_quad, laf_spln, criterion = "loo")
 ```
 
+:::question
 > **7H2.** In the `Laffer` data, there is one country with a high tax revenue that is an outlier. Use PSIS and WAIC to measure the importance of this outlier in the models you fit in the previous problem. Then use robust regression with a Student's t distribution to revist the curve fitting problem. How much does a curved relationship depend upon the outlier point.
+:::
 
-Because I used `brms::brm()` to estimate the models, we can use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models, and observation 1 is also problematic in the spline model.
+Because I used `brms::brm()` to estimate the models, we can't use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models, and observation 1 is also problematic in the spline model.
 
 ```{r e7h2-1}
 library(gghighlight)
@@ -453,19 +477,20 @@ The prediction intervals are a little bit narrower, which makes sense as the pre
 
 ```{r 7h2-4}
 laf_line2 <- add_criterion(laf_line2, criterion = c("loo", "waic"),
-                           overwrite = TRUE, force_save = TRUE)
+                           overwrite = TRUE)
 laf_quad2 <- add_criterion(laf_quad2, criterion = c("loo", "waic"),
-                           overwrite = TRUE, force_save = TRUE)
+                           overwrite = TRUE)
 laf_spln2 <- add_criterion(laf_spln2, criterion = c("loo", "waic"),
-                           overwrite = TRUE, force_save = TRUE)
+                           overwrite = TRUE)
 
 loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "waic")
 loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
 ```
 
+:::{.question .code-question}
 > **7H3.** Consider three fictional Polynesian islands. On each there is a Royal Ornithologist charged by the king with surveying the bird population. They have each found the following proportions of 5 important bird species:
 
-```{r e7h3-intro, message = FALSE, echo = FALSE}
+```{r e7h3-intro, message = FALSE, echo = FALSE, wrap = "table-question"}
 library(kableExtra)
 tibble(island = paste("Island", 1:3),
        a = c(0.2, 0.8, 0.05),
@@ -480,6 +505,7 @@ tibble(island = paste("Island", 1:3),
 ```
 
 > Notice that each row sums to 1, all the birds. This problem has two parts. It is not computationally complicated. But it is conceptually tricky. First, compute the entropy of each island's bird distribution. Interpret these entropy values. Second, use each island's bird distribution to predict the other two. This means to compute the KL divergence of each island from the others, treating each island as if it were a statistical model of the other islands. You should end up with 6 different KL divergence values. Which island predicts the others best? Why?
+:::
 
 First, lets compute the entropy for each each island.
 
@@ -532,7 +558,9 @@ crossing(model = paste("Island", 1:3),
 
 These results show us that when using Island 1 to predict Island 2, the KL divergence is about 0.87. When we use Island 1 to predict Island 3, the KL divergence is about 0.63, and so on. Overall, the distances are shorter when we used Island 1 as the model. This is because Island 1 has the highest entropy. Thus, we are less surprised by the other islands, so there's a shorter distance. In contrast, Island 2 and Island 3 have very concentrated distributions, so predicting the other islands leads to more surprises, and therefore greater distances.
 
+:::question
 > **7H4.** Recall the marriage, age, and happiness collider bias example from Chapter 6. Run models `m6.9` and `m6.10` again (page 178). Compare these two models using WAIC (or PSIS, they will produce identical results). Which model is expected to make better predictions? Which model provides the correct causal inference about the influence of age on happiness? Can you explain why the answers to these two questions disagree?
+:::
 
 As a reminder, here is the DAG for this example, where $H$ is happiness, $M$ is marriage, and $A$ is age.
 
@@ -594,13 +622,17 @@ adjustmentSets(hma_dag, exposure = "A", outcome = "H")
 
 The reason is that in this model, marital status is a collider. Adding this variable to the model add a real statistical association between happiness and age, which improves the predictions that are made. However, the association is not causal, so intervening on age (if that were possible), would not actually change happiness. Therefore it's important to consider the causal implications of your model before selecting one based on PSIS or WAIC alone.
 
+:::question
 > **7H5.** Revisit the urban fox data, `data(foxes)`, from the previous chapter's practice problems. Use WAIC or PSIS based model comparison on five different models, each using `weight` as the outcome, and containing these sets of predictor variables:  
+
 > (1) `avgfood + groupsize + area`  
 > (2) `avgfood + groupsize`  
 > (3) `groupsize + area`  
 > (4) `avgfood`  
 > (5) `area`  
-> Can you explain the relative differences in WAIC scores, using the fox DAG from teh previous chapter? Be sure to pay attention to teh standard error of the score differences (`dSE`).
+
+> Can you explain the relative differences in WAIC scores, using the fox DAG from the previous chapter? Be sure to pay attention to the standard error of the score differences (`dSE`).
+:::
 
 First, let's estimate the five models.
 
