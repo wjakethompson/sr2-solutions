@@ -18,6 +18,10 @@ Lecture 10:
 
 Coming soon.
 
-## Homework
+## Session Info {-}
 
-Coming soon.
+<details><summary>View the session information used to render this week.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>
