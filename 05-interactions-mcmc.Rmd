@@ -16,7 +16,72 @@ Lecture 10:
 
 ### Chapter 8
 
-Coming soon.
+:::question
+> **8E1.** For each of the causal relationships below, name a hypothetical third variable that would lead to an interaction effect.
+
+> (1) Bread dough rises because of yeast.
+> (2) Education leads to higher income.
+> (3) Gasoline makes a car go.
+:::
+
+For the first, the amount of heat can moderate the relationship between yeast and the amount the dough rises. In the second example, ethnicity may give rise to an interaction, as individuals of some races face more systemic challenges (i.e., it's easier for white people with low education to get a job than people of color). Thus, education may have more of an effect for minorities. Finally, a car also requires wheels. Wheels with no gas and gas with no wheels both prevent the car from moving; only with both will the car go.
+
+:::question
+> **8E2.** Which of the following explanations invokes an interaction?
+
+> (1) Caramelizing onions requires cooking over low heat and making sure the onions do not dry out.
+> (2) A car will go faster when it has more cylinders or when it has better fuel injector.
+> (3) Most people acquire their political beliefs from their parents, unless they get them instead from their friends.
+> (4) Intelligent animal species tend to be either highly social or have manipulative appendages (hands, tentacles, etc.).
+:::
+
+The first example invokes an interaction. The caramelization depends on both heat and moisture, but heat will also impact the moisture level.
+
+I have minimal car knowledge, but I presume that a good fuel injector with a 6 cylinder engine is better than a poor fuel injector with a 6 cylinder engine. The impact of cylinders would depend on the fuel injector. Similarly the effect of the fuel injector may depend on the number of cylinders. This would be an interaction.
+
+In the third example, it appears as though there are three important predictors: your parents political beliefs, your friends political beliefs, and how political your friends are. The description implies an interaction between how political your friends are and your parents political beliefs. As your friends become more political, the influence of your parents political beliefs decreases.
+
+Finally, without any expertise in the domain area, I have no reason to think that sociability would influence the effect of appendages on intelligence, or that appendages would influence the effect of sociability on intelligence. This implies no interaction.
+
+:::question
+> **8E3.** For each of the explanations in **8E2**, write a linear model that expresses the stated relationship.
+:::
+
+For onion caramelization, the mathematical model is:
+
+$$
+\begin{align}
+C_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_HH_i + \beta_MM_i + \beta_{HM}H_iM_i
+\end{align}
+$$
+
+The mathematical model for car speed is very similar:
+
+$$
+\begin{align}
+S_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_CC_i + \beta_FF_i + \beta_{CF}C_iF_i
+\end{align}
+$$
+
+The third model we are predicting political beliefs ($B$) from parents' political beliefs ($P$), friends political beliefs ($F$), how political your friends are ($H$), and the interaction be $P$ and $H$.
+
+$$
+\begin{align}
+B_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_PP_i + \beta_FF_i + \beta_HH_i + \beta_{PH}P_iH_i
+\end{align}
+$$
+
+The fourth model is a simple regression with no interaction.
+
+$$
+\begin{align}
+I_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_SS_i + \beta_AA_i
+\end{align}
+$$
 
 ## Session Info {-}
 
