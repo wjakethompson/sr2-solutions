@@ -142,3 +142,15 @@ div.table-question {
 div.question.code-question div.table-question {
   padding-bottom: 0.01em;
 }
+
+div.question.return {
+  background-color: #ffd6d6;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question.return blockquote {
+  border-left-color: #ff0000;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question.return blockquote:last-child {
+  border-left-color: #ff0000;
+}

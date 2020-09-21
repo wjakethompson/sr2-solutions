@@ -83,6 +83,155 @@ I_i &\sim \text{Normal}(\mu_i, \sigma) \\
 \end{align}
 $$
 
+:::question
+> **8M1.** Recall the tulips example from the chapter. Suppose another set of treatments adjusted the temperature in the greenhouse over two levels: cold and hot. The data in the chapter were collected at the cold temperature. You find none of the plants grown under the hot temperature developed any blooms at all, regardless of teh water and shade levels. Can you explain this result in terms of interactions between water, shade, and temperature?
+:::
+
+In the chapter example, we saw that at cool temperatures, the blooms were best predicted by water, shade, and their interaction. Here, we learn that neither water nor light matter at a high temperature. This implies a three-way interaction. Just as in the chapter where water had no effect when there was no light, we see that neither water nor light have an effect when temperature is high.
+
+:::question
+> **8M2.** Can you invent a regression equation that would make the bloom size zero, whenever the temperature is hot?
+:::
+
+For this model, we can use the interaction model from the chapter with an additional predictor ($C$) that is 0 when the temperature is hot and 1 when the temperature is cold.
+
+$$
+\begin{align}
+B_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= C_i \times (\alpha + \beta_WW_i + \beta_SS_i + \beta_{WS}W_iS_i)
+\end{align}
+$$
+
+:::question
+> **8M3.** In parts of North America, ravens depend upon wolves for their food. This is because ravens are carnivorous but cannot usually kill or open carcasses of prey. Wolves however can and do kill and tear open animals, and they tolerate ravens co-feeding at their kills. This species relationship is generally described as a "species interaction." Can you invent a hypothetical set of data on raven population size in which this relationship would manifest as a statistical interaction? Do you think the biological interaction could be linear? Why or why not?
+:::
+
+In order to predict raven population size based on wolf population size, we should include data on the territory area for the wolves, the number of wolves, and amount of food available, and finally the number of ravens. This is similar to the types of data included in `data(foxes)`. I would expect the relationship to be non-linear. When there are no wolves, I would expect there to be no ravens. As the number of wolves increases, the number of ravens would also increase. However, eventually the number of wolves would increase to the point that the wolves exhaust the food supply, leaving no food left for the ravens, at which point the raven population would begin to shrink. Thus, if we created a counter factual plot with wolves on the x-axis and ravens on the y-axis, I would expect to see at linear trend at first, but then the raven population level off or drop when there is a large numbers of wolves.
+
+:::{.question .return}
+> **8M4.** Repeat the tulips analysis, but this time use priors that constrain the effect of water to be positive and the effect of shade to be negative. Use prior predictive simulation. What do these prior asumptions mean for the interaction prior, if anything?
+:::
+
+```{r e8m4}
+library(rethinking)
+data("tulips")
+
+tulip_dat <- tulips %>%
+  as_tibble() %>%
+  mutate(blooms_std = blooms / max(blooms),
+         water_cent = water - mean(water),
+         shade_cent = shade - mean(shade))
+
+# b8m4 <- brm(blooms_std ~ 1 + water_cent + shade_cent + water_cent:shade_cent,
+#             data = tulip_dat, family = gaussian,
+#             prior = c(prior(normal(0.5, 0.25), class = Intercept),
+#                       prior(normal(0, 0.25), class = b, coef = water_cent),
+#                       prior(normal(0, 0.25), class = b, coef = shade_cent),
+#                       prior(normal(0, 0.25), class = b,
+#                             coef = "water_cent:shade_cent"),
+#                       prior(exponential(1), class = sigma)),
+#             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234)
+```
+
+:::question
+> **8H1.** Return to the `data(tulips)` example in the chapter. Now include the `bed` variable as a predictor in the interaction model. Don't interact `bed` with the other predictors; just include it as a main effect. Note that `bed` is categorical. So to use it properly, you will need to either construct dummy variables, or rather an index variable, as explained in Chapter 5.
+:::
+
+The `bed` variable is already a factor variable in the `tulips` data, so we can just add it to the formula in `brm()`. To use indicator variables instead of a dummy variable, we remove the separate intercept (i.e., `~ 0` in the formula below).
+
+```{r e8h1}
+b8h1 <- brm(blooms_std ~ 0 + water_cent + shade_cent + bed + 
+              water_cent:shade_cent,
+            data = tulip_dat, family = gaussian,
+            prior = c(prior(normal(0.5, 1), class = b, coef = beda),
+                      prior(normal(0.5, 1), class = b, coef = bedb),
+                      prior(normal(0.5, 1), class = b, coef = bedc),
+                      prior(normal(0, 0.25), class = b, coef = water_cent),
+                      prior(normal(0, 0.25), class = b, coef = shade_cent),
+                      prior(normal(0, 0.25), class = b,
+                            coef = "water_cent:shade_cent"),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h1.rds"))
+
+summary(b8h1)
+```
+
+:::{.question .return}
+> **8H2.** Use WAIC to compare the model from **8H1** to a model that omits `bed`. What do you infer from this comparison? Can you reconcile the WAIC results with the posterior distribution of the `bed` coefficients?
+:::
+
+For the comparison, we'll compare `b8h1` to the model `b8m4`, which is the model from the chapter, with new prior distributions that constrain the main effect of water to be positive and the main effect of shade to be negative.
+
+```{r e8h2}
+b8h1 <- add_criterion(b8h1, criterion = "waic")
+```
+
+:::question
+> **8H3.** Consider again the `data(rugged)` data on economic development and terrain ruggedness, examined in this chapter. One of the African countries in that example Seychelles, is far outside the cloud of other nations, being a rare country with both relatively high GDP and high ruggedness. Seychelles is also unusual, in that it is a group of islands far from the coast of mainland Africa, and its main economic activity is tourism.
+
+> (a) Focus on model `m8.5` from the chapter. Use WAIC pointwise penalties and PSIS Pareto *k* values to measure relative influence of each country. By these criteria, is Seychelles influencing the results? Are there other nations that are relatively influential? If so, can you explain why?
+> (b) Now use robust regression, as described in the previous chapter. Modify `m8.5` to se a Student-t distribution with $\nu = 2$. Does this change the results in a substantial way?
+:::
+
+In the text, model `m8.5` uses the tulips data, so I'm assuming this is a typo and we should be looking at model `m8.3`, which is the interaction model from the terrain ruggedness example in the chapter. So, let's first create a {brms} version of model `m8.3`.
+
+```{r e8h3}
+data("rugged")
+rugged_dat <- rugged %>%
+  as_tibble() %>%
+  select(country, rgdppc_2000, rugged, cont_africa) %>%
+  drop_na(rgdppc_2000) %>%
+  mutate(log_gdp = log(rgdppc_2000),
+         log_gdp_std = log_gdp / mean(log_gdp),
+         rugged_std = rugged / max(rugged),
+         rugged_std_cent = rugged_std - mean(rugged_std),
+         cid = factor(cont_africa, levels = c(1, 0),
+                      labels = c("African", "Not African")))
+
+b8h3 <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nl = TRUE),
+  data = rugged_dat, family = gaussian,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(normal(0, 0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(normal(0, 0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "chp8", "b8h3.rds")
+)
+
+b8h3 <- add_criterion(b8h3, criterion = c("loo", "waic"), overwrite = TRUE)
+
+summary(b8h3)
+```
+
+Now let's take a look at the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values from the model.
+
+```{r}
+library(gghighlight)
+
+tibble(pareto_k = b8h3$criteria$loo$diagnostics$pareto_k,
+       p_waic = b8h3$criteria$waic$pointwise[, "p_waic"]) %>%
+  rowid_to_column(var = "obs") %>%
+  left_join(rugged_dat %>%
+              select(country) %>%
+              rowid_to_column(var = "obs"),
+            by = "obs") %>%
+  ggplot(aes(x = pareto_k, y = p_waic)) +
+  geom_vline(xintercept = 0.7, linetype = "dashed") +
+  geom_hline(yintercept = 0.4, linetype = "dashed") +
+  geom_point() +
+  gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = country,
+              label_params = list(size = 3)) +
+  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC]))
+```
+
+
+
 ## Session Info {-}
 
 <details><summary>View the session information used to render this week.</summary>
