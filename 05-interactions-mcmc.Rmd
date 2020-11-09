@@ -1,6 +1,6 @@
 # Interactions & MCMC
 
-The fifth week covers Chapter 8 (Conditional Manatees) and Chapter 9 (Markov Chain Monte Carlo). 
+The fifth week covers Chapter 8 (Conditional Manatees) and Chapter 9 (Markov Chain Monte Carlo).
 
 ## Lectures
 
