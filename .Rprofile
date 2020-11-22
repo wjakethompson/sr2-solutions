@@ -5,6 +5,8 @@ if (interactive()) {
   suppressMessages(require(testthat))
   suppressMessages(require(remotes))
   
+  suppressMessages(credentials::set_github_pat())
+  
   # add git branch to console prompt
   if (requireNamespace("prompt", quietly = TRUE)) {
     prompt_git <- function(...) {
