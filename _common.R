@@ -13,7 +13,7 @@ suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
 
-ggplot2::theme_set(theme_minimal())
+ggplot2::theme_set(ggplot2::theme_minimal())
 
 knitr::opts_chunk$set(
   comment = "#>",
