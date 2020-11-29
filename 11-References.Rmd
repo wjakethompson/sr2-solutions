@@ -25,6 +25,7 @@ read_lines("bib/pkgs.bib") %>%
   str_replace_all("gganimate:", "{gganimate}:") %>%
   str_replace_all("ggdag:", "{ggdag}:") %>%
   str_replace_all("dagitty:", "{dagitty}:") %>%
+  str_replace_all(fixed("broom.mixed:"), "{broom.mixed}:") %>%
   write_lines("bib/pkgs.bib")
 ```
 
