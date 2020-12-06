@@ -801,17 +801,17 @@
     },
     "inline": {
       "Package": "inline",
-      "Version": "0.3.16",
+      "Version": "0.3.17",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "9c4cbc9464c45e2d642eabe3d5e9789a"
+      "Hash": "c34d7560557eb0b2e1040fc690534049"
     },
     "isoband": {
       "Package": "isoband",
-      "Version": "0.2.2",
+      "Version": "0.2.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "6e58bd3d6b3dd82a944cd6f05ade228f"
+      "Hash": "53647fb507373700028b2ce6cd30751a"
     },
     "jsonlite": {
       "Package": "jsonlite",
@@ -1109,10 +1109,10 @@
     },
     "processx": {
       "Package": "processx",
-      "Version": "3.4.4",
+      "Version": "3.4.5",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "03446ed0b8129916f73676726cb3c48f"
+      "Hash": "22aab6098cb14edd0a5973a8438b569b"
     },
     "progress": {
       "Package": "progress",
@@ -1259,9 +1259,9 @@
       "RemoteHost": "api.github.com",
       "RemoteRepo": "rethinking",
       "RemoteUsername": "rmcelreath",
-      "RemoteRef": "master",
+      "RemoteRef": "HEAD",
       "RemoteSha": "3b48ec8dfda4840b9dce096d0cb9406589ef7923",
-      "Hash": "9d384553f4e18770c53a59c58b290118"
+      "Hash": "2970f35f213e75c9b482b4cf84808793"
     },
     "rex": {
       "Package": "rex",
@@ -1272,10 +1272,10 @@
     },
     "rlang": {
       "Package": "rlang",
-      "Version": "0.4.8",
+      "Version": "0.4.9",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "843a6af51414bce7f8a8e372f11d6cd0"
+      "Hash": "9d7aba7bed9a79e2403b4777428a2b12"
     },
     "rmarkdown": {
       "Package": "rmarkdown",
@@ -1504,12 +1504,12 @@
       "Version": "3.0.0.9000",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteUsername": "r-lib",
-      "RemoteRepo": "testthat",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "45a9c705402bd51af29b9d999e587ba789f6203f",
       "RemoteHost": "api.github.com",
-      "Hash": "8e08e5ceed62abe7f7e6b24f7c46ca51"
+      "RemoteRepo": "testthat",
+      "RemoteUsername": "r-lib",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "3c87d527bd545a278453981043a0ce5efe6b3a58",
+      "Hash": "a26f2ad57f6b1cad61da2befc3ed7429"
     },
     "textshaping": {
       "Package": "textshaping",
