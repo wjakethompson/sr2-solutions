@@ -334,7 +334,7 @@ fixef(b8h3_t)
 ```
 
 :::{.question .code-question}
-> **8H4.** The values in `data(nettles)` are data on language diversity in 74 nations.^[Data from @nettle1998] The meaning of each column is given below.
+> **8H4.** The values in `data(nettle)` are data on language diversity in 74 nations.^[Data from @nettle1998] The meaning of each column is given below.
 
 > (1) `country`: Name of the country
 > (2) `num.lang`: Number of recognized languages spoken
@@ -357,7 +357,360 @@ d$lang.per.cap <- d$num.lang / d$k.pop
 > (c) Finally, evaluate the hypothesis that `mean.growing.season` and `sd.growing.season` interact to synergistically reduce language diversity. The idea is that, in nations with longer average growing seasons, high variance makes storage and redistribution even more important than it would be otherwise. That way, people can cooperate to preserve and protect windfalls to be used during the droughts.
 :::
 
-First, ...
+First, let's calculate some new variables we'll need for these models. We'll also go ahead and standardize everything to make setting the priors a little bit easier.
+
+```{r e8h4-1}
+data(nettle)
+
+nettle <- nettle %>%
+  as_tibble() %>%
+  mutate(lang_per_cap = num.lang / k.pop,
+         log_lang_per_cap = log(lang_per_cap),
+         log_area = log(area),
+         lang_per_cap_std = standardize(log_lang_per_cap),
+         area_std = standardize(log_area),
+         mean_growing_std = standardize(mean.growing.season),
+         sd_growing_std = standardize(sd.growing.season))
+
+nettle
+
+summary(nettle)
+```
+
+The first model we'll fit will predict `lang_per_cap_std` from `mean_growing_std` and `area_std`. To start, we'll look at some prior predictive simulations to check our priors. After some fiddling, a `normal(0, 0.3)` prior for the predictor coefficients seems to give us plausible lines that are generally within the expected bounds.
+
+```{r e8h4-2}
+b8h4p_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_a.rds"))
+
+new_nettle <- crossing(area_std = seq(-4, 4, by = 2),
+                       mean_growing_std = seq(-4, 4, by = 1),
+                       sd_growing_std = seq(-4, 4, by = 1))
+
+fitted(b8h4p_a, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_gird = fct_inorder(sd_grid)) %>%
+  ggplot(aes(x = mean_std, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "mean growing season (standardized)")
+```
+
+Now we can estimate the full model, with the likelihood. As we can see in the model summary and in the following plot of posterior predictions, there is in fact a positive relationship between the average length of the growing season and the number of languages per capita, after controlling for the size of the country.
+
+```{r e8h4-3}
+b8h4_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_a.rds"))
+
+b8h4_a <- add_criterion(b8h4_a, criterion = c("loo", "waic"))
+summary(b8h4_a)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_a) %>%
+  group_by(mean_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         area_grid = fct_inorder(area_grid)) %>%
+  ggplot(aes(x = mean_growing_std)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "mean growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+For the second part, we replace `mean_growing_std` with `sd_growing_std`. Again, we'll first look at the prior predictive simulations. It looks like the same priors we used in the previous model will work here as well.
+
+```{r e8h4-4}
+b8h4p_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_b.rds"))
+
+fitted(b8h4p_b, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_gird = fct_inorder(sd_grid)) %>%
+  ggplot(aes(x = sd_std, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "standard deviation of length of growing season (standardized)")
+```
+
+Adding the likelihood into the model, we see the expected negative association between the standard deviation of the length of the growing season and the number of languages per capita, after controlling for the size of the country. However, when we look at the estimate for `sd_growing_std`, we see that the 95% compatibility interval ranges from -0.37 to 0.10. Thus, there is a non-negligible proportion of the posterior distribution that would result in a *positive* association between the standard deviation of the length of the growing season and language diversity. Therefore, I would not conclude from this analysis that there is indeed a negative association here.
+
+```{r e8h4-5}
+b8h4_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_b.rds"))
+
+b8h4_b <- add_criterion(b8h4_b, criterion = c("loo", "waic"))
+summary(b8h4_b)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_b) %>%
+  group_by(sd_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         area_grid = fct_inorder(area_grid)) %>%
+  ggplot(aes(x = sd_growing_std)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "standard deviation of length of growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+In the third part of the question, we are asked to add the interaction term. As with the previous two models, we'll begin by looking at the prior predictive simulations. The priors look a little too uncertain under extreme values, but maybe that isn't the worst thing as we probably should be more uncertain when observing extreme values. 
+
+```{r e8h4-6}
+b8h4p_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_c.rds"))
+
+fitted(b8h4p_c, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_grid = fct_inorder(sd_grid)) %>%
+  filter(sd_std %in% seq(-4, 4, by = 2)) %>%
+  ggplot(aes(x = mean_std, y = .draw, group = rowid)) +
+  facet_grid(rows = vars(area_grid), cols = vars(sd_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "mean growing season (standardized)")
+```
+
+Let's now fit the model. In the model summary, we see a negative interaction term, which is illustrated in the posterior distributions below. When there is below average variability in the length of the growing season, we see a positive relationship between average length of the growing season and language diversity (the left two columns). Conversely, when there is high variability, we see a negative relationship between average length of the growing season and language diversity.
+
+```{r e8h4-7}
+b8h4_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_c.rds"))
+
+b8h4_c <- add_criterion(b8h4_c, criterion = c("loo", "waic"))
+summary(b8h4_c)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_c) %>%
+  group_by(mean_growing_std, sd_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_growing_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_grid = fct_inorder(sd_grid)) %>%
+  filter(sd_growing_std %in% seq(-4, 4, by = 2)) %>%
+  ggplot(aes(x = mean_growing_std)) +
+  facet_grid(cols = vars(sd_grid), rows = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "mean growing growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+Now that we've estimated all of the models, we can compare the models using LOO. I'm using LOO instead of WAIC, as all models have observations with problematic $p_{WAIC}$ values, but none have problematic Pareto $k$ values.
+
+```{r e8h4-8, echo = FALSE}
+bind_rows(tibble(pareto_k = b8h4_a$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_a$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model A"),
+          tibble(pareto_k = b8h4_b$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_b$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model B"),
+          tibble(pareto_k = b8h4_c$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_c$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model C")) %>%
+  left_join(nettle %>%
+              select(country) %>%
+              rowid_to_column(var = "obs"),
+            by = "obs") %>%
+  ggplot(aes(x = pareto_k, y = p_waic)) +
+  facet_grid(cols = vars(model)) +
+  geom_vline(xintercept = 0.7, linetype = "dashed") +
+  geom_hline(yintercept = 0.4, linetype = "dashed") +
+  geom_point() +
+  gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = country,
+              label_params = list(size = 3)) +
+  expand_limits(x = c(0, 1)) +
+  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC])) +
+  theme(panel.border = element_rect(fill = NA),
+        panel.spacing.x = unit(2, "lines"))
+```
+
+When we look at the LOO comparisons, we see that the interaction is the preferred model. However, the difference between the interaction model and model with only average length of the the growing season (model A), is barely larger than the standard error of the difference, indicating that the LOO isn't really able to differentiate between these two models. Even the model with only variability in growing season included had a difference that is only 1.89 times the standard error of the difference. Therefore, I would conclude that all models perform roughly the same statistically, and the choice of model should be driven by the causal model.
+
+```{r e8h4-9}
+loo_compare(b8h4_a, b8h4_b, b8h4_c)
+```
+
+:::question
+> **8H5.** Consider the `data(Wines2012)` data table. These data are expert ratings of 20 different French and American wines by 9 different French and American judges. Your goal is to model `score`, the subjective rating assigned by each judge to each wine. I recommend standardizing it. In this problem, consider only variation among judges and wines. Construct index variables of `judge` and `wine` and then use these index variables to construct a linear regression model. Justify your priors. You should end up with 9 judge parameters and 20 wine parameters. How do you interpret the variation among individual judges and individual wines? Do you notice any patterns, just by plotting the differences? Which judges gave teh highest/lowest ratings? Which wines were rated worst/best on average?
+:::
+
+First, let's prepare the data. We'll standardize the score and create index variables for both `judge` and `wine`.
+
+```{r b8h5-1}
+data(Wines2012)
+
+wine <- Wines2012 %>%
+  mutate(score_std = standardize(score),
+         judge_ind = factor(as.integer(judge)),
+         wine_ind = factor(as.integer(wine)))
+```
+
+Next, we'll fit the model, remembering to remove the overall intercept (i.e., `~ 0`) so that the index variables are estimated correctly. Because the scores have been standardized, we can use the `normal(0, 0.5)` prior we've used previously and which is used throughout much of the text. We'll also extract the posterior draws so that we can explore the posterior for each judge and wine individually.
+
+```{r b8h5-2}
+b8h5 <- brm(bf(score_std ~ 0 + j + w,
+               j ~ 0 + judge_ind,
+               w ~ 0 + wine_ind,
+               nl = TRUE),
+            data = wine, family = gaussian,
+            prior = c(prior(normal(0, 0.5), nlpar = j),
+                      prior(normal(0, 0.5), nlpar = w),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h5.rds"))
+
+draws <- posterior_samples(b8h5) %>%
+  as_tibble() %>%
+  select(-sigma, -lp__) %>%
+  pivot_longer(everything(), names_to = c(NA, NA, "type", "num"), names_sep = "_",
+               values_to = "value", ) %>%
+  mutate(num = str_replace_all(num, "ind", ""),
+         num = as.integer(num))
+```
+
+Looking at the distributions by judge, we can see that John Foy tends to give the highest scores, whereas Robert Hodgson and Jean-M Cardebat give the lowest scores on average.
+
+```{r b8h5-3}
+draws %>%
+  filter(type == "judge") %>%
+  mutate(num = factor(num)) %>%
+  left_join(wine %>%
+              distinct(judge, judge_ind),
+            by = c("num" = "judge_ind")) %>%
+  select(judge, value) %>%
+  group_by(judge) %>%
+  median_hdci(.width = c(0.67, 0.89, 0.97)) %>%
+  ggplot(aes(y = fct_rev(judge), x = value, xmin = .lower, xmax = .upper)) +
+  geom_interval() +
+  scale_color_brewer() +
+  labs(y = NULL, x = "judge_ind", color = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+For wines, B2, J2, D2, D1, and B1 received the highest scores on average, and wine I2 was clearly the lowest rated of the wines. However, overall, there is more variability amoung the judges than among the wines.
+
+```{r b8h5-4}
+draws %>%
+  filter(type == "wine") %>%
+  mutate(num = factor(num)) %>%
+  left_join(wine %>%
+              distinct(wine, wine_ind),
+            by = c("num" = "wine_ind")) %>%
+  select(wine, value) %>%
+  group_by(wine) %>%
+  median_hdci(.width = c(0.67, 0.89, 0.97)) %>%
+  ggplot(aes(y = fct_rev(wine), x = value, xmin = .lower, xmax = .upper)) +
+  geom_interval() +
+  scale_color_brewer() +
+  labs(y = NULL, x = "wine_ind", color = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+:::question
+> **8H6.** Now consider three features of the wines and judges:
+
+> 1. `flight`: Whether the wine is red or white.
+> 2. `wine.amer`: Indicator variable for American wines.
+> 3. `judge.amer`: Indicator variable for American judges.
+
+> Use indicator or index variables to model the influence of these features on the scores. Omit the individual judge and wine index variables from Problem 1. Do not include interaction effects yet. Again justify your priors What do you conclude about the differences among the wines and judges? Try to relate the results to the inferences in the previous problem.
+:::
+
+Something...
+
+:::question
+> **8H7.** Now consider two-way interactions among the three features. You should end up with three different interaction terms in your model. These will be easier to build, if you use indicator variables. Again justify your priors. Explain what each interaction means. Be sure to interpret the model's predictions on the outcome scale (`mu`, the expected score), not on the scale of individual parameters. You can use `link` to help with this, or just use your knowledge of the linear model instead. What do you conclude about the features and teh scores? Can you relate the results of your model(s) to the individual judge and wine inferences from **8H5**?
+:::
+
+Something...
 
 ## Session Info {-}
 
