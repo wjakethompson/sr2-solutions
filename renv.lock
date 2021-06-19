@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.1.0",
+    "Version": "4.1",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -67,6 +67,13 @@
       "RemotePkgPlatform": "macos",
       "RemoteSha": "0.2.2",
       "Hash": "3b986a53325a1d95610b8d86a284dac0"
+    },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-20",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "8dcfa99b14c296bc9f1fd64d52fd3ce7"
     },
     "MASS": {
       "Package": "MASS",
@@ -417,6 +424,13 @@
       "RemoteSha": "2.0.0",
       "Hash": "a667800d5f0350371bedeb8b8b950289"
     },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1593b7beb067c8381c0d24e38bd778e0"
+    },
     "cli": {
       "Package": "cli",
       "Version": "2.5.0",
@@ -436,6 +450,13 @@
       "RemotePkgPlatform": "macos",
       "RemoteSha": "0.7.1",
       "Hash": "ebaa97ac99cc2daf04e77eecc7b781d7"
+    },
+    "cluster": {
+      "Package": "cluster",
+      "Version": "2.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "ce49bfe5bc0b3ecd43a01fe1b01c2243"
     },
     "coda": {
       "Package": "coda",
@@ -797,6 +818,13 @@
       "RemotePkgPlatform": "macos",
       "RemoteSha": "0.5.1",
       "Hash": "81c3244cab67468aac4c60550832655d"
+    },
+    "foreign": {
+      "Package": "foreign",
+      "Version": "0.8-81",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "74628ea7a3be5ee8a7b5bb0a8e84882e"
     },
     "fs": {
       "Package": "fs",
@@ -1591,6 +1619,13 @@
       "RemoteSha": "1.2.2.2",
       "Hash": "2737faeee353704efec5afa1e943dd64"
     },
+    "nnet": {
+      "Package": "nnet",
+      "Version": "7.3-16",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3a3dc184000bc9e6c145c4dbde4dd702"
+    },
     "numDeriv": {
       "Package": "numDeriv",
       "Version": "2016.8-1.1",
@@ -1993,6 +2028,13 @@
       "RemoteSha": "7.1.1",
       "Hash": "fcd94e00cc409b25d07ca50f7bf339f5"
     },
+    "rpart": {
+      "Package": "rpart",
+      "Version": "4.1-15",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "9787c1fcb680e655d062e7611cadf78e"
+    },
     "rprojroot": {
       "Package": "rprojroot",
       "Version": "2.0.2",
@@ -2038,6 +2080,20 @@
       "RemotePkgPlatform": "macos",
       "RemoteSha": "2.1.1",
       "Hash": "c91e0f20c967e246cb6f2efe8c60e15b"
+    },
+    "rsthemes": {
+      "Package": "rsthemes",
+      "Version": "0.2.1.9000",
+      "Source": "GitHub",
+      "Remotes": "hrbrmstr/ipapi, rstudio/sass",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "rsthemes",
+      "RemoteUsername": "gadenbuie",
+      "RemotePkgRef": "gadenbuie/rsthemes",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "19299e5e318b4aa89be8539ccea867098790880c",
+      "Hash": "454b1aacd2653757293f28da4c543cd0"
     },
     "rstudioapi": {
       "Package": "rstudioapi",
@@ -2202,6 +2258,19 @@
       "RemoteSha": "1.2.0",
       "Hash": "30f0ebc41feba25691073626ff5e2cf4"
     },
+    "shrtcts": {
+      "Package": "shrtcts",
+      "Version": "0.1.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "shrtcts",
+      "RemoteUsername": "gadenbuie",
+      "RemotePkgRef": "gadenbuie/shrtcts",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "3a03311a030edff97e906743182b07ede88095a3",
+      "Hash": "03d31c8171922cf4367f99adc1f6c85f"
+    },
     "sourcetools": {
       "Package": "sourcetools",
       "Version": "0.1.7",
@@ -2214,6 +2283,13 @@
       "RemotePkgPlatform": "macos",
       "RemoteSha": "0.1.7",
       "Hash": "947e4e02a79effa5d512473e10f41797"
+    },
+    "spatial": {
+      "Package": "spatial",
+      "Version": "7.3-14",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a7341b0231ca84a0323982d5ae5a4300"
     },
     "stringi": {
       "Package": "stringi",
@@ -2228,6 +2304,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "0759e6b6c0957edb1311028a49a35e76"
+    },
+    "survival": {
+      "Package": "survival",
+      "Version": "3.2-11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f4d706b25d640dbaeb56d9c9b6ce9a22"
     },
     "svUnit": {
       "Package": "svUnit",
