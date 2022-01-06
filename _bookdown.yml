@@ -6,3 +6,11 @@ delete_merged_file: true
 language:
   ui:
     chapter_name: "Week "
+
+rmd_files: [
+  "index.Rmd",
+  
+  "01-bayesian-inference.Rmd",
+  
+  "11-References.Rmd"
+]
