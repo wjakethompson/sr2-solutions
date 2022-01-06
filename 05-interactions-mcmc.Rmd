@@ -628,9 +628,13 @@ First, let's prepare the data. We'll standardize the score and create index vari
 data(Wines2012)
 
 wine <- Wines2012 %>%
+  as_tibble() %>%
   mutate(score_std = standardize(score),
          judge_ind = factor(as.integer(judge)),
-         wine_ind = factor(as.integer(wine)))
+         wine_ind = factor(as.integer(wine)),
+         red = factor(flight, levels = c("white", "red")),
+         wine_amer = factor(wine.amer),
+         judge_amer = factor(judge.amer))
 ```
 
 Next, we'll fit the model, remembering to remove the overall intercept (i.e., `~ 0`) so that the index variables are estimated correctly. Because the scores have been standardized, we can use the `normal(0, 0.5)` prior we've used previously and which is used throughout much of the text. We'll also extract the posterior draws so that we can explore the posterior for each judge and wine individually.
@@ -675,7 +679,7 @@ draws %>%
   theme(legend.position = "bottom")
 ```
 
-For wines, B2, J2, D2, D1, and B1 received the highest scores on average, and wine I2 was clearly the lowest rated of the wines. However, overall, there is more variability amoung the judges than among the wines.
+For wines, B2, J2, D2, D1, and B1 received the highest scores on average, and wine I2 was clearly the lowest rated of the wines. However, overall, there is more variability among the judges than among the wines.
 
 ```{r b8h5-4}
 draws %>%
@@ -704,7 +708,21 @@ draws %>%
 > Use indicator or index variables to model the influence of these features on the scores. Omit the individual judge and wine index variables from Problem 1. Do not include interaction effects yet. Again justify your priors What do you conclude about the differences among the wines and judges? Try to relate the results to the inferences in the previous problem.
 :::
 
-Something...
+We can estimate the {brms} model as defined below. In this definition, we're using indicator variables rather than index variables, as that will make the next question a little bit easier. We'll use our standard `normal(0, 0.2)` prior for the intercept, since that will have to be near zero given that the `score` has been standardized. For the coefficients, we have to ask what a reasonable difference in scores would be between New Jersey and French wines, New Jersey and French judges, and red and white wine. One standard deviation seems reasonable, so 
+
+```{r e8h6-1}
+b8h6 <- brm(score_std ~ wine_amer + judge_amer + red,
+            data = wine, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h6.rds"))
+
+fixef(b8h6)
+```
+
+
 
 :::question
 > **8H7.** Now consider two-way interactions among the three features. You should end up with three different interaction terms in your model. These will be easier to build, if you use indicator variables. Again justify your priors. Explain what each interaction means. Be sure to interpret the model's predictions on the outcome scale (`mu`, the expected score), not on the scale of individual parameters. You can use `link` to help with this, or just use your knowledge of the linear model instead. What do you conclude about the features and teh scores? Can you relate the results of your model(s) to the individual judge and wine inferences from **8H5**?
