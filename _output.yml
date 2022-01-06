@@ -1,18 +1,35 @@
-bookdown::gitbook:
+# bookdown::gitbook:
+#   css: assets/style.css
+#   config:
+#     download: null
+#     sharing:
+#       facebook: no
+#       twitter: yes
+#       github: yes
+#     toc:
+#       collapse: section
+#       scroll_highlight: true
+#       before: |
+#         <li><strong><a href="./">Statistical Rethinking: Solutions</a></strong></li>
+#       after: |
+#         <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+#     edit:
+#       link: https://github.com/wjakethompson/sr2-solutions/edit/main/%s
+#       text: "Edit"
+
+bookdown::bs4_book:
+  theme:
+    primary: "#009FB7"
+    base_font:
+      google: Source Sans Pro
+    heading_font:
+      google:
+        family: Oxygen
+        wght: 700
+    code_font:
+      google: Fira Code
   css: assets/style.css
-  config:
-    download: null
-    sharing:
-      facebook: no
-      twitter: yes
-      github: yes
-    toc:
-      collapse: section
-      scroll_highlight: true
-      before: |
-        <li><strong><a href="./">Statistical Rethinking: Solutions</a></strong></li>
-      after: |
-        <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
-    edit:
-      link: https://github.com/wjakethompson/sr2-solutions/edit/main/%s
-      text: "Edit"
+  repo:
+    base: https://github.com/wjakethompson/sr2-solutions
+    branch: main
+  
