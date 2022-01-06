@@ -1,0 +1,36 @@
+--- 
+knit: "bookdown::render_book"
+title: "Statistical Rethinking: Solutions (2nd Edition)"
+author: "Jake Thompson"
+description: "This project contains solutions to exercises and homework for the second edition of Richard McElreath's Statistical Rethinking: A Bayesian Course Using R and Stan. Solutions are offered using the tidyverse and brms packages. Thus, this project should be viewed as a companion to both the original book and Solomon Kurz's translation of the text to tidyverse and brms syntax. Here, we extend the translation to also include solutions to the exercises and homework assignments associated with the course."
+date: "2022-01-06"
+url: 'https\://sr2-solutions.wjakethompson.com'
+github-repo: wjakethompson/sr2-solutions
+twitter-handle: wjakethompson
+site: bookdown::bookdown_site
+documentclass: book
+bibliography: [bib/refs.bib, bib/pkgs.bib]
+biblio-style: apa
+csl: csl/apa.csl
+link-citations: yes
+---
+
+# Welcome {-}
+
+This project is a companion to Richard McElreath's *Statistical Rethinking* [@sr2]. For each of the 10 weeks, of the course (materials provided [here](https://github.com/rmcelreath/stat_rethinking_2022)), I work through the exercises in each chapter covered that week. Like [Solomon Kurz](https://twitter.com/SolomonKurz), I take a {[tidyverse](https://tidyverse.tidyverse.org/)} [@R-tidyverse; @tidyverse2019] and {[brms](https://paul-buerkner.github.io/brms/)} [@R-brms; @brms2017; @brms2018] approach to solving these problems. For a translation of the actual book text to {tidyverse} and {brms} style code, please check out their project, [*Statistical rethinking* with brms, ggplot2, and the tidyverse: Second edition](https://bookdown.org/content/4857).
+
+You can purchase *Statistical Rethinking: A Bayesian Course in R and Stan* [@sr2] from [CRC Press](https://www.routledge.com/Statistical-Rethinking-A-Bayesian-Course-with-Examples-in-R-and-STAN/McElreath/p/book/9780367139919?utm_source=crcpress.com&utm_medium=referral).
+
+## Disclaimer {-}
+
+This project is a work in progress. If you'd like to follow along, you can find the GitHub repository [here](https://github.com/wjakethompson/sr2-solutions). These solutions have not been checked by anybody, so there will undoubtedly be errors. If you find any, please contribute or let me know!
+
+There are several ways to contribute. For simple edits or suggestions, you can use the edit button in the navigation bar at the top of the screen. You can also create a fork of the [repository](https://github.com/wjakethompson/sr2-solutions) and submit a pull request or [open an issue](https://github.com/wjakethompson/sr2-solutions/issues).
+
+Please note that this project is released with a [Contributor Code of Conduct](https://github.com/wjakethompson/sr2-solutions/blob/main/CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## License {-}
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a>
+
+This project is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.

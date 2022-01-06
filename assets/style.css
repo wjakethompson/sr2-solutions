@@ -1,0 +1,98 @@
+/* -----------div tips------------- */
+div.csl-entry {
+    padding-bottom: 1rem;
+    text-indent: -1.5rem;
+    margin-left: 1.5rem;
+}
+
+div.question pre {
+  font-size: 80%;
+  margin-bottom: 0rem;
+}
+
+div.question {
+  padding: 0.5em 1em 0.5em 1em;
+  margin: 1em -0.5em;
+  color: #272727;
+  background-color: #d6faff;
+}
+
+div.question blockquote {
+  border-left: 4px solid #009fb7;
+  margin-bottom: 0;
+  padding-bottom: 0.05em;
+  padding-top:0.05em;
+  color: #272727;
+  opacity: 1;
+}
+
+div.question div.sourceCode {
+  margin-left: -0.5rem;
+  border-left: 4px solid #009fb7;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+/*
+
+.book .book-body .page-wrapper .page-inner section.normal .question blockquote {
+  margin-bottom: 0;
+  padding-bottom: 0.01em;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  color: #272727;
+  opacity: 1;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question blockquote:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  color: #272727;
+  opacity: 1;
+}
+
+div.question .sourceCode {
+  margin-bottom: 0;
+  margin-top: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  padding: 0 0 0.85em 0.85em;
+}
+
+div.question.code-question .sourceCode {
+  margin-bottom: 0.85em;
+  margin-top: 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: #009fb7;
+  padding: 0 0 0 0.85em;
+}
+
+div.table-question {
+  padding-left: 0.85em;
+  border-left: 4px solid #009fb7;
+}
+
+div.question.code-question div.table-question {
+  padding-bottom: 0.01em;
+}
+
+div.question.return {
+  background-color: #ffd6d6;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question.return blockquote {
+  border-left-color: #ff0000;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal .question.return blockquote:last-child {
+  border-left-color: #ff0000;
+}
+
+*/
