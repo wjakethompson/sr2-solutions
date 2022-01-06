@@ -37,6 +37,7 @@ Imports:
   loo,
   modelr,
   purrr,
+  ragg,
   ratlas,
   rethinking,
   rmarkdown,
