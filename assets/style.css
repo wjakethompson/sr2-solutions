@@ -1,4 +1,10 @@
 /* -----------div tips------------- */
+div.csl-entry {
+    padding-bottom: 1rem;
+    text-indent: -1.5rem;
+    margin-left: 1.5rem;
+}
+
 div.question pre {
   font-size: 80%;
   margin-bottom: 0rem;
