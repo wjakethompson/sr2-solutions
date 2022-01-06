@@ -5,7 +5,7 @@ book_filename: "sr2-solutions"
 delete_merged_file: true
 language:
   ui:
-    chapter_name: "Week "
+    chapter_name: !expr function(i) paste0('Week ', i, ":")
 
 rmd_files: [
   "index.Rmd",
