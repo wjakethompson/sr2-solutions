@@ -1,6 +1,6 @@
 # GLMs II 
 
-The seventh week covers Chapter 11 (God Spiked the Integers) and Chapter 12 (Monsters and Mixtures).
+The seventh week covers Chapter 12 (Monsters and Mixtures).
 
 ## Lectures
 

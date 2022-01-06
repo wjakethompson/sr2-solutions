@@ -2,13 +2,15 @@
 
 ```{r write-packages, include = FALSE, cache = FALSE}
 library(tidyverse)
-library(renv)
 
 if (!file.exists("bib/pkgs.bib")) file.create("bib/pkgs.bib")
 
-pkgs <- unique(c(.packages(),
-                 dplyr::pull(renv::dependencies(), Package),
-                 "bookdown", "knitr", "rmarkdown"))
+desc <- desc::description$new()
+deps <- desc$get_deps() %>% 
+  filter(package != "R") %>% 
+  pull(package)
+
+pkgs <- unique(c(.packages(), deps))
 suppressWarnings(knitr::write_bib(pkgs, "bib/pkgs.bib"))
 
 # Correct capitalization in packages
@@ -25,6 +27,7 @@ read_lines("bib/pkgs.bib") %>%
   str_replace_all("gganimate:", "{gganimate}:") %>%
   str_replace_all("ggdag:", "{ggdag}:") %>%
   str_replace_all("dagitty:", "{dagitty}:") %>%
+  str_replace_all(fixed("broom.mixed:"), "{broom.mixed}:") %>%
   write_lines("bib/pkgs.bib")
 ```
 

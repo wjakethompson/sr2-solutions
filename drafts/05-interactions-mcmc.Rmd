@@ -1,0 +1,739 @@
+# Interactions & MCMC
+
+The fifth week covers Chapter 8 (Conditional Manatees) and Chapter 9 (Markov Chain Monte Carlo).
+
+## Lectures
+
+Lecture 9:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/QhHfo6-Bx8o" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 10:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/v-j0UmWf3Us" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 8
+
+:::question
+> **8E1.** For each of the causal relationships below, name a hypothetical third variable that would lead to an interaction effect.
+
+> (1) Bread dough rises because of yeast.
+> (2) Education leads to higher income.
+> (3) Gasoline makes a car go.
+:::
+
+For the first, the amount of heat can moderate the relationship between yeast and the amount the dough rises. In the second example, ethnicity may give rise to an interaction, as individuals of some races face more systemic challenges (i.e., it's easier for white people with low education to get a job than people of color). Thus, education may have more of an effect for minorities. Finally, a car also requires wheels. Wheels with no gas and gas with no wheels both prevent the car from moving; only with both will the car go.
+
+:::question
+> **8E2.** Which of the following explanations invokes an interaction?
+
+> (1) Caramelizing onions requires cooking over low heat and making sure the onions do not dry out.
+> (2) A car will go faster when it has more cylinders or when it has better fuel injector.
+> (3) Most people acquire their political beliefs from their parents, unless they get them instead from their friends.
+> (4) Intelligent animal species tend to be either highly social or have manipulative appendages (hands, tentacles, etc.).
+:::
+
+The first example invokes an interaction. The caramelization depends on both heat and moisture, but heat will also impact the moisture level.
+
+I have minimal car knowledge, but I presume that a good fuel injector with a 6 cylinder engine is better than a poor fuel injector with a 6 cylinder engine. The impact of cylinders would depend on the fuel injector. Similarly the effect of the fuel injector may depend on the number of cylinders. This would be an interaction.
+
+In the third example, it appears as though there are three important predictors: your parents political beliefs, your friends political beliefs, and how political your friends are. The description implies an interaction between how political your friends are and your parents political beliefs. As your friends become more political, the influence of your parents political beliefs decreases.
+
+Finally, without any expertise in the domain area, I have no reason to think that sociability would influence the effect of appendages on intelligence, or that appendages would influence the effect of sociability on intelligence. This implies no interaction.
+
+:::question
+> **8E3.** For each of the explanations in **8E2**, write a linear model that expresses the stated relationship.
+:::
+
+For onion caramelization, the mathematical model is:
+
+$$
+\begin{align}
+C_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_HH_i + \beta_MM_i + \beta_{HM}H_iM_i
+\end{align}
+$$
+
+The mathematical model for car speed is very similar:
+
+$$
+\begin{align}
+S_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_CC_i + \beta_FF_i + \beta_{CF}C_iF_i
+\end{align}
+$$
+
+The third model we are predicting political beliefs ($B$) from parents' political beliefs ($P$), friends political beliefs ($F$), how political your friends are ($H$), and the interaction be $P$ and $H$.
+
+$$
+\begin{align}
+B_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_PP_i + \beta_FF_i + \beta_HH_i + \beta_{PH}P_iH_i
+\end{align}
+$$
+
+The fourth model is a simple regression with no interaction.
+
+$$
+\begin{align}
+I_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_SS_i + \beta_AA_i
+\end{align}
+$$
+
+:::question
+> **8M1.** Recall the tulips example from the chapter. Suppose another set of treatments adjusted the temperature in the greenhouse over two levels: cold and hot. The data in the chapter were collected at the cold temperature. You find none of the plants grown under the hot temperature developed any blooms at all, regardless of teh water and shade levels. Can you explain this result in terms of interactions between water, shade, and temperature?
+:::
+
+In the chapter example, we saw that at cool temperatures, the blooms were best predicted by water, shade, and their interaction. Here, we learn that neither water nor light matter at a high temperature. This implies a three-way interaction. Just as in the chapter where water had no effect when there was no light, we see that neither water nor light have an effect when temperature is high.
+
+:::question
+> **8M2.** Can you invent a regression equation that would make the bloom size zero, whenever the temperature is hot?
+:::
+
+For this model, we can use the interaction model from the chapter with an additional predictor ($C$) that is 0 when the temperature is hot and 1 when the temperature is cold.
+
+$$
+\begin{align}
+B_i &\sim \text{Normal}(\mu_i, \sigma) \\
+\mu_i &= C_i \times (\alpha + \beta_WW_i + \beta_SS_i + \beta_{WS}W_iS_i)
+\end{align}
+$$
+
+:::question
+> **8M3.** In parts of North America, ravens depend upon wolves for their food. This is because ravens are carnivorous but cannot usually kill or open carcasses of prey. Wolves however can and do kill and tear open animals, and they tolerate ravens co-feeding at their kills. This species relationship is generally described as a "species interaction." Can you invent a hypothetical set of data on raven population size in which this relationship would manifest as a statistical interaction? Do you think the biological interaction could be linear? Why or why not?
+:::
+
+In order to predict raven population size based on wolf population size, we should include data on the territory area for the wolves, the number of wolves, and amount of food available, and finally the number of ravens. This is similar to the types of data included in `data(foxes)`. I would expect the relationship to be non-linear. When there are no wolves, I would expect there to be no ravens. As the number of wolves increases, the number of ravens would also increase. However, eventually the number of wolves would increase to the point that the wolves exhaust the food supply, leaving no food left for the ravens, at which point the raven population would begin to shrink. Thus, if we created a counter factual plot with wolves on the x-axis and ravens on the y-axis, I would expect to see at linear trend at first, but then the raven population level off or drop when there is a large numbers of wolves.
+
+:::question
+> **8M4.** Repeat the tulips analysis, but this time use priors that constrain the effect of water to be positive and the effect of shade to be negative. Use prior predictive simulation. What do these prior asumptions mean for the interaction prior, if anything?
+:::
+
+There are a few issues constraining different coefficients with bounded parameters (especially negative parameters) in {brms}. For some details, see [this thread](https://discourse.mc-stan.org/t/negative-prior-distribution/18093/2) on the Stan discourse. To get around this, rather than constrain the shade parameter to be negative, we'll create a new variable which is the opposite of shade, `light` and the corresponding `light_cent`. We can then constrain this parameter to be positive, just as the `water_cent` parameter is constrained to be positive. Finally, because of the new `light` variable the positivity constraints on the main effects, we also want to constrain the interaction term to be positive. That is, if both water and light increase, we expect an additional additive effect.
+
+```{r e8m4-1}
+library(rethinking)
+data("tulips")
+
+tulip_dat <- tulips %>%
+  as_tibble() %>%
+  mutate(light = -1 * shade,
+         blooms_std = blooms / max(blooms),
+         water_cent = water - mean(water),
+         shade_cent = shade - mean(shade),
+         light_cent = light - mean(light))
+
+b8m4 <- tulip_dat %>%
+  brm(blooms_std ~ 1 + water_cent + light_cent + water_cent:light_cent,
+      data = ., family = gaussian,
+      prior = c(prior(normal(0.5, 0.25), class = Intercept),
+                prior(normal(0, 0.25), class = b, lb = 0),
+                prior(exponential(1), class = sigma)),
+      iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+      file = here("fits", "chp8", "b8m4.rds"))
+
+summary(b8m4)
+```
+
+Looking at the the posterior predicted blooms, the results are very similar to what we saw in Figure 8.7 from the text. This indicates that the prior constraints did not have a large effect on the predicted values.
+
+```{r e8m4-2}
+new_tulip <- crossing(water_cent = -1:1, 
+                      light_cent = -1:1)
+
+points <- tulip_dat %>%
+  expand(nesting(water_cent, light_cent, blooms_std)) %>%
+  mutate(light_grid = glue("light_cent = {light_cent}"))
+
+fitted(b8m4, newdata = new_tulip, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_tulip, "{water_cent}_{light_cent}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("water_cent", "light_cent"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(water_cent = as.integer(water_cent),
+         light_cent = as.integer(light_cent),
+         light_grid = glue("light_cent = {light_cent}")) %>%
+  ggplot(aes(x = water_cent, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(light_grid)) +
+  geom_line(alpha = 0.4) +
+  geom_point(data = points, aes(x = water_cent, y = blooms_std),
+             inherit.aes = FALSE, color = "#009FB7") +
+  scale_x_continuous(breaks = -1:1) +
+  labs(x = "water")
+```
+
+Finally, let's look at the prior predictive simulation for this model. Overall the priors might be a little too uninformative, especially for the interaction. The interaction has the most impact in the far right panel of the below figure, and there are many lines that exceed the expected boundaries in this panel.
+
+```{r e8m4-3}
+b8m4p <- update(b8m4, sample_prior = "only",
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp8", "b8m4p.rds"))
+
+fitted(b8m4p, newdata = new_tulip, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_tulip, "{water_cent}_{light_cent}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("water_cent", "light_cent"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(water_cent = as.integer(water_cent),
+         light_cent = as.integer(light_cent),
+         light_grid = glue("light_cent = {light_cent}")) %>%
+  ggplot(aes(x = water_cent, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(light_grid)) +
+  geom_line(aes(alpha = rowid == 1), show.legend = FALSE) +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed") +
+  scale_alpha_manual(values = c(0.2, 1)) +
+  scale_x_continuous(breaks = -1:1) +
+  labs(x = "water")
+```
+
+
+:::question
+> **8H1.** Return to the `data(tulips)` example in the chapter. Now include the `bed` variable as a predictor in the interaction model. Don't interact `bed` with the other predictors; just include it as a main effect. Note that `bed` is categorical. So to use it properly, you will need to either construct dummy variables, or rather an index variable, as explained in Chapter 5.
+:::
+
+The `bed` variable is already a factor variable in the `tulips` data, so we can just add it to the formula in `brm()`. To use indicator variables instead of a dummy variable, we remove the separate intercept (i.e., `~ 0` in the formula below). Because of what's coming in the next question, we'll use `light` instead of `shade` for this model also.
+
+```{r e8h1}
+b8h1 <- brm(blooms_std ~ 0 + water_cent + light_cent + bed + 
+              water_cent:light_cent,
+            data = tulip_dat, family = gaussian,
+            prior = c(prior(normal(0.5, 1), class = b, coef = beda),
+                      prior(normal(0.5, 1), class = b, coef = bedb),
+                      prior(normal(0.5, 1), class = b, coef = bedc),
+                      prior(normal(0, 0.25), class = b, coef = water_cent),
+                      prior(normal(0, 0.25), class = b, coef = light_cent),
+                      prior(normal(0, 0.25), class = b,
+                            coef = "water_cent:light_cent"),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h1.rds"))
+
+summary(b8h1)
+```
+
+:::question
+> **8H2.** Use WAIC to compare the model from **8H1** to a model that omits `bed`. What do you infer from this comparison? Can you reconcile the WAIC results with the posterior distribution of the `bed` coefficients?
+:::
+
+For the comparison, we'll compare `b8h1` to the model `b8m4`, which is the model from the chapter, with new prior distributions that constrain the main effect of water to be positive and the main effect of shade to be negative.
+
+Model `b8h1` is the preferred model; however, the standard error of the difference is larger than the magnitude of the difference, indicating that the WAIC is not able to meaningfully differentiate between the two models. For predictive purposes, this means that the inclusion of the `bed` variable does not significantly improve the model. It should also be noted that both of the models have some exceptionally large penalty values, so these analyses may be unreliable, and we should consider re-fitting the models with a distribution with fatter tails.
+
+```{r e8h2}
+b8m4 <- add_criterion(b8m4, criterion = "waic",
+                      overwrite = TRUE, force_save = TRUE)
+b8h1 <- add_criterion(b8h1, criterion = "waic",
+                      overwrite = TRUE, force_save = TRUE)
+
+loo_compare(b8m4, b8h1, criterion = "waic") %>%
+  print(simplify = FALSE)
+```
+
+:::question
+> **8H3.** Consider again the `data(rugged)` data on economic development and terrain ruggedness, examined in this chapter. One of the African countries in that example Seychelles, is far outside the cloud of other nations, being a rare country with both relatively high GDP and high ruggedness. Seychelles is also unusual, in that it is a group of islands far from the coast of mainland Africa, and its main economic activity is tourism.
+
+> (a) Focus on model `m8.5` from the chapter. Use WAIC pointwise penalties and PSIS Pareto *k* values to measure relative influence of each country. By these criteria, is Seychelles influencing the results? Are there other nations that are relatively influential? If so, can you explain why?
+> (b) Now use robust regression, as described in the previous chapter. Modify `m8.5` to se a Student-t distribution with $\nu = 2$. Does this change the results in a substantial way?
+:::
+
+In the text, model `m8.5` uses the tulips data, so I'm assuming this is a typo and we should be looking at model `m8.3`, which is the interaction model from the terrain ruggedness example in the chapter. So, let's first create a {brms} version of model `m8.3`.
+
+```{r e8h3-1}
+data("rugged")
+rugged_dat <- rugged %>%
+  as_tibble() %>%
+  select(country, rgdppc_2000, rugged, cont_africa) %>%
+  drop_na(rgdppc_2000) %>%
+  mutate(log_gdp = log(rgdppc_2000),
+         log_gdp_std = log_gdp / mean(log_gdp),
+         rugged_std = rugged / max(rugged),
+         rugged_std_cent = rugged_std - mean(rugged_std),
+         cid = factor(cont_africa, levels = c(1, 0),
+                      labels = c("African", "Not African")))
+
+b8h3 <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nl = TRUE),
+  data = rugged_dat, family = gaussian,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(normal(0, 0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(normal(0, 0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "chp8", "b8h3.rds")
+)
+
+b8h3 <- add_criterion(b8h3, criterion = c("loo", "waic"), overwrite = TRUE)
+
+summary(b8h3)
+```
+
+Now let's take a look at the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values from the model. Seychelles does appear to be influential. The Pareto $k$ value is not above the above the 0.7 threshold; however, the $p_{WAIC}$ value is above the 0.4 threshold. In addition to Seychelles, Switzerland also appears to be influential. Like Seychelles, Switzerland is also an extremely rugged country that gets a great deal of economic activity through tourism.
+
+```{r e8h3-2}
+library(gghighlight)
+
+tibble(pareto_k = b8h3$criteria$loo$diagnostics$pareto_k,
+       p_waic = b8h3$criteria$waic$pointwise[, "p_waic"]) %>%
+  rowid_to_column(var = "obs") %>%
+  left_join(rugged_dat %>%
+              select(country) %>%
+              rowid_to_column(var = "obs"),
+            by = "obs") %>%
+  ggplot(aes(x = pareto_k, y = p_waic)) +
+  geom_vline(xintercept = 0.7, linetype = "dashed") +
+  geom_hline(yintercept = 0.4, linetype = "dashed") +
+  geom_point() +
+  gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = country,
+              label_params = list(size = 3)) +
+  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC]))
+```
+
+Now for part (b), we'll use a Student-t distribution with $\nu = 2$.
+
+```{r e8h3-3}
+b8h3_t <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nu = 2,
+     nl = TRUE),
+  data = rugged_dat, family = student,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(normal(0, 0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(normal(0, 0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "chp8", "b8h3_t.rds")
+)
+
+b8h3_t <- add_criterion(b8h3_t, criterion = c("loo", "waic"), overwrite = TRUE)
+```
+
+A comparison of PSIS-LOO criterion indicates that our Student-t model may be overfit, as the original model is strongly preferred.
+
+```{r e8h3-4}
+loo_compare(b8h3, b8h3_t)
+```
+
+Looking at the parameter estimates, it doesn't appear that the Student-t distribution had too much of an effect, as the estimates and interval are pretty similar across the two models.
+
+```{r e8h3-5}
+fixef(b8h3)
+
+fixef(b8h3_t)
+```
+
+:::{.question .code-question}
+> **8H4.** The values in `data(nettle)` are data on language diversity in 74 nations.^[Data from @nettle1998] The meaning of each column is given below.
+
+> (1) `country`: Name of the country
+> (2) `num.lang`: Number of recognized languages spoken
+> (3) `area`: Area in square kilometers
+> (4) `k.pop`: Population, in thousands
+> (5) `num.stations`: Number of weather stations that provided data for the next two columns
+> (6) `mean.growing.season`: Average length of growing season, in months
+> (7) `sd.growing.season`: Standard deviation of length of growing season, in months
+
+> Use these data to evaluate the hypothesis that language diversity is partly a product of food security. The notion is that, in productive ecologies, people don't need large social networks to buffer them against risk of food shortfalls. The means cultural groups can be smaller and more self-sufficient, leading to more languages per capita. Use the number of languages per capita as the outcome:
+
+```{r e8h4-intro, eval = FALSE}
+d$lang.per.cap <- d$num.lang / d$k.pop
+```
+
+> Use the logarithm of this new variable as your regression outcome. (A count model would be better here, but you'll learn those later, in Chapter 11.) This problem is open ended, allowing you to decide how you address the hypotheses and the uncertain advice the modeling provides. If you think you need to use WAIC anyplace, please do. If you think you need certain priors, argue for them. If you think you need to plot predictions in a certain way, please do. Just try to honestly evaluate the main effects of both `mean.growing.season` and `sd.growing.season`, as well as their two-way interaction. Here are three parts to help.
+
+> (a) Evaluate the hypothesis that language diversity, as measured by `log(lang.per.cap)`, is positively associated with average length of the growing season, `mean.growing.season`. Consider `log(area)` in your regression(s) as a covariate (not an interaction). Interpret your results.
+> (b) Now evaluate the hypothesis that language diversity is negatively associated with the standard deviation of length of growing season, `sd.growing.season`. This hypothesis follows from uncertainty in harvest favoring social insurance through larger social networks and therefore fewer languages. Again, consider `log(area)` as a covariate (not an interaction). Interpret your results.
+> (c) Finally, evaluate the hypothesis that `mean.growing.season` and `sd.growing.season` interact to synergistically reduce language diversity. The idea is that, in nations with longer average growing seasons, high variance makes storage and redistribution even more important than it would be otherwise. That way, people can cooperate to preserve and protect windfalls to be used during the droughts.
+:::
+
+First, let's calculate some new variables we'll need for these models. We'll also go ahead and standardize everything to make setting the priors a little bit easier.
+
+```{r e8h4-1}
+data(nettle)
+
+nettle <- nettle %>%
+  as_tibble() %>%
+  mutate(lang_per_cap = num.lang / k.pop,
+         log_lang_per_cap = log(lang_per_cap),
+         log_area = log(area),
+         lang_per_cap_std = standardize(log_lang_per_cap),
+         area_std = standardize(log_area),
+         mean_growing_std = standardize(mean.growing.season),
+         sd_growing_std = standardize(sd.growing.season))
+
+nettle
+
+summary(nettle)
+```
+
+The first model we'll fit will predict `lang_per_cap_std` from `mean_growing_std` and `area_std`. To start, we'll look at some prior predictive simulations to check our priors. After some fiddling, a `normal(0, 0.3)` prior for the predictor coefficients seems to give us plausible lines that are generally within the expected bounds.
+
+```{r e8h4-2}
+b8h4p_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_a.rds"))
+
+new_nettle <- crossing(area_std = seq(-4, 4, by = 2),
+                       mean_growing_std = seq(-4, 4, by = 1),
+                       sd_growing_std = seq(-4, 4, by = 1))
+
+fitted(b8h4p_a, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_gird = fct_inorder(sd_grid)) %>%
+  ggplot(aes(x = mean_std, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "mean growing season (standardized)")
+```
+
+Now we can estimate the full model, with the likelihood. As we can see in the model summary and in the following plot of posterior predictions, there is in fact a positive relationship between the average length of the growing season and the number of languages per capita, after controlling for the size of the country.
+
+```{r e8h4-3}
+b8h4_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_a.rds"))
+
+b8h4_a <- add_criterion(b8h4_a, criterion = c("loo", "waic"))
+summary(b8h4_a)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_a) %>%
+  group_by(mean_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         area_grid = fct_inorder(area_grid)) %>%
+  ggplot(aes(x = mean_growing_std)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "mean growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+For the second part, we replace `mean_growing_std` with `sd_growing_std`. Again, we'll first look at the prior predictive simulations. It looks like the same priors we used in the previous model will work here as well.
+
+```{r e8h4-4}
+b8h4p_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_b.rds"))
+
+fitted(b8h4p_b, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_gird = fct_inorder(sd_grid)) %>%
+  ggplot(aes(x = sd_std, y = .draw, group = rowid)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "standard deviation of length of growing season (standardized)")
+```
+
+Adding the likelihood into the model, we see the expected negative association between the standard deviation of the length of the growing season and the number of languages per capita, after controlling for the size of the country. However, when we look at the estimate for `sd_growing_std`, we see that the 95% compatibility interval ranges from -0.37 to 0.10. Thus, there is a non-negligible proportion of the posterior distribution that would result in a *positive* association between the standard deviation of the length of the growing season and language diversity. Therefore, I would not conclude from this analysis that there is indeed a negative association here.
+
+```{r e8h4-5}
+b8h4_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_b.rds"))
+
+b8h4_b <- add_criterion(b8h4_b, criterion = c("loo", "waic"))
+summary(b8h4_b)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_b) %>%
+  group_by(sd_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         area_grid = fct_inorder(area_grid)) %>%
+  ggplot(aes(x = sd_growing_std)) +
+  facet_grid(cols = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "standard deviation of length of growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+In the third part of the question, we are asked to add the interaction term. As with the previous two models, we'll begin by looking at the prior predictive simulations. The priors look a little too uncertain under extreme values, but maybe that isn't the worst thing as we probably should be more uncertain when observing extreme values. 
+
+```{r e8h4-6}
+b8h4p_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
+               data = nettle, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.3), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only",
+               file = here("fits", "chp8", "b8h4p_c.rds"))
+
+fitted(b8h4p_c, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
+  as.data.frame() %>%
+  set_names(glue_data(new_nettle,
+                      "{area_std}_{mean_growing_std}_{sd_growing_std}")) %>%
+  rowid_to_column() %>%
+  pivot_longer(-rowid, names_to = c("area_std", "mean_std", "sd_std"),
+               names_sep = "_", values_to = ".draw") %>%
+  mutate(area_std = as.integer(area_std),
+         mean_std = as.integer(mean_std),
+         sd_std = as.integer(sd_std),
+         area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_grid = fct_inorder(sd_grid)) %>%
+  filter(sd_std %in% seq(-4, 4, by = 2)) %>%
+  ggplot(aes(x = mean_std, y = .draw, group = rowid)) +
+  facet_grid(rows = vars(area_grid), cols = vars(sd_grid)) +
+  geom_line(alpha = 0.2) +
+  geom_hline(yintercept = c(-3, 3), linetype = "dashed") +
+  scale_x_continuous(breaks = seq(-4, 4, by = 2)) +
+  labs(x = "mean growing season (standardized)")
+```
+
+Let's now fit the model. In the model summary, we see a negative interaction term, which is illustrated in the posterior distributions below. When there is below average variability in the length of the growing season, we see a positive relationship between average length of the growing season and language diversity (the left two columns). Conversely, when there is high variability, we see a negative relationship between average length of the growing season and language diversity.
+
+```{r e8h4-7}
+b8h4_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
+              data = nettle, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.3), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp8", "b8h4_c.rds"))
+
+b8h4_c <- add_criterion(b8h4_c, criterion = c("loo", "waic"))
+summary(b8h4_c)
+
+new_nettle %>%
+  add_fitted_draws(b8h4_c) %>%
+  group_by(mean_growing_std, sd_growing_std, area_std) %>%
+  median_qi(.value, .width = c(.67, .89, .97)) %>%
+  mutate(area_grid = glue("area_std = {area_std}"),
+         sd_grid = glue("sd_growing_std = {sd_growing_std}"),
+         area_grid = fct_inorder(area_grid),
+         sd_grid = fct_inorder(sd_grid)) %>%
+  filter(sd_growing_std %in% seq(-4, 4, by = 2)) %>%
+  ggplot(aes(x = mean_growing_std)) +
+  facet_grid(cols = vars(sd_grid), rows = vars(area_grid)) +
+  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
+                  color = NA) +
+  scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
+  labs(x = "mean growing growing season (standardized)",
+       y = "log languages per capita (standardized)",
+       fill = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+Now that we've estimated all of the models, we can compare the models using LOO. I'm using LOO instead of WAIC, as all models have observations with problematic $p_{WAIC}$ values, but none have problematic Pareto $k$ values.
+
+```{r e8h4-8, echo = FALSE}
+bind_rows(tibble(pareto_k = b8h4_a$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_a$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model A"),
+          tibble(pareto_k = b8h4_b$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_b$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model B"),
+          tibble(pareto_k = b8h4_c$criteria$loo$diagnostics$pareto_k,
+                 p_waic = b8h4_c$criteria$waic$pointwise[, "p_waic"]) %>%
+            rowid_to_column(var = "obs") %>%
+            mutate(model = "Model C")) %>%
+  left_join(nettle %>%
+              select(country) %>%
+              rowid_to_column(var = "obs"),
+            by = "obs") %>%
+  ggplot(aes(x = pareto_k, y = p_waic)) +
+  facet_grid(cols = vars(model)) +
+  geom_vline(xintercept = 0.7, linetype = "dashed") +
+  geom_hline(yintercept = 0.4, linetype = "dashed") +
+  geom_point() +
+  gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = country,
+              label_params = list(size = 3)) +
+  expand_limits(x = c(0, 1)) +
+  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC])) +
+  theme(panel.border = element_rect(fill = NA),
+        panel.spacing.x = unit(2, "lines"))
+```
+
+When we look at the LOO comparisons, we see that the interaction is the preferred model. However, the difference between the interaction model and model with only average length of the the growing season (model A), is barely larger than the standard error of the difference, indicating that the LOO isn't really able to differentiate between these two models. Even the model with only variability in growing season included had a difference that is only 1.89 times the standard error of the difference. Therefore, I would conclude that all models perform roughly the same statistically, and the choice of model should be driven by the causal model.
+
+```{r e8h4-9}
+loo_compare(b8h4_a, b8h4_b, b8h4_c)
+```
+
+:::question
+> **8H5.** Consider the `data(Wines2012)` data table. These data are expert ratings of 20 different French and American wines by 9 different French and American judges. Your goal is to model `score`, the subjective rating assigned by each judge to each wine. I recommend standardizing it. In this problem, consider only variation among judges and wines. Construct index variables of `judge` and `wine` and then use these index variables to construct a linear regression model. Justify your priors. You should end up with 9 judge parameters and 20 wine parameters. How do you interpret the variation among individual judges and individual wines? Do you notice any patterns, just by plotting the differences? Which judges gave teh highest/lowest ratings? Which wines were rated worst/best on average?
+:::
+
+First, let's prepare the data. We'll standardize the score and create index variables for both `judge` and `wine`.
+
+```{r b8h5-1}
+data(Wines2012)
+
+wine <- Wines2012 %>%
+  as_tibble() %>%
+  mutate(score_std = standardize(score),
+         judge_ind = factor(as.integer(judge)),
+         wine_ind = factor(as.integer(wine)),
+         red = factor(flight, levels = c("white", "red")),
+         wine_amer = factor(wine.amer),
+         judge_amer = factor(judge.amer))
+```
+
+Next, we'll fit the model, remembering to remove the overall intercept (i.e., `~ 0`) so that the index variables are estimated correctly. Because the scores have been standardized, we can use the `normal(0, 0.5)` prior we've used previously and which is used throughout much of the text. We'll also extract the posterior draws so that we can explore the posterior for each judge and wine individually.
+
+```{r b8h5-2}
+b8h5 <- brm(bf(score_std ~ 0 + j + w,
+               j ~ 0 + judge_ind,
+               w ~ 0 + wine_ind,
+               nl = TRUE),
+            data = wine, family = gaussian,
+            prior = c(prior(normal(0, 0.5), nlpar = j),
+                      prior(normal(0, 0.5), nlpar = w),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h5.rds"))
+
+draws <- posterior_samples(b8h5) %>%
+  as_tibble() %>%
+  select(-sigma, -lp__) %>%
+  pivot_longer(everything(), names_to = c(NA, NA, "type", "num"), names_sep = "_",
+               values_to = "value", ) %>%
+  mutate(num = str_replace_all(num, "ind", ""),
+         num = as.integer(num))
+```
+
+Looking at the distributions by judge, we can see that John Foy tends to give the highest scores, whereas Robert Hodgson and Jean-M Cardebat give the lowest scores on average.
+
+```{r b8h5-3}
+draws %>%
+  filter(type == "judge") %>%
+  mutate(num = factor(num)) %>%
+  left_join(wine %>%
+              distinct(judge, judge_ind),
+            by = c("num" = "judge_ind")) %>%
+  select(judge, value) %>%
+  group_by(judge) %>%
+  median_hdci(.width = c(0.67, 0.89, 0.97)) %>%
+  ggplot(aes(y = fct_rev(judge), x = value, xmin = .lower, xmax = .upper)) +
+  geom_interval() +
+  scale_color_brewer() +
+  labs(y = NULL, x = "judge_ind", color = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+For wines, B2, J2, D2, D1, and B1 received the highest scores on average, and wine I2 was clearly the lowest rated of the wines. However, overall, there is more variability among the judges than among the wines.
+
+```{r b8h5-4}
+draws %>%
+  filter(type == "wine") %>%
+  mutate(num = factor(num)) %>%
+  left_join(wine %>%
+              distinct(wine, wine_ind),
+            by = c("num" = "wine_ind")) %>%
+  select(wine, value) %>%
+  group_by(wine) %>%
+  median_hdci(.width = c(0.67, 0.89, 0.97)) %>%
+  ggplot(aes(y = fct_rev(wine), x = value, xmin = .lower, xmax = .upper)) +
+  geom_interval() +
+  scale_color_brewer() +
+  labs(y = NULL, x = "wine_ind", color = "Interval") +
+  theme(legend.position = "bottom")
+```
+
+:::question
+> **8H6.** Now consider three features of the wines and judges:
+
+> 1. `flight`: Whether the wine is red or white.
+> 2. `wine.amer`: Indicator variable for American wines.
+> 3. `judge.amer`: Indicator variable for American judges.
+
+> Use indicator or index variables to model the influence of these features on the scores. Omit the individual judge and wine index variables from Problem 1. Do not include interaction effects yet. Again justify your priors What do you conclude about the differences among the wines and judges? Try to relate the results to the inferences in the previous problem.
+:::
+
+We can estimate the {brms} model as defined below. In this definition, we're using indicator variables rather than index variables, as that will make the next question a little bit easier. We'll use our standard `normal(0, 0.2)` prior for the intercept, since that will have to be near zero given that the `score` has been standardized. For the coefficients, we have to ask what a reasonable difference in scores would be between New Jersey and French wines, New Jersey and French judges, and red and white wine. One standard deviation seems reasonable, so 
+
+```{r e8h6-1}
+b8h6 <- brm(score_std ~ wine_amer + judge_amer + red,
+            data = wine, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp8", "b8h6.rds"))
+
+fixef(b8h6)
+```
+
+
+
+:::question
+> **8H7.** Now consider two-way interactions among the three features. You should end up with three different interaction terms in your model. These will be easier to build, if you use indicator variables. Again justify your priors. Explain what each interaction means. Be sure to interpret the model's predictions on the outcome scale (`mu`, the expected score), not on the scale of individual parameters. You can use `link` to help with this, or just use your knowledge of the linear model instead. What do you conclude about the features and teh scores? Can you relate the results of your model(s) to the individual judge and wine inferences from **8H5**?
+:::
+
+Something...
+
+## Session Info {-}
+
+<details><summary>View the session information used to render this week.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>

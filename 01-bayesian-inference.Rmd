@@ -13,11 +13,16 @@ The first week covers Chapter 1 (The Golem of Prague), Chapter 2 (Small Worlds a
 
 Lecture 1:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/4WVelCswXo4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-1, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/cclUd_HoRlo")
+```
 
 Lecture 2:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/XoVtOAN0htU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-2, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/guTdrfycW2Q")
+```
+
 
 ## Exercises
 
@@ -311,8 +316,8 @@ posterior[1]
 
 ### Chapter 3
 
-:::question
-> **Easy.** The Easy problems sue the sample from the posterior distribution for the globe tossing example. The code will give you a specific set of samples, so that you can check your answers exactly.
+:::{.question .code-question}
+> **Easy.** The Easy problems use the sample from the posterior distribution for the globe tossing example. The code will give you a specific set of samples, so that you can check your answers exactly.
 
 ```{r e3e}
 p_grid <- seq(from = 0, to = 1, length.out = 1000)
@@ -628,6 +633,6 @@ The model is severely under estimating the number of second-born boys when the f
 
 <details><summary>View the session information used to render this week.</summary>
 ```{r 01-session-info}
-devtools::session_info()
+sessioninfo::session_info()
 ```
 </details>

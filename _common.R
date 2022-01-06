@@ -13,7 +13,7 @@ suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
 
-ggplot2::theme_set(theme_minimal())
+ggplot2::theme_set(ggplot2::theme_minimal())
 
 knitr::opts_chunk$set(
   comment = "#>",
@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
   fig.asp = 1 / 1.618,
   fig.show = "hold",
   fig.align = "center",
-  out.width = "70%"
+  out.width = "80%"
 )
 
 knitr::knit_hooks$set(wrap = function(before, options, envir){

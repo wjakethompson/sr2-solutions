@@ -1,0 +1,1225 @@
+# More Linear Models
+
+The third week covers Chapter 5 (The Many Variables & The Spurious Waffles) and  Chapter 6 (The Haunted DAG & The Causal Terror).
+
+## Lectures
+
+Lecture 5:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/e0tO64mtYMU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Lecture 6:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/l_7yIUqWBmE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Exercises
+
+### Chapter 5
+
+:::question
+> **5E1.** Which of the linear models below are multiple linear regressions?
+\begin{align}
+  (1)\ \ \mu_i &= \alpha + \beta x_i \\
+  (2)\ \ \mu_i &= \beta_x x_i + \beta_z z_i \\
+  (3)\ \ \mu_i &= \alpha + \beta(x_i - z_i) \\
+  (4)\ \ \mu_i &= \alpha + \beta_x x_i + \beta_z z_i
+\end{align}
+:::
+
+Numbers 2 and 4 are multiple regressions. Number 1 contains only one predictor variable. Number 3, although two variables appear in the model, also only uses the difference of $x$ and $z$ as a single predictor. Only numbers 2 and 4 contain multiple predictor variables.
+
+:::question
+> **5E2.** Write down a multiple regression to evaluate the claim: *Animal diversity is linearly related to latitude, but only after controlling for plant diversity*. You just need to write down the model definition.
+:::
+
+We will denote animal diversity as $A$, latitude as $L$, and plant diversity as $P$. The linear model can then be defined as follows:
+
+\begin{align}
+  A_i &\sim \text{Normal}(\mu, \sigma) \\
+  \mu_i &= \alpha + \beta_L L_i + \beta_P P_i
+\end{align}
+
+:::question
+> **5E3.** Write down a multiple regression to evaluate the claim: *Neither amount of funding nor size of laboratory is by itself a good predictor of time to PhD degree; but together these variables are both positively associated with time to degree*. Write down the model definition and indicate which side of zero each slope parameter should be on.
+:::
+
+We will denote time to PhD degree as $T$, amount of funding as $F$, and size of laboratory as $L$. The linear model can then be defined in three pieces. The first two pieces are bivariate regressions to assess the first part of the claim that neither predictor is itself a good predictor of time to PhD degree. The third piece evaluate the second half of the claim that together, both variables have a positive relationship with time to PhD degree. We would expect $\beta_{F(F)}$ and $\beta_{L(L)}$ to have positive slopes that are close to zero (i.e., in the bivariate regressions, we should see little effect of funding or laboratory size). We would expect to see larger positive slopes for both $\beta_F$ and $\beta_L$, as we expect to see funding and laboratory size to have a sizable impact when both are included in the model.
+
+\begin{align}
+  T_i &\sim \text{Normal}(\mu_{i(F)}, \sigma_F) \\
+  \mu_{i(F)} &= \alpha_F + \beta_{F(F)} F_i \\ \\
+  
+  T_i &\sim \text{Normal}(\mu_{i(L)}, \sigma_L) \\
+  \mu_{i(L)} &= \alpha_L + \beta_{L(L)} L_i \\ \\
+  
+  T_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_F F_i + \beta_L L_i
+\end{align}
+
+:::question
+> **5E4.** Suppose you have a single categorical predictor with 4 levels (unique values), labeled A, B, C and D. Let $A_i$ be an indicator variable that is 1 where case $i$ is in category $A$. Also suppose $B_i$, $C_i$, and $D_i$ for the other categories. Now which of the following linear models are inferentially equivalent ways to include the categorical variable in a regression? Model are inferentially equivalent when it's possible to compute one posterior distribution from the posterior distribution of another model.
+\begin{align}
+  (1)\ \ \mu_i &= \alpha + \beta_A A_i + \beta_B B_i + \beta_D D_i \\
+  (2)\ \ \mu_i &= \alpha + \beta_A A_i + \beta_B B_i + \beta_C C_i + \beta_D D_i \\
+  (3)\ \ \mu_i &= \alpha + \beta_B B_i + \beta_C C_i + \beta_D D_i \\
+  (4)\ \ \mu_i &= \alpha_A A_i + \alpha_B B_i + \alpha_C C_i + \alpha_D D_i \\
+  (5)\ \ \mu_i &= \alpha_A (1 - B_i - C_i - D_i) + \alpha_B B_i + \alpha_C C_i + \alpha_D D_i
+\end{align}
+:::
+
+Numbers 1, 3, 4, and 5 are all inferentially equivalent. Numbers 1 and 3 both use 3 of the 4 indicator variables, meaning that you can always calculate the 4th from the three that are estimated and the intercept. Number 4 is equivalent to an index variable approach, which is inferentially equivalent to the indicator variable approach. Finally, Number 5 is mathematically equivalent to Number 4, assuming that each observation can belong to only 1 of the 4 groups.
+
+Number 2 is not a valid model representation, as the model should only contain $k-1$ indicator variables with an intercept (when using an indicator variable approach). Because all 4 are included in the definition of Number 2, we should expect to have estimation problems (if the model will estimate at all).
+
+:::question
+> **5M1.** Invent your own example of a spurious correlation. An outcome variable should be correlated with both predictor variables. But when both predictors are entered in the same model, the correlation between the outcome and one of the predictors should mostly vanish (or at least be greatly reduced).
+:::
+
+In this (simulated) example, we'll predict ice cream sales from the temperature and the number of shark attacks. First, we'll fit two bivariate regressions, `mod_t` and `mod_s`, which include only temperature and shark attacks as predictors, respectively. Then we'll estimate multivariate regression, `mod_all`, which includes both predictors.
+
+```{r e5m1-1}
+# Generate data ----------------------------------------------------------------
+set.seed(2020)
+n <- 100
+temp <- rnorm(n)
+shark <- rnorm(n, temp)
+ice_cream <- rnorm(n, temp)
+
+spur_exp <- tibble(ice_cream, temp, shark) %>%
+  mutate(across(everything(), standardize))
+
+# Fit models -------------------------------------------------------------------
+mod_t <- brm(ice_cream ~ 1 + temp, data = spur_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m1-t"))
+
+mod_s <- brm(ice_cream ~ 1 + shark, data = spur_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m1-s"))
+
+mod_all <- brm(ice_cream ~ 1 + temp + shark, data = spur_exp, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp5", "b5m1-all"))
+```
+
+The plot below shows the posterior distributions of the $\beta$ coefficients for temperature and shark attacks. As expected, both have a positive relationship with ice cream sales in the bivariate models. However, when both predictors are included in `mod_all`, the posterior distribution for `b_shark` moves down to zero, whereas the distribution of `b_temp` remains basically the same. Thus, the relationship between ice cream sales and shark attacks is a spurious correlation, as both are informed by the temperature.
+
+```{r e5m1-2}
+bind_rows(
+  spread_draws(mod_t, b_temp) %>%
+    mutate(model = "mod_t"),
+  spread_draws(mod_s, b_shark) %>%
+    mutate(model = "mod_s"),
+  spread_draws(mod_all, b_temp, b_shark) %>%
+    mutate(model = "mod_all")
+) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  drop_na(value) %>%
+  mutate(model = factor(model, levels = c("mod_t", "mod_s", "mod_all")),
+         parameter = factor(parameter, levels = c("b_temp", "b_shark"))) %>%
+  ggplot(aes(x = value, y = fct_rev(model))) +
+  facet_wrap(~parameter, nrow = 1) +
+  stat_halfeye(.width = 0.89) +
+  labs(x = "Parameter Value", y = "Model")
+```
+
+:::question
+> **5M2.** Invent your own example of a masked relationship. An outcome variable should be correlated with both predictor variables, but in opposite directions. And the two predictor variables should be correlated with one another.
+:::
+
+For this (also simulated) example, we'll predict an academic test score from the amount of instruction a student received and the number of days they missed class. First, we'll fit two bivariate regressions, `mod_i` and `mod_d`, which include only instruction and days away as predictors, respectively. Then we'll estimate multivariate regression, `mod_test`, which includes both predictors.
+
+```{r e5m2-1}
+# Generate data ----------------------------------------------------------------
+set.seed(2020)
+n <- 100
+u <- rnorm(n)
+days_away <- rnorm(n, u)
+instruction <- rnorm(n, u)
+test_score <- rnorm(n, instruction - days_away)
+
+mask_exp <- tibble(test_score, instruction, days_away) %>%
+  mutate(across(everything(), standardize))
+
+# Fit models -------------------------------------------------------------------
+mod_i <- brm(test_score ~ 1 + instruction, data = mask_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m2-i"))
+
+mod_d <- brm(test_score ~ 1 + days_away, data = mask_exp, family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp5", "b5m2-d"))
+
+mod_test <- brm(test_score ~ 1 + instruction + days_away, data = mask_exp,
+                family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp5", "b5m2-test"))
+```
+
+The figure below shows the posterior distributions of the $\beta$ parameters from each of the models. We can see that in full model, `mod_test`, `b_instruction` gets more positive and `b_days_away` gets more negative.
+
+```{r e5m2-2}
+bind_rows(
+  spread_draws(mod_i, b_instruction) %>%
+    mutate(model = "mod_i"),
+  spread_draws(mod_d, b_days_away) %>%
+    mutate(model = "mod_d"),
+  spread_draws(mod_test, b_instruction, b_days_away) %>%
+    mutate(model = "mod_test")
+) %>%
+  pivot_longer(cols = starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  drop_na(value) %>%
+  mutate(model = factor(model, levels = c("mod_i", "mod_d", "mod_test")),
+         parameter = factor(parameter, levels = c("b_instruction",
+                                                  "b_days_away"))) %>%
+  ggplot(aes(x = value, y = fct_rev(model))) +
+  facet_wrap(~parameter, nrow = 1) +
+  stat_halfeye(.width = 0.89) +
+  labs(x = "Parameter Value", y = "Model")
+```
+
+:::question
+> **5M3.** It is sometimes observed that the best predictor of fire risk is the presence of firefighters---State and localities with many firefighters also have more fires. Presumably firefighters do not *cause* fires. Nevertheless, this is not a spurious correlation. Instead fires cause firefighters. Consider the same reversal of causal inference in the context of the divorce and marriage data. How might a high divorce rate cause a higher marriage rate? Can you think of a way to evaluate this relationship, using multiple regression?
+:::
+
+A high divorce rate means that there are more people available in the population of single-people that are available to marry. Additionally, people may be getting divorced for the specific purpose of marrying someone else. To evaluate this, we could add marriage number, or a "re-marry" indicator. We would then expect the coefficient for marriage rate to get closer to zero once this predictor is added to the model.
+
+:::question
+> **5M4.** In the divorce data, States with high numbers of members of the Church of Jesus Christ of Latter-day Saints (LDS) have much lower divorce rates than the regression models expected. Find a list of LDS population by State and use those numbers as a predictor variable, predicting divorce rate using marriage rate, median age at marriage, and percent LDS population (possibly standardized). You may want to consider transformations of the raw percent LDS variable.
+:::
+
+We can pull the LDS membership from the official LDS website, and state populations from the United States census website. Conveniently, this is all pulled together on [Wikipedia](https://en.wikipedia.org/wiki/The_Church_of_Jesus_Christ_of_Latter-day_Saints_membership_statistics_(United_States)) (copied on September 1, 2020). The data is saved in `data/lds-data.csv`. We can then combine this with our existing divorce data from `data("WaffleDivorce")`. For this analysis, I'll use LDS membership per capita. Specifically, the number of LDS members per 100,000 in the state's population. This will then be standardized, along with the other predictor variables, as was done in the chapter examples.
+
+```{r e5m4-1}
+lds <- read_csv(here("data", "lds-data.csv"),
+                col_types = cols(.default = col_integer(),
+                                 state = col_character())) %>%
+  mutate(lds_prop = members / population,
+         lds_per_capita = lds_prop * 100000)
+
+data("WaffleDivorce")
+lds_divorce <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(Location, Divorce, Marriage, MedianAgeMarriage) %>%
+  left_join(select(lds, state, lds_per_capita),
+            by = c("Location" = "state")) %>%
+  mutate(lds_per_capita = log(lds_per_capita)) %>%
+  mutate(across(where(is.numeric), standardize))
+
+lds_divorce
+```
+
+We're now ready to estimate our model.
+
+```{r e5m4-2}
+lds_mod <- brm(Divorce ~ 1 + Marriage + MedianAgeMarriage + lds_per_capita,
+               data = lds_divorce, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b, coef = Marriage),
+                         prior(normal(0, 0.5), class = b, coef = MedianAgeMarriage),
+                         prior(normal(0, 0.5), class = b, coef = lds_per_capita),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp5", "b5m4"))
+```
+
+Finally, we can visualize our estimates. The intercept and coefficients for `Marriage` and `MedianAgeMarriage` are nearly identical to those from model `m5.3` in the text. Thus, it appears that our new predictor, LDS per capita, is contributing unique information. As expected, a higher population of LDS members in a state is associated with a lower divorce rate.
+
+```{r e5m4-3}
+spread_draws(lds_mod, `b_.*`, regex = TRUE) %>%
+  pivot_longer(starts_with("b_"), names_to = "parameter",
+               values_to = "value") %>%
+  ggplot(aes(x = value, y = parameter)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Value", y = "Parameter")
+```
+
+:::question
+> **5M5.** One way to reason through multiple causation hypotheses is to imagine detailed mechanisms through which predictor variables may influence outcomes. For example, it is sometimes argued that the price of gasoline (predictor variable) is positively associated with lower obesity rates (outcome variable). However, there are at least two important mechanisms by which the price of gas could reduce obesity. First, it could lead to less driving and therefore more exercise. Second, it could lead to less driving, which leads to less eating out, which leds to less consumption of huge restaurant meals. Can you outline one or more multiple regressions that address these two mechanisms? Assume you can have any predictor data you need.
+:::
+
+Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($G$), average exercise ($E$), and restaurant revenue ($R$). Given these variables, we can define the linear model as follows:
+
+\begin{align}
+  O_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_G G_i + \beta_E E_i + \beta_R R_i
+\end{align}
+
+:::question
+> **5H1.** In the divorce example, suppose the DAG is: $M \rightarrow A \rightarrow D$. What are the implied conditional independencies of the graph? Are the data consistent with it?
+:::
+
+We can use {dagitty} [@R-dagitty] to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
+
+```{r e5h1-1}
+library(dagitty)
+
+mad_dag <- dagitty("dag{ M -> A -> D}")
+impliedConditionalIndependencies(mad_dag)
+```
+
+As shown in model `m5.3`, the data is consistent with this implied conditional independency. Thus this data is consistent with multiple DAGs. Specific, it would support all Markov Equivalent DAGs. The second DAG in this list, `D <- A -> M`, is the DAG that was investigated in the text.
+
+```{r e5h1-2}
+equivalentDAGs(mad_dag)
+```
+
+:::question
+> **5H2.** Assuming that the DAG for the divorce example is indeed $M \rightarrow A \rightarrow D$, fit a new model and use it ot estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
+:::
+
+First, we'll estimate a model consistent this this DAG. Because there are two regressions here, we'll use {brms}'s multivariate syntax (i.e., `bf()`; see [here](https://paul-buerkner.github.io/brms/articles/brms_multivariate.html)).
+
+```{r e5h2-1}
+dat <- WaffleDivorce %>%
+  select(A = MedianAgeMarriage,
+         D = Divorce,
+         M = Marriage) %>%
+  mutate(across(everything(), standardize))
+
+d_model <- bf(D ~ 1 + A + M)
+a_model <- bf(A ~ 1 + M)
+
+b5h2 <- brm(d_model + a_model + set_rescor(FALSE),
+            data = dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept, resp = D),
+                      prior(normal(0, 0.5), class = b, resp = D),
+                      prior(exponential(1), class = sigma, resp = D),
+                      
+                      prior(normal(0, 0.2), class = Intercept, resp = A),
+                      prior(normal(0, 0.5), class = b, resp = A),
+                      prior(exponential(1), class = sigma, resp = A)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h2"))
+```
+
+We can then simulation our counterfactuals and plot with {ggplot2}.
+
+```{r e5h2-2}
+posterior_samples(b5h2) %>%
+  as_tibble() %>%
+  rowid_to_column(var = "iter") %>%
+  expand(nesting(iter, b_D_Intercept, b_A_Intercept, b_D_A, b_D_M, b_A_M,
+                 sigma_D, sigma_A),
+         m = seq(from = -2, to = 2, length.out = 30)) %>%
+  mutate(a_sim = rnorm(n(), mean = b_A_Intercept + b_A_M * m, sd = sigma_A),
+         d_sim = rnorm(n(), mean = b_D_Intercept + b_D_A * a_sim + b_D_M * m,
+                       sd = sigma_D)) %>%
+  pivot_longer(ends_with("_sim"), names_to = "name", values_to = "value") %>%
+  group_by(m, name) %>%
+  mean_qi(value, .width = c(0.89)) %>%
+  ungroup() %>%
+  mutate(name = case_when(name == "a_sim" ~ "Counterfactual effect M -> A",
+                          TRUE ~ "Total Counterfactual effect of M on D")) %>%
+  ggplot(aes(x = m, y = value, ymin = .lower, ymax = .upper)) +
+  facet_wrap(~name, nrow = 1) +
+  geom_smooth(stat = "identity") +
+  labs(x = "Manipulated M", y = "Counterfactual")
+```
+
+:::question
+> **5H3.** Return to the milk energy model, `m5.7`. Suppose that the true causal relationship among the variables is:
+
+```{r e5h3-into, out.width = "40%", echo = FALSE, wrap = "table-question"}
+suppressPackageStartupMessages(library(ggdag))
+
+dag_coords <-
+  tibble(name = c("M", "K", "N"),
+         x    = c(1, 2, 3),
+         y    = c(2, 1, 2))
+
+dagify(K ~ M + N, N ~ M,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA)) -> p
+
+ggsave("e5h3-dag.png", plot = p, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(here("img", "e5h3-dag.png"))
+```
+
+> Now compute the counterfactual effect on $K$ of doubling $M$. You will need to account for both the direct and indirect paths of causation. Use the counterfactual example from the chapter (starting on page 140) as a template.
+:::
+
+First, we need to estimate our model.
+
+```{r e5h3-1}
+data(milk)
+
+new_milk <- milk %>%
+  select(kcal.per.g,
+         neocortex.perc,
+         mass) %>%
+  drop_na(everything()) %>%
+  mutate(log_mass = log(mass),
+         K = standardize(kcal.per.g),
+         N = standardize(neocortex.perc),
+         M = standardize(log_mass))
+
+K_model <- bf(K ~ 1 + M + N)
+N_model <- bf(N ~ 1 + M)
+
+b5h3 <- brm(K_model + N_model + set_rescor(FALSE),
+            data = new_milk, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept, resp = K),
+                      prior(normal(0, 0.5), class = b, resp = K),
+                      prior(exponential(1), class = sigma, resp = K),
+                      
+                      prior(normal(0, 0.2), class = Intercept, resp = N),
+                      prior(normal(0, 0.5), class = b, resp = N),
+                      prior(exponential(1), class = sigma, resp = N)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h3"))
+```
+
+Now we can calculate the counterfactual. $M$ represents the mass, so we'll use evenly spaced values from 0.5 to 80, which captures the range of observed mass in the data. We'll then predict new values of $K$ from these masses. 
+
+```{r e5h3-2}
+milk_cf <- posterior_samples(b5h3) %>%
+  as_tibble() %>%
+  rowid_to_column(var = "iter") %>%
+  expand(nesting(iter, b_K_Intercept, b_N_Intercept, b_K_M, b_K_N, b_N_M,
+                 sigma_K, sigma_N),
+         mass = seq(from = 0.5, to = 80, by = 0.5)) %>%
+  mutate(log_mass = log(mass),
+         M = (log_mass - mean(new_milk$log_mass)) / sd(new_milk$log_mass),
+         n_sim = rnorm(n(), mean = b_N_Intercept + b_N_M * M, sd = sigma_N),
+         k_sim = rnorm(n(), mean = b_K_Intercept + b_K_N * n_sim + b_K_M * M,
+                       sd = sigma_K)) %>%
+  pivot_longer(ends_with("_sim"), names_to = "name", values_to = "value") %>%
+  group_by(mass, name) %>%
+  mean_qi(value, .width = c(0.89)) %>%
+  ungroup() %>%
+  filter(name == "k_sim") %>%
+  mutate(name = case_when(name == "n_sim" ~ "Counterfactual effect M -> N",
+                          TRUE ~ "Total Counterfactual effect of M on K"))
+
+ggplot(milk_cf, aes(x = mass, y = value, ymin = .lower, ymax = .upper)) +
+  geom_smooth(stat = "identity") +
+  labs(x = "Manipulated Mass", y = "Counterfactual K")
+```
+
+As we can see in the plot below, because mass is log-transformed in the model, there is a non-linear relationship between the manipulated mass and our counterfactual. Thus, the impact of doubling mass depends on the original mass. For example, expected causal effect of increasing the mass from 2 to 4 is a `r sprintf("%0.3f", pull(filter(milk_cf, mass == 2), value) - pull(filter(milk_cf, mass == 4), value))` standard deviation decrease in $K$, whereas the expected causal effect of increasing the mass from 20 to 40 is a `r sprintf("%0.3f", pull(filter(milk_cf, mass == 20), value) - pull(filter(milk_cf, mass == 40), value))` standard deviation decrease in $K$. 
+
+:::question
+> **5H4.** Here is an open practice problem to engage your imagination. In the divorce data, States in the southern United States have many of the highest divorce rates. Add the `South` indicator variable to the analysis. First, draw one or more DAGs that represent your ideas for how Southern American culture might influence any of the other three variables ($D$, $M$, or $A$). Then list the testable implications of your DAGs, if there are any, and fit one or more models to evaluate the implications. What do you think the influence of "Southerness" is?
+:::
+
+First, let's draw a DAG using {ggdag} [@R-ggdag]. 
+
+```{r e5h4-1, out.width = "40%"}
+dag_coords <-
+  tibble(name = c("S", "A", "M", "D"),
+         x = c(1, 1, 2, 3),
+         y = c(3, 1, 2, 1))
+
+dagify(D ~ A + M,
+       M ~ A + S,
+       A ~ S,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+In this proposed model, we are hypothesizing that southerness influences the median age at marriage and the marriage rate. We can use {dagitty} to view the testable implications:
+
+```{r e5h4-2}
+div_dag <- dagitty("dag{S -> M -> D; S -> A -> D; A -> M}")
+impliedConditionalIndependencies(div_dag)
+```
+
+Given the DAG, divorce rate should be independent of southerness when we condition on median age at marriage and marriage rate. Let's estimate a model to test this. We'll include median age at marriage ($A$), marriage rate ($M$), and southerness ($S$) in the model. Because both $A$ and $M$ are included, we would expect the coefficient for $S$ to be zero, if the implied conditional independency holds.
+
+```{r e5h4-3}
+data("WaffleDivorce")
+
+south_divorce <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(D = Divorce,
+         A = MedianAgeMarriage,
+         M = Marriage,
+         S = South) %>%
+  drop_na(everything()) %>%
+  mutate(across(where(is.double), standardize))
+
+b5h4 <- brm(D ~ A + M + S, data = south_divorce, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp5", "b5h4"))
+```
+
+Now we can look at the posterior distribution for the $\beta$ coefficient for southerness.
+
+```{r e5h4-4}
+spread_draws(b5h4, b_S) %>%
+  ggplot(aes(x = b_S)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = expression(beta[S]), y = "Density")
+```
+
+The effect of southerness is close to zero, but slightly larger than we might have expected. Thus, we have some preliminary evidence that being in the south does not cause a higher divorce rate, but we would want to consider adding additional variables (e.g., religiosity) that we know also influence divorce rates and may also be correlated with southerness.
+
+### Chapter 6
+
+:::question
+> **6E1.** List three mechanisms by which multiple regression can produce false inferences about causal effects.
+:::
+
+The three mechanisms are:
+
+1. *Multicollinearity*. This occurs when two or more variables are strongly assocaited, conditional on the other variables in the model.
+2. *Post-treatment Bias*. This occurs when the inclusion of a variable "blocks" the effect of another.
+3. *Collider Bias*. This occurs when two variables are unrelated to each other, but are both related to a third variable. The inclusion of the third variable creates a statistical association in the model between the first two.
+
+:::question
+> **6E2.** For one of the mechanisms in the previous problem, provide an example of your choice, perhaps from your own research.
+:::
+
+In educational research, we are often interested in instructional interventions. For example, we might provide teacher with professional development ($P$). We expect the professional development to have a positive impact on instruction the teacher provides, which in turn should improve student performance. However, student performance is also influence by the pre-existing knowledge state of the teacher's students. This is a post-treatment bias, where the quality of the instruction masks the effect of the professional development as shown in the DAG.
+
+```{r e6e2, out.width = "40%"}
+ed_dag <- dagitty("dag { D -> I -> P <- K }")
+coordinates(ed_dag) <- list(x = c(D = 1, I = 1.5, P = 2, K = 2.5),
+                            y = c(D = 3, I = 2, P = 1, K = 2))
+
+ggplot(ed_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+:::question
+> **6E3.** List the four elemental confounds. Can you explain the conditional dependencies of each?
+:::
+
+1. *The Fork*. The classic "confounder" example. A variable $Z$ is a common cause to both $X$ and $Y$, resulting in a correlation between $X$ and $Y$. In other words, $X$ is independent of $Y$, conditional on $Z$, or, in math notation, $X \!\perp\!\!\!\perp Y | Z$.
+
+```{r e6e3-1, echo = FALSE, out.width = "25%"}
+fork_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(3, 3, 1))
+
+dagify(X ~ Z,
+       Y ~ Z,
+       coords = fork_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+2. *The Pipe*. A variable $X$ influences, another variable $Z$, which in turn influences the outcome $Y$. A good example is the post-treatment bias described above. The treatment ($X$) is meant to influence some outcome ($Y$), but does so through an intermediary ($Z$). Including both $X$ and $Z$ can then make it appear as though $X$ has no effect on $Y$. Thus, as in the the fork, $X$ is independent of $Y$, conditional on $Z$. And in math again: $X \!\perp\!\!\!\perp Y | Z$.
+
+```{r e6e3-2, echo = FALSE, out.width = "25%"}
+pipe_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(3, 1, 2))
+
+dagify(Z ~ X,
+       Y ~ Z,
+       coords = pipe_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+3. *The Collider*. Unlike the fork and the pipe, the collider induces a correlation between otherwise unassociated variables. Thus, $X$ is *not* independent from $Y$, conditional on $Z$. In math notation, this can be written as $X \not\!\perp\!\!\!\perp Y|Z$.
+
+```{r e6e3-3, echo = FALSE, out.width = "25%"}
+coll_coords <- tibble(name = c("X", "Y", "Z"),
+                      x = c(1, 3, 2),
+                      y = c(1, 1, 3))
+
+dagify(Z ~ X,
+       Z ~ Y,
+       coords = coll_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+4. *The Descendant*. In this final case, the descendant, $D$, is influenced by another variable in the DAG, in this case $Z$. Conditioning on the descendant has the impact of partially conditioning on the parent variable. In this example, $Z$ is a collider. Thus, if we kept $Z$ out of the model, but included $D$, we would get a partial collider bias, because $D$ contains some of the information that is in $Z$. How much bias is introduced depends on the strength of the relationship between the the descendant and its parent. 
+
+```{r e6e3-4, echo = FALSE, out.width = "25%"}
+desc_coords <- tibble(name = c("X", "Y", "Z", "D"),
+                      x = c(1, 3, 2, 2),
+                      y = c(1, 1, 3, 1.2))
+
+dagify(Z ~ X,
+       Z ~ Y,
+       D ~ Z,
+       coords = desc_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+:::question
+> **6E4.** How is a biased sample like conditioning on a collider? Think of the example at the open of the chapter.
+:::
+
+With a collider, an association is introduced between two variables when a third is added. A biased sample is like an un-measured collider. In the example that started the chapter, there was no association between trustworthiness and and newsworthiness. However, when selection status is added to the model, there appears to be a negative association. Now imagine that you only have data for the funded proposals. Here, there is an implicit conditioning on selection status, because you only have funded proposals. This is potentially more nefarious, because the collider isn't explicitly in your data, or has no variance (i.e., all proposals in your data have a selection score of `1`).
+
+:::question
+> **6M1.** Modify the DAG on page 186 to include the variable $V$, an unobserved cause of $C$ and $Y$: $C \leftarrow V \rightarrow Y$. Reanalyze the DAG. How many paths connect $X$ to $Y$? Which must be closed? Which variables should you condition on now?
+:::
+
+The new DAG looks like this:
+
+```{r e6m1-1, out.width = "40%"}
+dag_coords <- tibble(name = c("X", "U", "A", "B", "C", "Y", "V"),
+                     x = c(1, 1, 2, 2, 3, 3, 3.5),
+                     y = c(1, 2, 2.5, 1.5, 2, 1, 1.5))
+
+dagify(Y ~ X + C + V,
+       X ~ U,
+       U ~ A,
+       B ~ U + C,
+       C ~ A + V,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(data = . %>% filter(name %in% c("U", "V")),
+                 shape = 1, stroke = 2, color = "black") +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+There are now 4 paths from $X$ to $Y$. The two paths from the original DAG, and 2 new paths introduced by $V$.
+
+1. `X <- U <- A -> C -> Y`
+2. `X <- U -> B <- C -> Y`
+3. `X <- U <- A -> C <- V -> Y`
+4. `X <- U -> B <- C <- V -> Y`
+
+Paths 2 and 4 are already closed, because $B$ is a collider. Paths 1 and 3 are open because $A$ is a fork. In the original DAG, we could close either $A$ or $C$; however, in the new DAG, $C$ is a collider. Therefore, if we conditioned on $C$, we'd be opening up a new path through $V$. Therefore, if we want to make inferences about the causal effect of $X$ on $Y$, we must only condition on $A$ (assuming our DAG is correct). We can confirm using `dagitty::adjustmentSets()`.
+
+```{r e6m1-2}
+new_dag <- dagitty("dag { U [unobserved]
+                          V [unobserved]
+                          X -> Y
+                          X <- U <- A -> C -> Y
+                          U -> B <- C
+                          C <- V -> Y }")
+
+adjustmentSets(new_dag, exposure = "X", outcome = "Y")
+```
+
+:::question
+> **6M2.** Sometimes, in order to avoid multicollinearity, people inspect pairwise correlations among predictors before including them in a model. This is a bad procedure, because what matters is the conditional association, not the association before the variables are included in the model. To highlight this, consider the DAG $X \rightarrow Z \rightarrow Y$. Simulate data from this DAG so that the correlation between $X$ and $Z$ is very large. Then include both in a model prediction $Y$. Do you observe any multicollinearity? Why or why not? What is different from the legs example in the chapter?
+:::
+
+First, we'll generate some data and confirm that `x` and `z` are highly correlated in our simulation.
+
+```{r e6m2-1}
+set.seed(1984)
+
+n <- 100
+dat <- tibble(x = rnorm(n)) %>%
+  mutate(z = rnorm(n, mean = x, sd = 0.4),
+         y = rnorm(n, mean = z),
+         across(everything(), standardize))
+
+sim_cor <- cor(dat$x, dat$z)
+sim_cor
+```
+
+In our generated data of `r prettyNum(nrow(dat), big.mark = ",")` observations, there is a correlation of `r fmt_prop(sim_cor, 3)` between `x` and `z`. Now let's estimate a model regressing `y` and both `x` and `z`.
+
+```{r e6m2-2}
+b6m2 <- brm(y ~ 1 + x + z, data = dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp6", "b6m2"))
+
+posterior_samples(b6m2) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97))
+```
+
+In the model summary, we can see that both `x` and `z` have estimates with relatively narrow posterior distributions. This is in contrast to the example of legs in the chapter, where the estimated standard deviations of the $beta$ parameters were much larger than the magnitudes of the parameters, and the posterior distributions had significant overlap. Thus, it does not appear as though we are observing multicollinearity.
+
+This is due to the causal model that gave rise to this (simulated) data. In the legs example from the chapter, both legs predicted height (left DAG below). In this example, only $Z$ predicts the outcome. In DAG language, $Z$ is a pipe. Therefore, when the model is estimated, the golem is looking at what $X$ tells us, conditional on $Z$. The answer in this case is "no" because $X$ and $Z$ are highly correlated, which is why the posterior for $X$ is centered on zero. The leg model does not condition on either of the predictors, as both have direct paths to the outcome variable. Thus, whether or not a model has multicollinearity depends not only on the pairwise relationship, but also the causal model.
+
+```{r e6m2-3, out.width = "40%", echo = FALSE, fig.cap = " "}
+leg_coords <- tibble(name = c("R", "L", "H"),
+                     x = c(1, 3, 2),
+                     y = c(2, 2, 1))
+leg_dag <- dagify(H ~ R + L,
+                  coords = leg_coords)
+
+new_coords <- tibble(name = c("X", "Y", "Z"),
+                     x = c(1, 3, 2),
+                     y = c(3, 1, 2))
+new_dag <- dagify(Y ~ Z,
+                  Z ~ X,
+                  coords = new_coords)
+
+padding <- 30
+ggplot(leg_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"))
+ggplot(new_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"))
+```
+
+:::question
+> **6M3.** Learning to analyze DAGs requires practice. For each of the four DAGs below, state which variables, if any, you must adjust for (condition on) to estimate the total causal influence of $X$ on $Y$.
+
+```{r e6m3-1, out.width = "40%", echo = FALSE, fig.cap = " ", wrap = "table-question"}
+dag1 <- dagitty("dag{ X <- Z <- A -> Y <- X; Y <- Z }")
+coordinates(dag1) <- list(x = c(X = 1, Y = 3, Z = 2, A = 3),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag2 <- dagitty("dag{ X -> Z <- A -> Y <- X; Y <- Z }")
+coordinates(dag2) <- list(x = c(X = 1, Y = 3, Z = 2, A = 3),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag3 <- dagitty("dag{ Y -> Z <- A -> X -> Y; X -> Z }")
+coordinates(dag3) <- list(x = c(X = 1, Y = 3, Z = 2, A = 1),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+dag4 <- dagitty("dag{ Y <- Z <- A -> X -> Y; X -> Z }")
+coordinates(dag4) <- list(x = c(X = 1, Y = 3, Z = 2, A = 1),
+                          y = c(X = 1, Y = 1, Z = 2, A = 2))
+
+# Plots -----
+padding <- 30
+p1 <- ggplot(dag1, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+p2 <- ggplot(dag2, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+p3 <- ggplot(dag3, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, padding, 0, 0), "pt"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+p4 <- ggplot(dag4, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.margin = unit(c(0, 0, 0, padding), "pt"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+
+ggsave("e6m3-dag1.png", plot = p1, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+ggsave("e6m3-dag2.png", plot = p2, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+ggsave("e6m3-dag3.png", plot = p3, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+ggsave("e6m3-dag4.png", plot = p4, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(c(here("img", "e6m3-dag1.png"),
+                          here("img", "e6m3-dag2.png"),
+                          here("img", "e6m3-dag3.png"),
+                          here("img", "e6m3-dag4.png")))
+```
+:::
+
+*Upper Left*: There are two back-door paths from $X$ to $Y$: $X \leftarrow Z \rightarrow Y$ and $X \leftarrow Z \leftarrow A \rightarrow Y$. In the first path $Z$ is a fork, and in the second, $Z$ is a pipe and $A$ is a fork. Thus, in both cases, conditioning on $Z$ would close the path. We can confirm with `dagitty::adjustmentSets()`.
+
+```{r e6m3-2}
+dag1 <- dagitty("dag{ X <- Z <- A -> Y <- X; Y <- Z }")
+adjustmentSets(dag1, exposure = "X", outcome = "Y")
+```
+
+*Upper Right*: Again, there are two paths from $X$ to $Y$: $X \rightarrow Z \rightarrow Y$ and $X \rightarrow Z \leftarrow A \rightarrow Y$. The first path is an indirect causal effect for $X$ on $Y$, which should be included when estimating the total causal effect of $X$ on $Y$. In the second path, $Z$ is a collider, so the path is already closed and therefore no action is needed. Thus, no adjustments are needed to estimate the total effect of $X$ of $Y$.
+
+```{r e6m3-3}
+dag2 <- dagitty("dag{ X -> Z <- A -> Y <- X; Y <- Z }")
+adjustmentSets(dag2, exposure = "X", outcome = "Y")
+```
+
+*Lower Left*: There are two paths from $X$ to $Y$: $X \leftarrow A \rightarrow Z \leftarrow Y$ and $X \rightarrow Z \leftarrow Y$. There is only one causal path from $X$ to $Y$, the direct path. In both back-door paths, $Z$ is a collider so the paths are closed unless we include it, so no additional variables need to be added to the model.
+
+```{r e6m3-4}
+dag3 <- dagitty("dag{ Y -> Z <- A -> X -> Y; X -> Z }")
+adjustmentSets(dag3, exposure = "X", outcome = "Y")
+```
+
+*Lower Right*: Finally, this DAG also has two causal paths from $X$ to $Y$. The direct effect, and an indirect effect through $Z$. There is one additional path, $X \leftarrow A \rightarrow Z \rightarrow Y$. Conditioning on $A$ will close the path.
+
+```{r e6m3-5}
+dag4 <- dagitty("dag{ Y <- Z <- A -> X -> Y; X -> Z }")
+adjustmentSets(dag4, exposure = "X", outcome = "Y")
+```
+
+:::question
+> **6H1.** Use the Waffle House data, `data(WaffleDivorce)`, to find the total causal influence of number of Waffle Houses on divorce rate. Justify your model or models with a causal graph.
+:::
+
+For this problem, we'll use the DAG given the chapter example:
+
+```{r e6h1-1, out.width = "40%"}
+waffle_dag <- dagitty("dag { S -> W -> D <- A <- S -> M -> D; A -> M }")
+coordinates(waffle_dag) <- list(x = c(A = 1, S = 1, M = 2, W = 3, D = 3),
+                                y = c(A = 1, S = 3, M = 2, W = 3, D = 1))
+
+ggplot(waffle_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+In order to estimate the total causal effect of Waffle Houses ($W$) on divorce rate ($D$), we have to condition on either $S$ or both $A$ and $M$. For simplicity, we'll condition on only $S$.
+
+```{r e6h1-2}
+adjustmentSets(waffle_dag, exposure = "W", outcome = "D")
+```
+
+We can use `brms::brm()` to estimate the model.
+
+```{r e6h1-3}
+data("WaffleDivorce")
+waffle <- WaffleDivorce %>%
+  as_tibble() %>%
+  select(D = Divorce,
+         A = MedianAgeMarriage,
+         M = Marriage,
+         S = South,
+         W = WaffleHouses) %>%
+  mutate(across(-S, standardize),
+         S = factor(S))
+
+waff_mod <- brm(D ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h1"))
+```
+
+Finally, we can see the causal estimate of Waffle Houses on divorce rate by looking at the posterior distribution of the `b_W` parameter. Here, we can see that the estimate is very small, indicating that the number of Waffle Houses has little to no causal impact on the divorce rate in a state.
+
+```{r e6h1-4}
+spread_draws(waff_mod, b_W) %>%
+  ggplot(aes(x = b_W)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = expression(beta[W]), y = "Density")
+```
+
+:::question
+> **6H2.** Build a series of models to test the implied conditional independencies of the causal graph you used in the previous problem. If any of the tests fail, how do you think the graph needs to be ammended? Does the graph need more or fewer arrows? Feel free to nominate variables that aren't in the data.
+:::
+
+First we need to get the conditional independencies implied by our DAG.
+
+```{r e6h2-1}
+impliedConditionalIndependencies(waffle_dag)
+```
+
+There are three models we need to estimate to evaluate the implied conditional independencies. Each one can be estimated with `brms::brm()`.
+
+```{r e6h2-2}
+waff_ci1 <- brm(A ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-1"))
+
+waff_ci2 <- brm(D ~ 1 + S + A + M + W, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-2"))
+
+waff_ci3 <- brm(M ~ 1 + W + S, data = waffle, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h2-3"))
+```
+
+Finally, we can example the posterior distributions for the implied conditional independencies. The implied conditional independency tested in the first model, $A \!\perp\!\!\!\perp W | S$, appears to be met, as the $beta_W$ coefficient from the model is centered on zero. The same is true for the third implied conditional independency, $M \!\perp\!\!\!\perp W | S$. The second implied conditional independency, $D \!\perp\!\!\!\perp S | A, M, W$, is less clear, as the posterior distribution overlaps zero, but does indicate a slightly positive relationship between divorce rate a state's "southern" status, even after adjusting for median age of marriage, marriage rate, and the number of waffle houses. This is likely because there are other variables missing from the model that are related to both divorce rate and also southerness. For example, religiosity, family size, and education could all plausibly impact divorce rates and show regional differences in the United States.
+
+```{r e6h2-3}
+lbls <- c(expression("Model 1:"~beta[W]),
+          expression("Model 2:"~beta[S]),
+          expression("Model 3:"~beta[W]))
+
+bind_rows(
+  gather_draws(waff_ci1, b_W) %>%
+    ungroup() %>%
+    mutate(model = "ICI 1"),
+  gather_draws(waff_ci2, b_S1) %>%
+    ungroup() %>%
+    mutate(model = "ICI 2"),
+  gather_draws(waff_ci3, b_W) %>%
+    ungroup() %>%
+    mutate(model = "ICI 3")
+) %>%
+  ggplot(aes(x = .value, y= model)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  scale_y_discrete(labels = lbls) +
+  labs(x = "Parameter Estimate", y = "Implied Conditional Independency")
+```
+
+:::question
+> All three problems below are based on the same data. The data in `data(foxes)` are 116 foxes from 30 different urban groups in England. These foxes are like street gangs. Group size varies from 2 to 8 individuals. Each group maintains its own urban territory. Some territories are larger than others. The `area` variable encodes this information. Some territories also have more `avgfood` than others. We want to model the `weight` of each fox. For the problems below, assume the following DAG:
+
+```{r e6h-fox, out.width = "40%", echo = FALSE, fig.cap = " ", wrap = "table-question"}
+suppressPackageStartupMessages(library(tidygraph))
+suppressPackageStartupMessages(library(ggraph))
+
+fox_dag <- dagitty("dag{ area -> avgfood -> groupsize -> weight <- avgfood }")
+coordinates(fox_dag) <- list(x = c(area = 2, avgfood = 1, weight = 2,
+                                   groupsize = 3),
+                             y = c(area = 3, avgfood = 2, weight = 1,
+                                   groupsize = 2))
+
+p <- fox_dag %>%
+  tidy_dagitty() %>%
+  as_tbl_graph() %>%
+  mutate(x = c(2, 1, 3, 2),
+         y = c(3, 2, 2, 1)) %>%
+  ggraph(x = x, y = y) +
+  geom_node_text(aes(label = name), color = "black", size = 10) + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name, fontsize = 30),
+                     end_cap = label_rect(node2.name, fontsize = 30)),
+                 edge_color = "black", edge_width = 2,
+                 arrow = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  expand_limits(x = c(0.75, 3.25), y = c(0.9)) +
+  theme_graph() +
+  theme(plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+
+ggsave("e6h-fox.png", plot = p, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(here("img", "e6h-fox.png"))
+```
+:::
+
+:::question
+> **6H3.** Use a model to infer the total causal influence of `area` on `weight`. Would increasing the area available to each fox make it heavier (healthier)? You might want to standardize the variables. Regardless, use prior predictive simulation to show that your model's prior predictions stay within the possible outcome range.
+:::
+
+First, let's load the data and standardize the variables.
+
+```{r e6h3-1}
+data(foxes)
+
+fox_dat <- foxes %>%
+  as_tibble() %>%
+  select(area, avgfood, weight, groupsize) %>%
+  mutate(across(everything(), standardize))
+
+fox_dat
+```
+
+For this first question, there are no back-door paths from area to weight. All of the arrows represent indirect effects of area on weight. Therefore, we do not want to condition on `avgfood` or `groupsize`, as this would close one or more of these indirect paths which are needed to estimate the total causal effect. We can confirm with `dagitty::adjustmentSets()`.
+
+```{r e6h3-2}
+fox_dag <- dagitty("dag{ area -> avgfood -> groupsize -> weight <- avgfood }")
+adjustmentSets(fox_dag, exposure = "area", outcome = "weight")
+```
+
+Thus, our model for this question can be written as:
+
+\begin{align}
+  W_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_A \\
+  \alpha &\sim \text{Normal}(0, 0.2) \\
+  \beta_A &\sim \text{Normal}(0, 0.5) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+Now, let's do some prior predictive simulations to makes sure we're within the bounds of what might be expected. Nearly all the lines are within the bounds of what might be expected.
+
+```{r e6h3-3, message = FALSE}
+set.seed(2020)
+
+n <- 1000
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 0, 0.2),
+       beta = rnorm(n, 0, 0.5)) %>%
+  expand(nesting(group, alpha, beta),
+         area = seq(from = -2, to = 2, length.out = 100)) %>%
+  mutate(weight = alpha + beta * area) %>%
+  ggplot(aes(x = area, y = weight, group = group)) +
+  geom_line(alpha = 1 / 10) +
+  geom_hline(yintercept = c((0 - mean(foxes$weight)) / sd(foxes$weight),
+                            (max(foxes$weight) - mean(foxes$weight)) /
+                              sd(foxes$weight)),
+             linetype = c("dashed", "solid"), color = "red") +
+  annotate(geom = "text", x = -2, y = -3.83, hjust = 0, vjust = 1,
+           label = "No weight") +
+  annotate(geom = "text", x = -2, y = 2.55, hjust = 0, vjust = 0,
+           label = "Maximum weight") +
+  expand_limits(y = c(-4, 4)) +
+  labs(x = "Standardized Area", y = "Standardized Weight")
+```
+
+Finally, we can estimate the model. Conditional on this DAG and our data, it doesn't appear as though area size has any causal effect on the weight of foxes.
+
+```{r e6h3-4}
+area_mod <- brm(weight ~ 1 + area, data = fox_dat, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b,),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h3"))
+
+posterior_samples(area_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_area", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+:::question
+> **6H4.** Now infer the causal impact of adding food to a territory. Would this make foxes heavier? Which covariates do you need to adjust for to estimate the total causal influence of food?
+:::
+
+To estimate the total causal impact of food, we don't need to adjust for any variables. There is a direct path from average food to weight and an indirect path through group size. If we condition on group size, then that path would be closed and we would be left with only the direct effect. However, as we want the total effect, there is no adjustment to be made.
+
+```{r e6h4-1}
+adjustmentSets(fox_dag, exposure = "avgfood", outcome = "weight")
+```
+
+When we estimate the model regressing weight on average food available, we see that there is no effect of food on weight. Given the DAG, this is expected. If there were an impact of food on weight, then we would have expected to see an impact of area on weight in the previous problem, as area is upstream up average food in the causal model.
+
+```{r e6h4-2}
+food_mod <- brm(weight ~ 1 + avgfood, data = fox_dat, family = gaussian,
+                prior = c(prior(normal(0, 0.2), class = Intercept),
+                          prior(normal(0, 0.5), class = b,),
+                          prior(exponential(1), class = sigma)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp6", "b6h4"))
+
+posterior_samples(food_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_avgfood", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+:::question
+> **6H5.** Now infer the causal impact of group size. Which covariates do you need to adjust for? Looking at the posterior distribution of the resulting model, what do you think explains these data? That is, can you explain the estimates for all three problems? How do they go together?
+:::
+
+When assessing the causal impact of group size, there is one back-door path: $G \leftarrow F \rightarrow W$. In this path, average food, $F$, is a fork, so we have to condition on it to isolate the effect of group size.
+
+```{r e6h5-1}
+adjustmentSets(fox_dag, exposure = "groupsize", outcome = "weight")
+```
+
+When we estimate this model, we see a negative effect for group size when controlling for food. We also now see a positive effect for average food when controlling for group size. Thus, the causal effect of group size is to decrease weight. Logically this makes sense, as there would be less food for each fox. This model also indicates that the direct effect of average food is to increase weight. That is, if group size is held constant, more food results in more weight. However, the total causal effect of food on weight, as we saw in the last problem, is nothing. This is because more food also leads to larger groups, which in turn decreases weight. This is a masking effect, also called a post-treatment bias.
+
+```{r e6h5-2}
+grp_mod <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
+               family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b,),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp6", "b6h5"))
+
+posterior_samples(grp_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  mutate(name = factor(name, levels = c("b_Intercept", "b_avgfood",
+                                        "b_groupsize", "sigma"))) %>%
+  ggplot(aes(x = value, y = fct_rev(name))) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  labs(x = "Parameter Estimate", y = "Parameter")
+```
+
+:::question
+> **6H6.** Consider your own research question. Draw a DAG to represent it. What are the testable implications of your DAG? Are there any variables you could condition on to close all backdoor paths? Are there unobserved variables that you have omitted? Would a reasonable colleague imagine additional threats to causal inference that you have ignored?
+:::
+
+For this question, we'll use the same instructional intervention described for question **6E2**. The DAG is shown below. In this DAG, we're interested in the effect of a new professional development intervention ($D$) on student performance ($P$). However, the professional development works by improving the teacher's instruction ($I$), and student performance is also affected by the students' pre-existing knowledge ($K$).
+
+```{r e6h6-1, out.width = "40%"}
+ed_dag <- dagitty("dag { D -> I -> P <- K }")
+coordinates(ed_dag) <- list(x = c(D = 1, I = 1.5, P = 2, K = 2.5),
+                            y = c(D = 3, I = 2, P = 1, K = 2))
+
+ggplot(ed_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+Based on this DAG, there are three testable implications:
+
+1. $D \!\perp\!\!\!\perp K$
+2. $D \!\perp\!\!\!\perp P | I$
+3. $I \!\perp\!\!\!\perp K$
+
+```{r e6h6-2}
+impliedConditionalIndependencies(ed_dag)
+```
+
+If we are interested in the causal impact of the professional development intervention $D$ on student performance $P$, then there are no back-door paths to close. Conditioning on the quality of instruction would introduce a post-treatment bias that would mask the effect of the professional development on the student performance.
+
+```{r e6h6-3}
+adjustmentSets(ed_dag, exposure = "D", outcome = "P")
+```
+
+There are many other factors not included in this DAG that are known to have an impact both on quality of instruction and student performance. These could include the socioeconomic and socioemotional state of the student, student motivation, school funding, class size, and at-home educational support, to name just a few. Students are also grouped into classes and schools, so there are likely group-level effects that are not accounted for here.
+
+:::question
+> **6H7.** For the DAG you made in the previous problem, can you write a data generating simulation for it? Can you design one or more statistical models to produce causal estimates? If so, try to calculate interesting counterfactuals. If not, use the simulation to estimate the size of the bias you might expect. Under what conditions would you, for example, infer the opposite of a true causal effect?
+:::
+
+Given the DAG, we can generate data and estimate some causal models to test it. First, let's generate data. For the sake of this example, we'll assume there are no group level effects and that all teachers are equally effective. These assumptions wouldn't hold in real data, but will suffice for this exercise.
+
+```{r e6h7-1}
+set.seed(2010)
+
+students <- 500
+
+ed_dat <- tibble(k = rnorm(students, mean = 0, sd = 2),
+                 d = sample(0L:1L, students, replace = TRUE),
+                 i = rnorm(students, mean = 1 + 3 * d),
+                 p = k + rnorm(students, 0.8 * i)) %>%
+  mutate(across(where(is.double), standardize))
+
+ed_dat
+```
+
+Now let's estimate a model to find the causal effect of professional development on student performance.
+
+\begin{align}
+  P_i &\sim \text{Normal}(\mu_i, \sigma) \\
+  \mu_i &= \alpha + \beta_D \\
+  \alpha &\sim \text{Normal}(0,0.2) \\
+  \beta_D &\sim \text{Normal}(0,0.5) \\
+  \sigma &\sim \text{Exponential}(1)
+\end{align}
+
+```{r e6h7-2}
+ed_mod <- brm(p ~ 1 + d, data = ed_dat, family = gaussian,
+              prior = c(prior(normal(0, 0.2), class = Intercept),
+                        prior(normal(0, 0.5), class = b),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp6", "b6h7-causal"))
+
+posterior_samples(ed_mod) %>%
+  as_tibble() %>%
+  select(-lp__) %>%
+  pivot_longer(everything()) %>%
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
+  scale_y_discrete(labels = c(expression(beta[D]), expression(alpha),
+                              expression(sigma))) +
+  labs(x = "Parameter Value", y = "Parameter")
+```
+
+Here we can see that, as expected given the data is simulated, there is a strong effect of professional development on student performance. With students whose teachers received the professional development showing a 0.88 standard deviation increase in performance compared to students whose teachers did not receive the professional development.
+
+## Session Info {-}
+
+<details><summary>View the session information used to render this week.</summary>
+```{r 01-session-info}
+devtools::session_info()
+```
+</details>
