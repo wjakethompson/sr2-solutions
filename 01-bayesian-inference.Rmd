@@ -71,6 +71,9 @@ The idea is that probability is only a subjective perception of the likelihood t
 
 :::question
 > **2M1.** Recall the globe tossing model from the chapter. Compute and plot the grid approximate posterior distribution for each of the following sets of observations. In each case, assume a uniform prior for *p*.
+>   (1) W, W, W
+>   (2) W, W, W, L
+>   (3) L, W, W, L, W, W, W
 :::
 
 ```{r e2m1}
@@ -609,7 +612,7 @@ ggplot() +
 Based on first births only, the model appears to fit less well. Specifically, the model appears to be overestimating the number of first births who are boys. However, it does not appear to be a large discrepancy, as the observed value is still within the middle 66% interval.
 
 :::question
-> **3H5.** The model assumes that sex of first and second births are independent. To check this assumption, focus now on second births that followed female first borns. Compare 10,000 simulated conts of boys to only those second births that followed girls. To do this correctly, you need to count the number of first borns who were firls and simulate that many births, 10,000 times. Compare the counts of boys in your simulations to the actual observed count of boys following girls. How does the model look in this light? Any guesses what is going on in these data?
+> **3H5.** The model assumes that sex of first and second births are independent. To check this assumption, focus now on second births that followed female first borns. Compare 10,000 simulated conts of boys to only those second births that followed girls. To do this correctly, you need to count the number of first borns who were girls and simulate that many births, 10,000 times. Compare the counts of boys in your simulations to the actual observed count of boys following girls. How does the model look in this light? Any guesses what is going on in these data?
 :::
 
 ```{r 3eh5}
@@ -629,10 +632,211 @@ ggplot() +
 
 The model is severely under estimating the number of second-born boys when the first born child is a girl. Thus, our assumption that births are independent appears to be violated.
 
-## Session Info {-}
+## Homework
 
-<details><summary>View the session information used to render this week.</summary>
-```{r 01-session-info}
-sessioninfo::session_info()
+:::question
+> **1.** Suppose the globe tossing data (Chapter 2) had turned out to be 4 water and 11 land. Construct the posterior distribution, using grid approximation. Use the same flat prior as in the book.
+:::
+
+First, we create our grid and create our prior, which is a constant for all values of the grid.
+
+```{r w1h1-1}
+dist <- tibble(p_grid = seq(from = 0, to = 1, length.out = 1000),
+               prior = rep(1, times = 1000))
+dist
 ```
-</details>
+
+Next, we calculate the likelihood of 4 water and 11 land for each value of the grid and normalize so that all values sum to 1.
+
+```{r w1h1-2}
+dist <- dist %>% 
+  mutate(likelihood = dbinom(4, size = 15, prob = p_grid),
+         posterior = likelihood * prior,
+         posterior = posterior / sum(posterior))
+dist
+```
+
+Finally, we can visualize the posterior distribution.
+
+```{r w1h1-3}
+ggplot(dist, aes(x = p_grid, y = posterior)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
+```
+
+:::question
+> **2.** Now suppose the data are 4 water and 2 land. Compute the posterior again, but this time use a prior that is zero below *p* = 0.5 and a constant above *p* = 0.5. This corresponds to prior information that a majority of the Earth's surface is water.
+:::
+
+We follow the same process, but now we define a prior that is 0 for the *p* < .5 and 1 for *p* &ge; .5.
+
+```{r w1h2-1}
+dist <- tibble(p_grid = seq(from = 0, to = 1, length.out = 1000),
+               prior = rep(c(0, 1), each = 500)) %>% 
+  mutate(likelihood = dbinom(4, size = 6, prob = p_grid),
+         posterior = likelihood * prior,
+         posterior = posterior / sum(posterior))
+dist
+```
+
+We now see that the posterior distribution is truncated at .5. The peak is around .65, which is expected given that 4 out of 6 trials (two-thirds) were water.
+
+```{r w1h2-2}
+ggplot(dist, aes(x = p_grid, y = posterior)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
+```
+
+:::question
+> **3.** For the posterior distribution from **2**, compute 89% percentile and HPDI intervals. Compare the widths of these intervals. Which is wider? Why? If you had only the information in the interval, what might you misunderstand about the shape of the posterior distribution?
+:::
+
+First, we take 10,000 samples from the posterior calculated in the previous question. Then we summarize with `PI()` and `HPDI()`.
+
+```{r w1h3-1}
+intervals <- dist %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
+  summarize(bound = c("lower", "upper"),
+            pi = PI(p_grid, prob = 0.89),
+            hpdi = HPDI(p_grid, prob = 0.89))
+intervals
+```
+
+```{r w1h3-2, include = FALSE}
+interval_char <- intervals %>% 
+  mutate(across(where(is.double), ~sprintf("%0.3f", .x)))
+```
+
+The 89% percentile interval is [`r interval_char$pi[1]`, `r interval_char$pi[2]`], and the highest posterior density interval is [`r interval_char$hpdi[1]`, `r interval_char$hpdi[2]`]. The percentile interval is `r sprintf("%0.3f", intervals$pi[2] - intervals$pi[1])` wide, and the highest posterior density interval is `r sprintf("%0.3f", intervals$hpdi[2] - intervals$hpdi[1])` wide. Thus, percentile interval is wider. This is because the HPDI finds the narrowest interval that contains 89% of the data. Therefore, unless the posterior is perfectly symmetrical, the central 89% will, by definition, be wider than the HDPI.
+
+For both intervals, the only boundary information is conveyed. No information about the actual shape of the posterior is conveyed. Without visualizing the posterior, the interval boundaries might tempt us to (incorrectly) assume that all values in the interval are equally likely or that values in the middle of the range are the most plausible. However, we know from the previous problem that the posterior is asymmetrical, with values closer to the low end of the interval more plausible than values at the high end of the interval.
+
+:::question
+> **4.** OPTIONAL CHALLENGE. Suppose there is bias in sampling so that Land is more likely than Water to be recorded. Specifically, assume that 1-in-5 (20%) of Water samples are accidentally recorded instead as "Land." First, write a generative simulation of this sampling process. Assuming the true proportion of Water is 0.70, what proportion does your simulation tend to produce instead? Second, using a simulated sample of 20 tosses, compute the unbiased posterior distribution of the true proportion of water.
+:::
+
+We'll start by writing a function to generate the biased data. First, we generate the specified number of `tosses` with the `true_prop`. Normally, we would use `rbinom(n = 1, size = tosses)`, but this will only provide the total number of successes (tosses with a "water" result). We want the results from each individual toss. So, as an example, rather than 1 trial of 100 tosses, we do 100 trials of 1 toss.
+
+Next, we generate random uniform numbers between 0 and 1. These indicate which trials are biased. For every element of `bias_sim` that is less than `bias`, the corresponding element of `true_trials` is changed to 0 in a new vector called `bias_trials`. If the original results was 0 ("land"), then the bias has no effect (i.e., 0 is changed to 0). If the original result was 1 ("water"), then there is a `bias` chance that the result will be changed to 0.
+
+Finally, we sum the total number of 1s ("water") after implementing the bias and return the results.
+
+```{r w1h4-1}
+biased_globe <- function(tosses = 100, true_prop = 0.7, bias = 0.2) {
+  true_trials <- rbinom(n = tosses, size = 1, prob = true_prop)
+  bias_sim <- runif(n = tosses, min = 0, max = 1)
+
+  bias_trials <- true_trials
+  bias_trials[which(bias_sim < bias)] <- 0L
+  sum(bias_trials)
+}
+```
+
+What does this bias mean for our estimated proportion of water? To explore, we'll run a short simulation. We'll use our `biased_globe()` function to do 1,000 simulations of 100 tosses. For each of the simulations, we can see the proportion of tosses that were water, with the bias included.
+
+```{r w1h4-2}
+bias_prop <- map_int(seq_len(1000),
+                     ~biased_globe(tosses = 100, true_prop = 0.7, bias = 0.2))
+
+ggplot() +
+  stat_histinterval(aes(x = bias_prop / 100), .width = c(0.67, 0.89, 0.97),
+                    breaks = seq(0, 1, by = 0.01)) +
+  geom_vline(aes(xintercept = 0.7), linetype = "dashed", color = "red") +
+  expand_limits(x = c(0, 1)) +
+  labs(x = "Proportion Water (p)", y = "Simulations")
+```
+
+In the previous figure, the true proportion, 0.7, is indicated by the dashed red line. However, we can see that the biased tosses are greatly reducing the number of "waters" that we actually observe. On average, we observe `r round(mean(bias_prop), digits = 0)` waters, for an estimated proportion of `r sprintf("%0.2f", mean(bias_prop / 100))`.
+
+Our final step is to compute an unbiased posterior distribution of the true proportion of water, using 20 tosses from the biased data generation process. We'll start by generating our 20 tosses.
+
+```{r w1h4-3}
+set.seed(123)
+biased_dat <- biased_globe(tosses = 20)
+biased_dat
+```
+
+In our data, we observed `r biased_dat` waters. To get our unbiased estimate, we can incorporate our pre-existing scientific knowledge as a prior. We know that the true proportion of water should probably be somewhere between 60--80%. We can encode that as a 
+
+```{r w1h4-4}
+library(geomtextpath)
+
+bias_posterior <- tibble(p_grid = seq(0, 1, length.out = 1000)) %>% 
+  mutate(prior = dbeta(p_grid, shape1 = 28, shape2 = 12),
+         likelihood = dbinom(biased_dat, size = 20, prob = p_grid),
+         posterior = likelihood * prior,
+         across(-p_grid, ~ .x / sum(.x)))
+
+ggplot(bias_posterior, aes(x = p_grid)) +
+  geom_textline(aes(y = prior), linetype = "dashed", color = "grey80",
+                size = 6, linewidth = 1, label = "Prior", hjust = 0.45,
+                family = "Source Sans Pro") +
+  geom_textline(aes(y = likelihood), linetype = "solid", color = "grey80",
+                size = 6, linewidth = 1, label = "Likelihood", hjust = 0.4,
+                family = "Source Sans Pro") +
+  geom_textline(aes(y = posterior), linetype = "solid", color = "#009fb7",
+                size = 7, linewidth = 1, label = "Posterior", fontface = "bold",
+                family = "Source Sans Pro") +
+  scale_x_continuous(breaks = seq(0, 1, 0.1))
+```
+
+```{r w1h4-5-hide, include = FALSE}
+set.seed(123)
+samples <- bias_posterior %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
+  pull(p_grid)
+
+sample_mean <- mean(samples)
+sample_hpdi <- HPDI(samples, prob = 0.89)
+
+sample_mean
+
+sample_hpdi
+```
+
+Sampling from our posterior, the expected value (mean) of the true proportion of water is `r sprintf("%0.3f", sample_mean)`, with and 89% HDPI of `r glue("[{sprintf('%0.3f', sample_hpdi[1])}, {sprintf('%0.3f', sample_hpdi[2])}]")`. Thus, the true proportion of water 0.7 is consistent with this posterior, as that value is well within our plausible interval, even though the data itself is biased.
+
+```{r w1h4-5-show, ref.label = "w1h4-5-hide"}
+```
+
+However, this was only one sample of 20 tosses. To know whether we are consistently getting unbiased estimated, we can conduct another quick simulation that repeats the previous steps 1,000 times.
+
+```{r w1h4-6, cache = TRUE}
+calc_globe_posterior <- function(.x) {
+  biased_dat <- biased_globe(tosses = 20)
+  
+  bias_posterior <- tibble(p_grid = seq(0, 1, length.out = 1000)) %>% 
+    mutate(prior = dbeta(p_grid, shape1 = 28, shape2 = 12),
+           likelihood = dbinom(biased_dat, size = 20, prob = p_grid),
+           posterior = likelihood * prior,
+           across(-p_grid, ~ .x / sum(.x)))
+  
+  samples <- bias_posterior %>% 
+    slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
+    pull(p_grid)
+  
+  sample_mean <- mean(samples)
+  sample_hpdi <- HPDI(samples, prob = 0.89)
+  
+  tibble(samples = list(samples),
+         mean = sample_mean,
+         lb = sample_hpdi[1],
+         ub = sample_hpdi[2])
+}
+
+set.seed(456)
+unbias <- map_dfr(seq_len(1000), calc_globe_posterior, .id = "rep")
+```
+
+```{r w1h4-7}
+unbias %>% 
+  ggplot(aes(x = mean)) +
+  stat_histinterval(.width = c(0.67, 0.89, 0.97),
+                    breaks = seq(0, 1, by = 0.01)) +
+  geom_vline(aes(xintercept = 0.7), linetype = "dashed", color = "red") +
+  expand_limits(x = c(0, 1)) +
+  labs(x = "Proportion Water (p)", y = "Simulations")
+```
+
