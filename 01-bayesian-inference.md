@@ -734,7 +734,7 @@ sessioninfo::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2022-01-06
+#>  date     2022-01-09
 #>  pandoc   2.14.2 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────────────────
@@ -756,7 +756,7 @@ sessioninfo::session_info()
 #>  cellranger             1.1.0      2016-07-27 [1] CRAN (R 4.1.2)
 #>  checkmate              2.0.0      2020-02-06 [1] CRAN (R 4.1.2)
 #>  cli                    3.1.0      2021-10-27 [1] CRAN (R 4.1.2)
-#>  cmdstanr             * 0.4.0.9001 2022-01-06 [1] Github (stan-dev/cmdstanr@bf8d5dc)
+#>  cmdstanr             * 0.4.0.9001 2022-01-09 [1] Github (stan-dev/cmdstanr@a2a97d9)
 #>  coda                   0.19-4     2020-09-30 [1] CRAN (R 4.1.2)
 #>  codetools              0.2-18     2020-11-04 [2] CRAN (R 4.1.2)
 #>  colorspace             2.0-2      2021-06-24 [1] CRAN (R 4.1.2)
