@@ -1,12 +1,5 @@
 # Bayesian Inference
 
-```{css, echo = FALSE}
-#cb27 {
-  margin-bottom: 0;
-  padding-bottom: 0.85em;
-}
-```
-
 The first week covers Chapter 1 (The Golem of Prague), Chapter 2 (Small Worlds and Large Worlds), and Chapter 3 (Sampling the Imaginary).
 
 ## Lectures
