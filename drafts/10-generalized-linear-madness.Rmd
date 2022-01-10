@@ -1,0 +1,24 @@
+# Generalized Linear Madness
+
+The tenth (and final) week covers Chapter 16 (Generalized Linear Models).
+
+## Lectures
+
+Lecture 19:
+
+```{r lecture-19, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+Lecture 20:
+
+```{r lecture-20, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+## Exercises
+
+### Chapter 16
+
+
+## Homework

@@ -1,4 +1,4 @@
-# More Linear Models
+# Causes, Confounds & Colliders
 
 The third week covers Chapter 5 (The Many Variables & The Spurious Waffles) and  Chapter 6 (The Haunted DAG & The Causal Terror).
 
@@ -6,11 +6,15 @@ The third week covers Chapter 5 (The Many Variables & The Spurious Waffles) and 
 
 Lecture 5:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/e0tO64mtYMU" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-5, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
 
 Lecture 6:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/l_7yIUqWBmE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-6, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
 
 ## Exercises
 
@@ -1216,10 +1220,4 @@ posterior_samples(ed_mod) %>%
 
 Here we can see that, as expected given the data is simulated, there is a strong effect of professional development on student performance. With students whose teachers received the professional development showing a 0.88 standard deviation increase in performance compared to students whose teachers did not receive the professional development.
 
-## Session Info {-}
-
-<details><summary>View the session information used to render this week.</summary>
-```{r 01-session-info}
-devtools::session_info()
-```
-</details>
+## Homework
