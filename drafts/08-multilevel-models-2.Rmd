@@ -1,0 +1,24 @@
+# Multilevel Models II
+
+The eighth week covers Chapter 14 (Adventures in Covariance).
+
+## Lectures
+
+Lecture 15:
+
+```{r lecture-15, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+Lecture 16:
+
+```{r lecture-16, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+## Exercises
+
+### Chapter 14
+
+
+## Homework

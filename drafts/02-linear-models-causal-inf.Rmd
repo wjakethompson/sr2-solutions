@@ -1,4 +1,4 @@
-# Linear Models
+# Linear Models & Causal Inference
 
 The second week covers Chapter 4 (Geocentric Models).
 
@@ -6,11 +6,15 @@ The second week covers Chapter 4 (Geocentric Models).
 
 Lecture 3:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/h5aPo5wXN8E" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-3, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
 
 Lecture 4:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ENxTrFf9a7c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+```{r lecture-4, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
 
 ## Exercises
 
@@ -863,10 +867,4 @@ fitted_draws(no_int2, cb_dat) %>%
   labs(x = "Year", y = "Day in Year")
 ```
 
-## Session Info {-}
-
-<details><summary>View the session information used to render this week.</summary>
-```{r 01-session-info}
-devtools::session_info()
-```
-</details>
+## Homework

@@ -1,0 +1,25 @@
+# Multilevel Models I
+
+The seventh week covers Chapter 13 (Models With Memory).
+
+## Lectures
+
+Lecture 13:
+
+```{r lecture-13, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+Lecture 14:
+
+```{r lecture-14, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/")
+```
+
+## Exercises
+
+### Chapter 13
+
+
+## Homework
+
