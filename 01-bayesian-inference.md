@@ -1,12 +1,5 @@
 # Bayesian Inference
 
-<style type="text/css">
-#cb27 {
-  margin-bottom: 0;
-  padding-bottom: 0.85em;
-}
-</style>
-
 The first week covers Chapter 1 (The Golem of Prague), Chapter 2 (Small Worlds and Large Worlds), and Chapter 3 (Sampling the Imaginary).
 
 ## Lectures
@@ -734,7 +727,7 @@ sessioninfo::session_info()
 #>  collate  C.UTF-8
 #>  ctype    C.UTF-8
 #>  tz       UTC
-#>  date     2022-01-09
+#>  date     2022-01-10
 #>  pandoc   2.14.2 @ /usr/bin/ (via rmarkdown)
 #> 
 #> ─ Packages ───────────────────────────────────────────────────────────────────
@@ -756,7 +749,7 @@ sessioninfo::session_info()
 #>  cellranger             1.1.0      2016-07-27 [1] CRAN (R 4.1.2)
 #>  checkmate              2.0.0      2020-02-06 [1] CRAN (R 4.1.2)
 #>  cli                    3.1.0      2021-10-27 [1] CRAN (R 4.1.2)
-#>  cmdstanr             * 0.4.0.9001 2022-01-09 [1] Github (stan-dev/cmdstanr@a2a97d9)
+#>  cmdstanr             * 0.4.0.9001 2022-01-10 [1] Github (stan-dev/cmdstanr@a2a97d9)
 #>  coda                   0.19-4     2020-09-30 [1] CRAN (R 4.1.2)
 #>  codetools              0.2-18     2020-11-04 [2] CRAN (R 4.1.2)
 #>  colorspace             2.0-2      2021-06-24 [1] CRAN (R 4.1.2)
@@ -775,7 +768,7 @@ sessioninfo::session_info()
 #>  evaluate               0.14       2019-05-28 [1] CRAN (R 4.1.2)
 #>  extrafont              0.17       2014-12-08 [1] CRAN (R 4.1.2)
 #>  extrafontdb            1.0        2012-06-11 [1] CRAN (R 4.1.2)
-#>  fansi                  0.5.0      2021-05-25 [1] CRAN (R 4.1.2)
+#>  fansi                  1.0.0      2022-01-10 [1] CRAN (R 4.1.2)
 #>  farver                 2.1.0      2021-02-28 [1] CRAN (R 4.1.2)
 #>  fastmap                1.1.0      2021-01-25 [1] CRAN (R 4.1.2)
 #>  forcats              * 0.5.1      2021-01-27 [1] CRAN (R 4.1.2)

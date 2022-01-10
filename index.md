@@ -3,7 +3,7 @@ knit: "bookdown::render_book"
 title: "Statistical Rethinking: Solutions (2nd Edition)"
 author: "Jake Thompson"
 description: "This project contains solutions to exercises and homework for the second edition of Richard McElreath's Statistical Rethinking: A Bayesian Course Using R and Stan. Solutions are offered using the tidyverse and brms packages. Thus, this project should be viewed as a companion to both the original book and Solomon Kurz's translation of the text to tidyverse and brms syntax. Here, we extend the translation to also include solutions to the exercises and homework assignments associated with the course."
-date: "2022-01-09"
+date: "2022-01-10"
 url: 'https\://sr2-solutions.wjakethompson.com'
 github-repo: wjakethompson/sr2-solutions
 twitter-handle: wjakethompson
