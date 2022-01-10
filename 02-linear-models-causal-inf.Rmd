@@ -7,7 +7,7 @@ The second week covers Chapter 4 (Geocentric Models).
 Lecture 3:
 
 ```{r lecture-3, echo = FALSE, out.width = "100%"}
-knitr::include_url("https://www.youtube.com/embed/")
+knitr::include_url("https://www.youtube.com/embed/zYYBtxHWE0A")
 ```
 
 Lecture 4:
