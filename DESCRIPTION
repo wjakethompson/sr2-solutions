@@ -48,7 +48,8 @@ Imports:
   tidybayes,
   tidybayes.rethinking,
   tidygraph,
-  tidyverse
+  tidyverse,
+  transformr
 Remotes:
   stan-dev/cmdstanr,
   clauswilke/colorblindr,
