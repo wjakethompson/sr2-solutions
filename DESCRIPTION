@@ -22,6 +22,7 @@ Imports:
   dplyr,
   downlit,
   emo,
+  geomtextpath,
   gganimate,
   ggdag,
   gghighlight,
@@ -52,6 +53,7 @@ Remotes:
   stan-dev/cmdstanr,
   clauswilke/colorblindr,
   hadley/emo,
+  AllanCameron/geomtextpath,
   atlas-aai/ratlas,
   rmcelreath/rethinking,
   mjskay/tidybayes.rethinking
