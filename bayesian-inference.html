@@ -123,10 +123,13 @@
 <p>The idea is that probability is only a subjective perception of the likelihood that something will happen. In the globe tossing example, the result will always be either “land” or “water” (i.e., 0 or 1). When we toss the globe, we don’t know what the result will be, but we know it will always be “land” or “water.” To express our uncertainty in the outcome, we use probability. Because we know that water is more likely than land, we may say that the probability of “water” is 0.7; however, we’ll never actually observe a result of 0.7 waters, or observe any probability. We will only ever observe the two results of “land” and “water.”</p>
 <div class="question">
 <blockquote>
-<p><strong>2M1.</strong> Recall the globe tossing model from the chapter. Compute and plot the grid approximate posterior distribution for each of the following sets of observations. In each case, assume a uniform prior for <em>p</em>.</p>
+<p><strong>2M1.</strong> Recall the globe tossing model from the chapter. Compute and plot the grid approximate posterior distribution for each of the following sets of observations. In each case, assume a uniform prior for <em>p</em>.
+(1) W, W, W
+(2) W, W, W, L
+(3) L, W, W, L, W, W, W</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span>
 
 <span class="va">dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>p_grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,
@@ -155,7 +158,7 @@
 </blockquote>
 </div>
 <p>For this problem we can use the same code as above, just altering how the prior is defined.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>p_grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>prior <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span><span class="va">p_grid</span> <span class="op">&lt;</span> <span class="fl">0.5</span> <span class="op">~</span> <span class="fl">0L</span>,
                            <span class="cn">TRUE</span> <span class="op">~</span> <span class="fl">1L</span><span class="op">)</span>,
@@ -182,7 +185,7 @@
 <p><strong>2M3.</strong> Suppose there are two globes, one for Earth and one for Mars. The Earth globe is 70% covered in water. The Mars globe is 100% land. Further suppose that one of these globes—you don’t know which—was tossed in the air and produced a “land” observatiion. Assume that each globe was equally likely to be tossed. Show that the posterior probability that the globe was the Earth, conditional on seeing “land” (Pr(Earth|land)), is 0.23.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># probability of land, given Earth</span>
 <span class="va">p_le</span> <span class="op">&lt;-</span> <span class="fl">0.3</span>
 
@@ -204,7 +207,7 @@
 <p><strong>2M4.</strong> Suppose you have a deck with only three cards. Each card has only two sides, and each side is either black or white. One card has two black sides. The second card has one black and one white side. The third card has two white sides. Now suppose all three cards are placed in a bag and shuffled. Someone reaches into the bag and pulls out a card and places it flat on a table. A black side is shown facing up, but you don’t know the color of the side facing down. Show that the probability that the other side is also black is 2/3. Use the counting method (Section 2 of the chapter) to approach this problem. This means counting up the ways that each card could produce the observed data (a black side faceing up on the table).</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">card_bb_likelihood</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">card_bw_likelihood</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">card_ww_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0</span>
@@ -221,7 +224,7 @@
 <p><strong>2M5.</strong> Now suppose there are four cards: B/B, B/W, W/W, and another B/B. Again suppose a card is drawn from the bag and a black side appears face up. Again calculate the probability that the other side is black.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">card_bb_likelihood</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">card_bw_likelihood</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">card_ww_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0</span>
@@ -239,7 +242,7 @@
 <p><strong>2M6.</strong> Imagine that black ink is heavy, and so cards with black sides are heavier than cards with white sides. As a result, it’s less likely that a card with black sides is pulled from the bag. So again assume there are three cards: B/B, B/W, and W/W. After experimenting a number of times, you conclude that for every way to pull the B/B card from the bag, there are 2 ways to pull the B/W card and 3 ways to pull the W/W card. Again suppose that a card is pulled and a black side appears face up. Show that the probability the other side is black is now 0.5. Use the counting method, as before.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">card_bb_likelihood</span> <span class="op">&lt;-</span> <span class="fl">2</span>
 <span class="va">card_bw_likelihood</span> <span class="op">&lt;-</span> <span class="fl">1</span>
 <span class="va">card_ww_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0</span>
@@ -256,7 +259,7 @@
 <p><strong>2M7.</strong> Assume again the original card problem, with a single card showing a black side face up. Before looking at the other side, we draw another card from the bag and lay it face up on the table. The face that is shown on the new card is white. Show that the probability that the first card, the one showing a black side, has black on its other side is now 0.75. Use the counting method, if you can. Hint: Treat this like the sequence of globe tosses, countng all the ways to see each observation, for each possiible first card.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># 2 choices for first card, with 3 options for second card: 2 W/W + 1 W/B</span>
 <span class="va">card_bb_likelihood</span> <span class="op">&lt;-</span> <span class="fl">2</span> <span class="op">*</span> <span class="fl">3</span> 
 <span class="va">card_wb_likelihood</span> <span class="op">&lt;-</span> <span class="fl">1</span> <span class="op">*</span> <span class="fl">2</span> 
@@ -275,7 +278,7 @@
 Now suppose you are managing a captive panda breeding program. You have a newe female panda of unknown species, and she has just given birth to twins. What is the probability that her next birth will also be twins?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># After first birth, likelihood of species A and B is equal to the rate the</span>
 <span class="co"># species give birth to twins</span>
 <span class="va">a_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0.1</span>
@@ -299,7 +302,7 @@ Now suppose you are managing a captive panda breeding program. You have a newe f
 <p><strong>2H2.</strong> Recall all the facts from the problem above. Now compute the probability that the panda we have is from species A, asssuming we have observed only the first birth at that it was twins.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># probability of species A</span>
 <span class="va">p_a</span> <span class="op">&lt;-</span> <span class="fl">0.5</span>
 
@@ -322,7 +325,7 @@ Now suppose you are managing a captive panda breeding program. You have a newe f
 <p><strong>2H3.</strong> Continuing on from the previous problem, suppose the same panda mother has a second birth and that it is not twins, but a singleton infant. Compute the posterior probability that this panda is species A.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># likelihood for each species is Pr(twins) * Pr(singleton)</span>
 <span class="va">a_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0.1</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">0.1</span><span class="op">)</span>
 <span class="va">b_likelihood</span> <span class="op">&lt;-</span> <span class="fl">0.2</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fl">0.2</span><span class="op">)</span>
@@ -347,7 +350,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p>The vet administers the test to your panda and tells you that the test is positive for species A. First ignore your previous information from the births and compute the posterior probability that your panda is species A. Then redo your calculation, now using the birth data as well.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># use Bayes' Theorem to determine the probability of species A, given a positive</span>
 <span class="co"># test</span>
 <span class="va">p_ap</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fl">0.8</span> <span class="op">*</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="op">(</span><span class="fl">0.5</span> <span class="op">*</span> <span class="fl">0.8</span><span class="op">)</span> <span class="op">+</span> <span class="op">(</span><span class="fl">0.5</span> <span class="op">*</span> <span class="fl">0.35</span><span class="op">)</span><span class="op">)</span>
@@ -377,7 +380,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <blockquote>
 <p><strong>Easy.</strong> The Easy problems use the sample from the posterior distribution for the globe tossing example. The code will give you a specific set of samples, so that you can check your answers exactly.</p>
 </blockquote>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
 <span class="va">prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1000</span><span class="op">)</span>
 <span class="va">likelihood</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="fl">6</span>, size <span class="op">=</span> <span class="fl">9</span>, prob <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span>
@@ -395,7 +398,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E1.</strong> How much posterior probability lies below <em>p</em> = 0.2?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">samples</span> <span class="op">&lt;</span> <span class="fl">0.2</span><span class="op">)</span>
 <span class="co">#&gt; [1] 4e-04</span></code></pre></div>
 <div class="question">
@@ -403,7 +406,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E2.</strong> How much posterior probability lies above <em>p</em> = 0.8?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">samples</span> <span class="op">&gt;</span> <span class="fl">0.8</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.112</span></code></pre></div>
 <div class="question">
@@ -411,7 +414,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E3.</strong> How much posterior probability lies between <em>p</em> = 0.2 and <em>p</em> = 0.8?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org">tidyverse</a></span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/between.html">between</a></span><span class="op">(</span><span class="va">samples</span>, <span class="fl">0.2</span>, <span class="fl">0.8</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.888</span></code></pre></div>
@@ -420,7 +423,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E4.</strong> 20% of the posterior probability lies below which value of <em>p</em>?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span><span class="op">(</span><span class="va">samples</span>, probs <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>
 <span class="co">#&gt;   20% </span>
 <span class="co">#&gt; 0.519</span></code></pre></div>
@@ -429,7 +432,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E5.</strong> 20% of the posterior probability lies above which value of <em>p</em>?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/stats/quantile.html">quantile</a></span><span class="op">(</span><span class="va">samples</span>, probs <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span>
 <span class="co">#&gt;   80% </span>
 <span class="co">#&gt; 0.756</span></code></pre></div>
@@ -438,7 +441,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E6.</strong> Which values of <em>p</em> contain the narrowest interval equal to 66% of the posterior probability?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">rethinking</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">HPDI</a></span><span class="op">(</span><span class="va">samples</span>, prob <span class="op">=</span> <span class="fl">0.66</span><span class="op">)</span>
 <span class="co">#&gt; |0.66 0.66| </span>
@@ -448,7 +451,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3E7.</strong> Which values of <em>p</em> contain 66% of the posterior probability, assuming equal posterior probability both below and above the interval?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">PI</a></span><span class="op">(</span><span class="va">samples</span>, prob <span class="op">=</span> <span class="fl">0.66</span><span class="op">)</span>
 <span class="co">#&gt;   17%   83% </span>
 <span class="co">#&gt; 0.503 0.770</span></code></pre></div>
@@ -457,7 +460,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M1.</strong> Suppose the globe tossing data had turned out to be 8 water in 15 tosses. Constructe the posterior distribution, using grid approximation. Use the same flat prior as before.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
 <span class="va">prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1000</span><span class="op">)</span>
 <span class="va">likelihood</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="fl">8</span>, size <span class="op">=</span> <span class="fl">15</span>, prob <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span>
@@ -475,7 +478,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M2.</strong> Draw 10,000 samples from the grid approximation from above. Then use the sample to calculate the 90% HPDI for <em>p</em>.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">101</span><span class="op">)</span>
 <span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html">sample</a></span><span class="op">(</span><span class="va">p_grid</span>, prob <span class="op">=</span> <span class="va">posterior</span>, size <span class="op">=</span> <span class="fl">1e4</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 
@@ -487,7 +490,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M3.</strong> Construct a posterior predictive check for this model and data. The means simulate the distribution of samples, averaging over the posterior uncertainty in <em>p</em>. What is the probability of observing 8 water in 15 tosses?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="fl">1e4</span>, size <span class="op">=</span> <span class="fl">15</span>, prob <span class="op">=</span> <span class="va">samples</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">w</span> <span class="op">==</span> <span class="fl">8</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.15</span></code></pre></div>
@@ -496,7 +499,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M4.</strong> Using the posterior distribution constructed from the new (8/15) data, now calculate the probability of observing 6 water in 9 tosses.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="fl">1e4</span>, size <span class="op">=</span> <span class="fl">9</span>, prob <span class="op">=</span> <span class="va">samples</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">w</span> <span class="op">==</span> <span class="fl">6</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.171</span></code></pre></div>
@@ -505,7 +508,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M5.</strong> Start over at <strong>3M1</strong>, but now use a prior that is zero below <em>p</em> = 0.5 and a constant above <em>p</em> = 0.5. This corresponds to prior information that a majority of the Earth’s surface is water. Repeat each problem above and compare the inferences (using both priors) to the true value <em>p</em> = 0.7.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># 3M5.1</span>
 <span class="va">p_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
 <span class="va">prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html">case_when</a></span><span class="op">(</span><span class="va">p_grid</span> <span class="op">&lt;</span> <span class="fl">0.5</span> <span class="op">~</span> <span class="fl">0L</span>,
@@ -520,7 +523,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Proportion Water (p)"</span>, y <span class="op">=</span> <span class="st">"Posterior Density"</span><span class="op">)</span></code></pre></div>
 <div class="inline-figure"><img src="01-bayesian-inference_files/figure-html/e3m5-1.png" width="80%" style="display: block; margin: auto;"></div>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># 3M5.2</span>
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">101</span><span class="op">)</span>
 <span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html">sample</a></span><span class="op">(</span><span class="va">p_grid</span>, prob <span class="op">=</span> <span class="va">posterior</span>, size <span class="op">=</span> <span class="fl">1e4</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
@@ -543,7 +546,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3M6.</strong> Suppose you want to estimate the Earth’s proportion of water very precisely. Specifically, you want the 99% percentile interval of the posterior distribution of <em>p</em> to be only 0.05 wide. This means the distance between the upper and lower bound of the interval should be 0.05. How many times will you have to toss the globe to do this?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">single_sim</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tosses</span>, <span class="va">prior_type</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"uniform"</span>, <span class="st">"step"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">prior_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.arg.html">match.arg</a></span><span class="op">(</span><span class="va">prior_type</span><span class="op">)</span>
   <span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="fl">1</span>, size <span class="op">=</span> <span class="va">tosses</span>, prob <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span>
@@ -590,7 +593,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <blockquote>
 <p><strong>Hard.</strong> The Hard problems here all use the data below. These data indicate the gender (male = 1, female = 0) of officially reported first and second born children in 100 two-child families. So for example, the first family in the data reported a boy (1) and then a girl (0). The second family reported a girl (0) and then a boy (1). The third family reported two girls. You can load these tow vectors into R’s memory by typing:</p>
 </blockquote>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">homeworkch3</span><span class="op">)</span>
 <span class="va">birth1</span>
 <span class="co">#&gt;   [1] 1 0 0 0 1 1 0 1 0 1 0 0 1 1 0 1 1 0 0 0 1 0 0 0 1 0 0 0 0 1 1 1 0 1 0 1 1</span>
@@ -603,7 +606,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <blockquote>
 <p>Use these vectors as data. So for example to compute the total number of boys born across all of these births, you could use:</p>
 </blockquote>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">birth1</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">birth2</span><span class="op">)</span>
 <span class="co">#&gt; [1] 111</span></code></pre></div>
 </div>
@@ -612,7 +615,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3H1.</strong> Using grid approximation, compute the posterior distribution for the probability of a birth being a boy. Assume a uniform prior probability. Which parameter value maximizes the posterior probability?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">p_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>
 <span class="va">prior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1000</span><span class="op">)</span>
 
@@ -636,7 +639,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3H2.</strong> Using the <code>sample</code> function, draw 10,000 random parameter values from the posterior distribution you calculated above. Use these sample to estimate the 50%, 89%, and 97% highest posterior density intervals.</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/model-method-sample.html">sample</a></span><span class="op">(</span><span class="va">p_grid</span>, prob <span class="op">=</span> <span class="va">posterior</span>, size <span class="op">=</span> <span class="fl">1e4</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">HPDI</a></span><span class="op">(</span><span class="va">samples</span>, prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.50</span>, <span class="fl">0.89</span>, <span class="fl">0.97</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; |0.97 |0.89  |0.5  0.5| 0.89| 0.97| </span>
@@ -646,7 +649,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3H3.</strong> Use <code>rbinom</code> to simulate 10,000 replicates of 200 births. You should end up with 10,000 numbers, each one a count of boys out of 200 births. Compare the distribution of predicted numbers of boys to the actual count in the data (111 boys out of 200 births). There are many good ways to visualize the simulations, but the <code>dens</code> command (part of the <code>rethinking</code> package) is prbably the easiest way in this case. Does it look like the model fits the data well? That is, does the distribution of predictions include the actual observation as a central, likely outcome?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://mjskay.github.io/tidybayes/">tidybayes</a></span><span class="op">)</span>
 <span class="va">break_func</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
   <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html">max</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, by <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span>
@@ -666,7 +669,7 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p><strong>3H4.</strong> Now compare 10,000 counts of boys from 100 simulated first borns only the number of boys in the first births, <code>birth1</code>. How does the model look in this light?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">301</span><span class="op">)</span>
 <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span><span class="fl">1e4</span>, size <span class="op">=</span> <span class="fl">100</span>, prob <span class="op">=</span> <span class="va">samples</span><span class="op">)</span>
 
@@ -680,10 +683,10 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p>Based on first births only, the model appears to fit less well. Specifically, the model appears to be overestimating the number of first births who are boys. However, it does not appear to be a large discrepancy, as the observed value is still within the middle 66% interval.</p>
 <div class="question">
 <blockquote>
-<p><strong>3H5.</strong> The model assumes that sex of first and second births are independent. To check this assumption, focus now on second births that followed female first borns. Compare 10,000 simulated conts of boys to only those second births that followed girls. To do this correctly, you need to count the number of first borns who were firls and simulate that many births, 10,000 times. Compare the counts of boys in your simulations to the actual observed count of boys following girls. How does the model look in this light? Any guesses what is going on in these data?</p>
+<p><strong>3H5.</strong> The model assumes that sex of first and second births are independent. To check this assumption, focus now on second births that followed female first borns. Compare 10,000 simulated conts of boys to only those second births that followed girls. To do this correctly, you need to count the number of first borns who were girls and simulate that many births, 10,000 times. Compare the counts of boys in your simulations to the actual observed count of boys following girls. How does the model look in this light? Any guesses what is going on in these data?</p>
 </blockquote>
 </div>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fb_girls</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="va">birth1</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">birth1</span><span class="op">)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">302</span><span class="op">)</span>
@@ -700,176 +703,186 @@ So suppose now that a veterinarian comes along who has a new genetic test that s
 <p>The model is severely under estimating the number of second-born boys when the first born child is a girl. Thus, our assumption that births are independent appears to be violated.</p>
 </div>
 </div>
-<div id="session-info" class="section level2 unnumbered">
-<h2>Session Info<a class="anchor" aria-label="anchor" href="#session-info"><i class="fas fa-link"></i></a>
+<div id="homework" class="section level2" number="1.3">
+<h2>
+<span class="header-section-number">1.3</span> Homework<a class="anchor" aria-label="anchor" href="#homework"><i class="fas fa-link"></i></a>
 </h2>
-<details><summary>
-View the session information used to render this week.
-</summary><div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">sessioninfo</span><span class="fu">::</span><span class="fu"><a href="https://r-lib.github.io/sessioninfo/reference/session_info.html">session_info</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; ─ Session info ───────────────────────────────────────────────────────────────</span>
-<span class="co">#&gt;  setting  value</span>
-<span class="co">#&gt;  version  R version 4.1.2 (2021-11-01)</span>
-<span class="co">#&gt;  os       Ubuntu 20.04.3 LTS</span>
-<span class="co">#&gt;  system   x86_64, linux-gnu</span>
-<span class="co">#&gt;  ui       X11</span>
-<span class="co">#&gt;  language (EN)</span>
-<span class="co">#&gt;  collate  C.UTF-8</span>
-<span class="co">#&gt;  ctype    C.UTF-8</span>
-<span class="co">#&gt;  tz       UTC</span>
-<span class="co">#&gt;  date     2022-01-10</span>
-<span class="co">#&gt;  pandoc   2.14.2 @ /usr/bin/ (via rmarkdown)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ─ Packages ───────────────────────────────────────────────────────────────────</span>
-<span class="co">#&gt;  package              * version    date (UTC) lib source</span>
-<span class="co">#&gt;  abind                  1.4-5      2016-07-21 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  arrayhelpers           1.1-0      2020-02-04 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  assertthat             0.2.1      2019-03-21 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  backports              1.4.1      2021-12-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  base64enc              0.1-3      2015-07-28 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  bayesplot              1.8.1      2021-06-14 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  bookdown               0.24       2021-09-02 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  bridgesampling         1.1-2      2021-04-16 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  brms                 * 2.16.3     2021-11-22 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  Brobdingnag            1.2-6      2018-08-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  broom                  0.7.11     2022-01-03 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  bslib                  0.3.1      2021-10-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cachem                 1.0.6      2021-08-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  callr                  3.7.0      2021-04-20 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cellranger             1.1.0      2016-07-27 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  checkmate              2.0.0      2020-02-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cli                    3.1.0      2021-10-27 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cmdstanr             * 0.4.0.9001 2022-01-10 [1] Github (stan-dev/cmdstanr@a2a97d9)</span>
-<span class="co">#&gt;  coda                   0.19-4     2020-09-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  codetools              0.2-18     2020-11-04 [2] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  colorspace             2.0-2      2021-06-24 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  colourpicker           1.1.1      2021-10-04 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  crayon                 1.4.2      2021-10-29 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  crosstalk              1.2.0      2021-11-04 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  DBI                    1.1.2      2021-12-20 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  dbplyr                 2.1.1      2021-04-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  digest                 0.6.29     2021-12-01 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  distributional         0.3.0      2022-01-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  downlit                0.4.0      2021-10-29 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  dplyr                * 1.0.7      2021-06-18 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  DT                     0.20       2021-11-15 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  dygraphs               1.1.1.6    2018-07-11 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ellipsis               0.3.2      2021-04-29 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  evaluate               0.14       2019-05-28 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  extrafont              0.17       2014-12-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  extrafontdb            1.0        2012-06-11 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  fansi                  1.0.0      2022-01-10 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  farver                 2.1.0      2021-02-28 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  fastmap                1.1.0      2021-01-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  forcats              * 0.5.1      2021-01-27 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  fs                     1.5.2      2021-12-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  gdtools                0.2.3      2021-01-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  generics               0.1.1      2021-10-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ggdist                 3.0.1      2021-11-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ggplot2              * 3.3.5      2021-06-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ggridges               0.5.3      2021-01-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  glue                 * 1.6.0      2021-12-17 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  gridExtra              2.3        2017-09-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  gtable                 0.3.0      2019-03-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  gtools                 3.9.2      2021-06-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  haven                  2.4.3      2021-08-04 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  here                 * 1.0.1      2020-12-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  highr                  0.9        2021-04-16 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  hms                    1.1.1      2021-09-26 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  hrbrthemes           * 0.8.0      2020-03-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  htmltools              0.5.2      2021-08-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  htmlwidgets            1.5.4      2021-09-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  httpuv                 1.6.5      2022-01-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  httr                   1.4.2      2020-07-20 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  igraph                 1.2.11     2022-01-04 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  inline                 0.3.19     2021-05-31 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  jquerylib              0.1.4      2021-04-26 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  jsonlite               1.7.2      2020-12-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  knitr                  1.37       2021-12-16 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  labeling               0.4.2      2020-10-20 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  later                  1.3.0      2021-08-18 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  lattice                0.20-45    2021-09-22 [2] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  lifecycle              1.0.1      2021-09-24 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  loo                  * 2.4.1      2020-12-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  lubridate              1.8.0      2021-10-07 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  magrittr               2.0.1      2020-11-17 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  markdown               1.1        2019-08-07 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  MASS                   7.3-54     2021-05-03 [2] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  Matrix                 1.3-4      2021-06-01 [2] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  matrixStats            0.61.0     2021-09-17 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  memoise                2.0.1      2021-11-26 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  mime                   0.12       2021-09-28 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  miniUI                 0.1.1.1    2018-05-18 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  modelr                 0.1.8      2020-05-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  munsell                0.5.0      2018-06-12 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  mvtnorm                1.1-3      2021-10-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  nlme                   3.1-153    2021-09-07 [2] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  pillar                 1.6.4      2021-10-18 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  pkgbuild               1.3.1      2021-12-20 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  pkgconfig              2.0.3      2019-09-22 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  plyr                   1.8.6      2020-03-03 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  posterior              1.2.0      2022-01-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  prettyunits            1.1.1      2020-01-24 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  processx               3.5.2      2021-04-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  promises               1.2.0.1    2021-02-11 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ps                     1.6.0      2021-02-28 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  purrr                * 0.3.4      2020-04-17 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  R6                     2.5.1      2021-08-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ragg                   1.2.1      2021-12-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ratlas               * 0.0.0.9000 2022-01-06 [1] Github (atlas-aai/ratlas@267dd5c)</span>
-<span class="co">#&gt;  Rcpp                 * 1.0.7      2021-07-07 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  RcppParallel           5.1.5      2022-01-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  readr                * 2.1.1      2021-11-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  readxl                 1.3.1      2019-03-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  reprex                 2.0.1      2021-08-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  reshape2               1.4.4      2020-04-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rethinking           * 2.21       2022-01-06 [1] Github (rmcelreath/rethinking@783d111)</span>
-<span class="co">#&gt;  rlang                  0.4.12     2021-10-18 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rmarkdown              2.11       2021-09-14 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rprojroot              2.0.2      2020-11-15 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rsconnect              0.8.25     2021-11-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rstan                * 2.21.3     2021-12-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rstantools             2.1.1      2020-07-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  Rttf2pt1               1.3.9      2021-07-22 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  rvest                  1.0.2      2021-10-16 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  sass                   0.4.0      2021-05-12 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  scales                 1.1.1      2020-05-11 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  sessioninfo            1.2.2      2021-12-06 [1] any (@1.2.2)</span>
-<span class="co">#&gt;  shape                  1.4.6      2021-05-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  shiny                  1.7.1      2021-10-02 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  shinyjs                2.1.0      2021-12-23 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  shinystan              2.5.0      2018-05-01 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  shinythemes            1.2.0      2021-01-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  StanHeaders          * 2.21.0-7   2020-12-17 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  stringi                1.7.6      2021-11-29 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  stringr              * 1.4.0      2019-02-10 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  svUnit                 1.0.6      2021-04-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  systemfonts            1.0.3      2021-10-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tensorA                0.36.2     2020-11-19 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  textshaping            0.3.6      2021-10-13 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  threejs                0.3.3      2020-01-21 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tibble               * 3.1.6      2021-11-07 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tidybayes            * 3.0.2      2022-01-05 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tidybayes.rethinking * 3.0.0      2022-01-06 [1] Github (mjskay/tidybayes.rethinking@7da9946)</span>
-<span class="co">#&gt;  tidyr                * 1.1.4      2021-09-27 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tidyselect             1.1.1      2021-04-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tidyverse            * 1.3.1      2021-04-15 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  tzdb                   0.2.0      2021-10-27 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  utf8                   1.2.2      2021-07-24 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  vctrs                  0.3.8      2021-04-29 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  withr                  2.4.3      2021-11-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  xfun                   0.29       2021-12-14 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  xml2                   1.3.3      2021-11-30 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  xtable                 1.8-4      2019-04-21 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  xts                    0.12.1     2020-09-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  yaml                   2.2.1      2020-02-01 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  zoo                    1.8-9      2021-03-09 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;  [1] /home/runner/work/_temp/Library</span>
-<span class="co">#&gt;  [2] /opt/R/4.1.2/lib/R/library</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; ──────────────────────────────────────────────────────────────────────────────</span></code></pre></div>
-</details>
+<div class="question">
+<blockquote>
+<p><strong>1.</strong> Suppose the globe tossing data (Chapter 2) had turned out to be 4 water and 11 land. Construct the posterior distribution, using grid approximation. Use the same flat prior as in the book.</p>
+</blockquote>
+</div>
+<p>First, we create our grid and create our prior, which is a constant for all values of the grid.</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>p_grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>,
+               prior <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">1</span>, times <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span><span class="op">)</span>
+<span class="va">dist</span>
+<span class="co">#&gt; # A tibble: 1,000 × 2</span>
+<span class="co">#&gt;     p_grid prior</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 0           1</span>
+<span class="co">#&gt;  2 0.00100     1</span>
+<span class="co">#&gt;  3 0.00200     1</span>
+<span class="co">#&gt;  4 0.00300     1</span>
+<span class="co">#&gt;  5 0.00400     1</span>
+<span class="co">#&gt;  6 0.00501     1</span>
+<span class="co">#&gt;  7 0.00601     1</span>
+<span class="co">#&gt;  8 0.00701     1</span>
+<span class="co">#&gt;  9 0.00801     1</span>
+<span class="co">#&gt; 10 0.00901     1</span>
+<span class="co">#&gt; # … with 990 more rows</span></code></pre></div>
+<p>Next, we calculate the likelihood of 4 water and 11 land for each value of the grid and normalize so that all values sum to 1.</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">dist</span> <span class="op">&lt;-</span> <span class="va">dist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>likelihood <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="fl">4</span>, size <span class="op">=</span> <span class="fl">15</span>, prob <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span>,
+         posterior <span class="op">=</span> <span class="va">likelihood</span> <span class="op">*</span> <span class="va">prior</span>,
+         posterior <span class="op">=</span> <span class="va">posterior</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">posterior</span><span class="op">)</span><span class="op">)</span>
+<span class="va">dist</span>
+<span class="co">#&gt; # A tibble: 1,000 × 4</span>
+<span class="co">#&gt;     p_grid prior    likelihood posterior</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 0           1 0              0       </span>
+<span class="co">#&gt;  2 0.00100     1 0.00000000136  2.17e-11</span>
+<span class="co">#&gt;  3 0.00200     1 0.0000000214   3.44e-10</span>
+<span class="co">#&gt;  4 0.00300     1 0.000000107    1.72e- 9</span>
+<span class="co">#&gt;  5 0.00400     1 0.000000336    5.38e- 9</span>
+<span class="co">#&gt;  6 0.00501     1 0.000000811    1.30e- 8</span>
+<span class="co">#&gt;  7 0.00601     1 0.00000166     2.66e- 8</span>
+<span class="co">#&gt;  8 0.00701     1 0.00000305     4.88e- 8</span>
+<span class="co">#&gt;  9 0.00801     1 0.00000514     8.23e- 8</span>
+<span class="co">#&gt; 10 0.00901     1 0.00000814     1.30e- 7</span>
+<span class="co">#&gt; # … with 990 more rows</span></code></pre></div>
+<p>Finally, we can sample from and visualize the posterior distribution. The majority of the posterior is below 0.5, with a mean of 0.30. This is not surprising, given that this is what the data indicates (i.e., more land observed than water).</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span>
+
+<span class="va">dist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html">slice_sample</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10000</span>, weight_by <span class="op">=</span> <span class="va">posterior</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="http://mjskay.github.io/ggdist/reference/stat_sample_slabinterval.html">stat_histinterval</a></span><span class="op">(</span>.width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.67</span>, <span class="fl">0.89</span>, <span class="fl">0.97</span><span class="op">)</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.02</span><span class="op">)</span>,
+                    point_interval <span class="op">=</span> <span class="va">mean_hdci</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Proportion Water (p)"</span>, y <span class="op">=</span> <span class="st">"Posterior Density"</span><span class="op">)</span></code></pre></div>
+<div class="inline-figure"><img src="01-bayesian-inference_files/figure-html/w1h1-4-1.png" width="80%" style="display: block; margin: auto;"></div>
+<div class="question">
+<blockquote>
+<p><strong>2.</strong> Now suppose the data are 4 water and 2 land. Compute the posterior again, but this time use a prior that is zero below <em>p</em> = 0.5 and a constant above <em>p</em> = 0.5. This corresponds to prior information that a majority of the Earth’s surface is water.</p>
+</blockquote>
+</div>
+<p>We follow the same process, but now we define a prior that is 0 for the <em>p</em> &lt; .5 and 1 for <em>p</em> ≥ .5.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>p_grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fl">0</span>, to <span class="op">=</span> <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span>,
+               prior <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">500</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>likelihood <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="fl">4</span>, size <span class="op">=</span> <span class="fl">6</span>, prob <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span>,
+         posterior <span class="op">=</span> <span class="va">likelihood</span> <span class="op">*</span> <span class="va">prior</span>,
+         posterior <span class="op">=</span> <span class="va">posterior</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">posterior</span><span class="op">)</span><span class="op">)</span>
+<span class="va">dist</span>
+<span class="co">#&gt; # A tibble: 1,000 × 4</span>
+<span class="co">#&gt;     p_grid prior likelihood posterior</span>
+<span class="co">#&gt;      &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;</span>
+<span class="co">#&gt;  1 0           0   0                0</span>
+<span class="co">#&gt;  2 0.00100     0   1.50e-11         0</span>
+<span class="co">#&gt;  3 0.00200     0   2.40e-10         0</span>
+<span class="co">#&gt;  4 0.00300     0   1.21e- 9         0</span>
+<span class="co">#&gt;  5 0.00400     0   3.82e- 9         0</span>
+<span class="co">#&gt;  6 0.00501     0   9.32e- 9         0</span>
+<span class="co">#&gt;  7 0.00601     0   1.93e- 8         0</span>
+<span class="co">#&gt;  8 0.00701     0   3.57e- 8         0</span>
+<span class="co">#&gt;  9 0.00801     0   6.07e- 8         0</span>
+<span class="co">#&gt; 10 0.00901     0   9.70e- 8         0</span>
+<span class="co">#&gt; # … with 990 more rows</span></code></pre></div>
+<p>We now see that the posterior distribution is truncated at .5. The mean is around 0.69, which is expected given that 4 out of 6 trials (two-thirds) were water.</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span>
+
+<span class="va">dist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html">slice_sample</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10000</span>, weight_by <span class="op">=</span> <span class="va">posterior</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="http://mjskay.github.io/ggdist/reference/stat_sample_slabinterval.html">stat_histinterval</a></span><span class="op">(</span>.width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.67</span>, <span class="fl">0.89</span>, <span class="fl">0.97</span><span class="op">)</span>, breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.02</span><span class="op">)</span>,
+                    point_interval <span class="op">=</span> <span class="va">mean_hdci</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Proportion Water (p)"</span>, y <span class="op">=</span> <span class="st">"Posterior Density"</span><span class="op">)</span></code></pre></div>
+<div class="inline-figure"><img src="01-bayesian-inference_files/figure-html/w1h2-3-1.png" width="80%" style="display: block; margin: auto;"></div>
+<div class="question">
+<blockquote>
+<p><strong>3.</strong> For the posterior distribution from <strong>2</strong>, compute 89% percentile and HPDI intervals. Compare the widths of these intervals. Which is wider? Why? If you had only the information in the interval, what might you misunderstand about the shape of the posterior distribution?</p>
+</blockquote>
+</div>
+<p>First, we take 10,000 samples from the posterior calculated in the previous question. Then we summarize with <code><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">PI()</a></code> and <code><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">HPDI()</a></code>.</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span>
+
+<span class="va">intervals</span> <span class="op">&lt;-</span> <span class="va">dist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/slice.html">slice_sample</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10000</span>, weight_by <span class="op">=</span> <span class="va">posterior</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarize</a></span><span class="op">(</span>bound <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"lower"</span>, <span class="st">"upper"</span><span class="op">)</span>,
+            pi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">PI</a></span><span class="op">(</span><span class="va">p_grid</span>, prob <span class="op">=</span> <span class="fl">0.89</span><span class="op">)</span>,
+            hpdi <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/rethinking/man/HPDI.html">HPDI</a></span><span class="op">(</span><span class="va">p_grid</span>, prob <span class="op">=</span> <span class="fl">0.89</span><span class="op">)</span><span class="op">)</span>
+<span class="va">intervals</span>
+<span class="co">#&gt; # A tibble: 2 × 3</span>
+<span class="co">#&gt;   bound    pi  hpdi</span>
+<span class="co">#&gt;   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
+<span class="co">#&gt; 1 lower 0.525 0.503</span>
+<span class="co">#&gt; 2 upper 0.882 0.848</span></code></pre></div>
+<p>The 89% percentile interval is [0.525, 0.882], and the highest posterior density interval is [0.503, 0.848]. The percentile interval is 0.357 wide, and the highest posterior density interval is 0.345 wide. Thus, percentile interval is wider. This is because the HPDI finds the narrowest interval that contains 89% of the data. Therefore, unless the posterior is perfectly symmetrical, the central 89% will, by definition, be wider than the HDPI.</p>
+<p>For both intervals, the only boundary information is conveyed. No information about the actual shape of the posterior is conveyed. Without visualizing the posterior, the interval boundaries might tempt us to (incorrectly) assume that all values in the interval are equally likely or that values in the middle of the range are the most plausible. However, we know from the previous problem that the posterior is asymmetrical, with values closer to the low end of the interval more plausible than values at the high end of the interval.</p>
+<div class="question">
+<blockquote>
+<p><strong>4.</strong> OPTIONAL CHALLENGE. Suppose there is bias in sampling so that Land is more likely than Water to be recorded. Specifically, assume that 1-in-5 (20%) of Water samples are accidentally recorded instead as “Land.” First, write a generative simulation of this sampling process. Assuming the true proportion of Water is 0.70, what proportion does your simulation tend to produce instead? Second, using a simulated sample of 20 tosses, compute the unbiased posterior distribution of the true proportion of water.</p>
+</blockquote>
+</div>
+<p>We’ll start by writing a function to generate the biased data. First, we generate the specified number of <code>tosses</code> with the <code>true_prop</code>. Normally, we would use <code>rbinom(n = 1, size = tosses)</code>, but this will only provide the total number of successes (tosses with a “water” result). We want the results from each individual toss. So, as an example, rather than 1 trial of 100 tosses, we do 100 trials of 1 toss.</p>
+<p>Next, we generate random uniform numbers between 0 and 1. These indicate which trials are biased. For every element of <code>bias_sim</code> that is less than <code>bias</code>, the corresponding element of <code>true_trials</code> is changed to 0 in a new vector called <code>bias_trials</code>. If the original results was 0 (“land”), then the bias has no effect (i.e., 0 is changed to 0). If the original result was 1 (“water”), then there is a <code>bias</code> chance that the result will be changed to 0.</p>
+<p>Finally, we sum the total number of 1s (“water”) after implementing the bias and return the results.</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">biased_globe</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tosses</span> <span class="op">=</span> <span class="fl">100</span>, <span class="va">true_prop</span> <span class="op">=</span> <span class="fl">0.7</span>, <span class="va">bias</span> <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">true_trials</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">rbinom</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">tosses</span>, size <span class="op">=</span> <span class="fl">1</span>, prob <span class="op">=</span> <span class="va">true_prop</span><span class="op">)</span>
+  <span class="va">bias_sim</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">tosses</span>, min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>
+
+  <span class="va">bias_trials</span> <span class="op">&lt;-</span> <span class="va">true_trials</span>
+  <span class="va">bias_trials</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html">which</a></span><span class="op">(</span><span class="va">bias_sim</span> <span class="op">&lt;</span> <span class="va">bias</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0L</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">bias_trials</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>What does this bias mean for our estimated proportion of water? To explore, we’ll run a short simulation. We’ll use our <code>biased_globe()</code> function to do 1,000 simulations of 100 tosses. For each of the simulations, we can see the proportion of tosses that were water, with the bias included.</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">bias_prop</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map_int</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq_len</a></span><span class="op">(</span><span class="fl">1000</span><span class="op">)</span>,
+                     <span class="op">~</span><span class="fu">biased_globe</span><span class="op">(</span>tosses <span class="op">=</span> <span class="fl">100</span>, true_prop <span class="op">=</span> <span class="fl">0.7</span>, bias <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span><span class="op">)</span>
+
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="http://mjskay.github.io/ggdist/reference/stat_sample_slabinterval.html">stat_histinterval</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">bias_prop</span> <span class="op">/</span> <span class="fl">100</span><span class="op">)</span>, .width <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.67</span>, <span class="fl">0.89</span>, <span class="fl">0.97</span><span class="op">)</span>,
+                    breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, by <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html">geom_vline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/expand_limits.html">expand_limits</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Proportion Water (p)"</span>, y <span class="op">=</span> <span class="st">"Simulations"</span><span class="op">)</span></code></pre></div>
+<div class="inline-figure"><img src="01-bayesian-inference_files/figure-html/w1h4-2-1.png" width="80%" style="display: block; margin: auto;"></div>
+<p>In the previous figure, the true proportion, 0.7, is indicated by the dashed red line. However, we can see that the biased tosses are greatly reducing the number of “waters” that we actually observe. On average, we observe 56 waters, for an estimated proportion of 0.56.</p>
+<p>Our final step is to compute an unbiased posterior distribution of the true proportion of water, using 20 tosses from the biased data generation process. We’ll start by generating our 20 tosses.</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span>
+<span class="va">biased_dat</span> <span class="op">&lt;-</span> <span class="fu">biased_globe</span><span class="op">(</span>tosses <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>
+<span class="va">biased_dat</span>
+<span class="co">#&gt; [1] 11</span></code></pre></div>
+<p>In our data, we observed 11 waters. Our final step is to estimate the unbiased posterior. We can accomplish this by using the biased sampling rate of 0.8. That is, each true water observation has an 80% chance of actually being recorded as a water observation. This is shown in the <code>crtd_likelihood</code> line below. In the <code><a href="https://rdrr.io/r/stats/Binomial.html">dbinom()</a></code> function, rather than setting <code>prob = p_grid</code>, we set <code>prob = p_grid * 0.8</code>, to reflect the bias in sampling. We then see that the biased posterior peaks around 0.55, whereas correcting for the bias results in a posterior that peaks right around 0.70.</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://allancameron.github.io/geomtextpath/">geomtextpath</a></span><span class="op">)</span>
+
+<span class="va">posterior</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>p_grid <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, length.out <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>prior <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Beta.html">dbeta</a></span><span class="op">(</span><span class="va">p_grid</span>, shape1 <span class="op">=</span> <span class="fl">1</span>, shape2 <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,
+         bias_likelihood <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="va">biased_dat</span>, size <span class="op">=</span> <span class="fl">20</span>, prob <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span>,
+         crtd_likelihood <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html">dbinom</a></span><span class="op">(</span><span class="va">biased_dat</span>, size <span class="op">=</span> <span class="fl">20</span>, prob <span class="op">=</span> <span class="va">p_grid</span> <span class="op">*</span> <span class="fl">0.8</span><span class="op">)</span>,
+         bias_posterior <span class="op">=</span> <span class="va">bias_likelihood</span> <span class="op">*</span> <span class="va">prior</span>,
+         crtd_posterior <span class="op">=</span> <span class="va">crtd_likelihood</span> <span class="op">*</span> <span class="va">prior</span>,
+         bias_posterior <span class="op">=</span> <span class="va">bias_posterior</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">bias_posterior</span><span class="op">)</span>,
+         crtd_posterior <span class="op">=</span> <span class="va">crtd_posterior</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">crtd_posterior</span><span class="op">)</span><span class="op">)</span>
+
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">posterior</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">p_grid</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://allancameron.github.io/geomtextpath/reference/geom_textpath.html">geom_textline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">bias_posterior</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, color <span class="op">=</span> <span class="st">"grey70"</span>,
+                size <span class="op">=</span> <span class="fl">6</span>, linewidth <span class="op">=</span> <span class="fl">1</span>, label <span class="op">=</span> <span class="st">"Biased"</span>, hjust <span class="op">=</span> <span class="fl">0.45</span>,
+                family <span class="op">=</span> <span class="st">"Source Sans Pro"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://allancameron.github.io/geomtextpath/reference/geom_textpath.html">geom_textline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">crtd_posterior</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"solid"</span>, color <span class="op">=</span> <span class="st">"#009FB7"</span>,
+                size <span class="op">=</span> <span class="fl">6</span>, linewidth <span class="op">=</span> <span class="fl">1</span>, label <span class="op">=</span> <span class="st">"Corrected"</span>, hjust <span class="op">=</span> <span class="fl">0.4</span>,
+                family <span class="op">=</span> <span class="st">"Source Sans Pro"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Proportion Water (p)"</span>, y <span class="op">=</span> <span class="st">"Posterior Density"</span><span class="op">)</span></code></pre></div>
+<div class="inline-figure"><img src="01-bayesian-inference_files/figure-html/w1h4-4-1.png" width="80%" style="display: block; margin: auto;"></div>
+
 </div>
 </div>
   <div class="chapter-nav">
@@ -887,7 +900,7 @@ View the session information used to render this week.
 <li><a class="nav-link" href="#chapter-3"><span class="header-section-number">1.2.3</span> Chapter 3</a></li>
 </ul>
 </li>
-<li><a class="nav-link" href="#session-info">Session Info</a></li>
+<li><a class="nav-link" href="#homework"><span class="header-section-number">1.3</span> Homework</a></li>
 </ul>
 
       <div class="book-extra">
@@ -905,7 +918,7 @@ View the session information used to render this week.
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-10.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-14.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
