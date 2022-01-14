@@ -13,7 +13,7 @@ knitr::include_url("https://www.youtube.com/embed/zYYBtxHWE0A")
 Lecture 4:
 
 ```{r lecture-4, echo = FALSE, out.width = "100%"}
-knitr::include_url("https://www.youtube.com/embed/")
+knitr::include_url("https://www.youtube.com/embed/QiHKdvAbYII")
 ```
 
 ## Exercises
@@ -248,8 +248,9 @@ b4.3 <- brm(height ~ 1 + weight_c, data = how_dat, family = gaussian,
             iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "chp4", "b4.3-0"))
 
-posterior_samples(b4.3) %>%
-  select(-lp__) %>%
+as_draws_df(b4.3) %>%
+  as_tibble() %>% 
+  select(b_Intercept, b_weight_c, sigma) %>%
   cov() %>%
   round(digits = 3)
 ```
@@ -264,8 +265,9 @@ b4.3_nc <- brm(height ~ 1 + weight, data = how_dat, family = gaussian,
                iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
                file = here("fits", "chp4", "b4.3_nc"))
 
-posterior_samples(b4.3_nc) %>%
-  select(-lp__) %>%
+as_draws_df(b4.3_nc) %>%
+  as_tibble() %>% 
+  select(b_Intercept, b_weight, sigma) %>%
   cov() %>%
   round(digits = 3)
 ```
@@ -291,17 +293,17 @@ predictions <- bind_rows(
 
 fits <- bind_rows(
   weight_seq %>%
-    add_fitted_draws(b4.3) %>%
+    add_epred_draws(b4.3) %>%
     mutate(type = "Centered"),
   weight_seq %>%
-    add_fitted_draws(b4.3_nc) %>%
+    add_epred_draws(b4.3_nc) %>%
     mutate(type = "Non-centered")
 ) %>%
   ungroup()
 
 bands <- fits %>%
   group_by(type, weight) %>%
-  median_qi(.value, .width = c(.67, .89, .97))
+  median_qi(.epred, .width = c(.67, .89, .97))
 
 lines <- fits %>%
   filter(.draw %in% sample(unique(.data$.draw), size = 50))
@@ -309,10 +311,10 @@ lines <- fits %>%
 ggplot(lines, aes(x = weight)) +
   facet_wrap(~type, nrow = 1) +
   geom_ribbon(data = predictions, aes(ymin = Q2.5, ymax = Q97.5), alpha = 0.3) +
-  geom_lineribbon(data = bands, aes(y = .value, ymin = .lower, ymax = .upper),
+  geom_lineribbon(data = bands, aes(y = .epred, ymin = .lower, ymax = .upper),
                   color = NA) +
   scale_fill_brewer(palette = "Blues", breaks = c(.67, .89, .97)) +
-  geom_line(aes(y = .value, group = .draw)) +
+  geom_line(aes(y = .epred, group = .draw)) +
   geom_point(data = how_dat, aes(y = height), shape = 1, alpha = 0.7) +
   labs(x = "Weight", y = "Height", fill = "Interval") +
   theme(legend.position = "bottom") +
@@ -320,10 +322,10 @@ ggplot(lines, aes(x = weight)) +
 ```
 
 :::question
-> **4M8.** In the chapter, we used 15 knots with the cherry blossom spline. Increase the number of know and observe what happens to the resulting spline. Then adjust also the width of the prior on the weights---change the standard deviation of the prior and watch what happens. What do you think the combination of know number and the prior on the weights controls?
+> **4M8.** In the chapter, we used 15 knots with the cherry blossom spline. Increase the number of knots and observe what happens to the resulting spline. Then adjust also the width of the prior on the weights---change the standard deviation of the prior and watch what happens. What do you think the combination of know number and the prior on the weights controls?
 :::
 
-Because {brms} estimates splines a little differently than {rethinking} (see [here](https://bookdown.org/connect/#/apps/4857/access)), I'll use {rethinking} for estimating the spline models. First lets look again at the 15-knot spline model, and then double the number of knots and play with the prior. As expected, increasing the number of knots increases the "wiggly-ness" of the spline. We can also see that tightening the prior on the weights takes away some of the "wiggly-ness". 
+Because {brms} estimates splines a little differently than {rethinking} (see [here](https://bookdown.org/content/4857/geocentric-models.html#splines.)), I'll use {rethinking} for estimating the spline models. First lets look again at the 15-knot spline model, and then double the number of knots and play with the prior. As expected, increasing the number of knots increases the "wiggly-ness" of the spline. We can also see that tightening the prior on the weights takes away some of the "wiggly-ness". 
 
 ```{r e4m8-libs, include = FALSE}
 library(splines)
@@ -331,7 +333,7 @@ library(tidybayes.rethinking)
 library(colorblindr)
 ```
 
-```{r e4m8-1, cache = TRUE}
+```{r e4m8-1, cache = TRUE, eval = FALSE}
 library(splines)
 library(tidybayes.rethinking)
 library(colorblindr)
@@ -473,9 +475,9 @@ library(modelr)
 mod_fits <- young_how %>%
   data_grid(weight = seq_range(weight, 100)) %>%
   mutate(weight_c = weight - mean(young_how$weight)) %>%
-  add_fitted_draws(b4h2) %>%
+  add_epred_draws(b4h2) %>%
   group_by(weight) %>%
-  mean_qi(.value, .width = 0.89)
+  mean_qi(.epred, .width = 0.89)
 
 mod_preds <- young_how %>%
   data_grid(weight = seq_range(weight, 100)) %>%
@@ -489,7 +491,7 @@ ggplot(young_how, aes(x = weight)) +
   geom_ribbon(data = mod_preds, aes(ymin = .lower, ymax = .upper),
               alpha = 0.2) +
   geom_lineribbon(data = mod_fits,
-                  aes(y = .value, ymin = .lower, ymax = .upper),
+                  aes(y = .epred, ymin = .lower, ymax = .upper),
                   fill = "grey60", size = 1) +
   labs(x = "Weight", y = "Height")
 ```
@@ -633,6 +635,8 @@ tibble(group = seq_len(n),
 We'll try each type of model: linear, polynomial, and spline. For each, we'll fit the model, and then visualize the predictions with the observed data. Because we're no longer trying to replicate a spline model from the text, I'll use `brm()` to estimate this spline model. Overall the predictions from each model are remarkably similar. Therefore, I would go with a linear model, as that is the simplest of the models.
 
 ```{r e4h5-1}
+data(cherry_blossoms)
+
 cb_temp <- cherry_blossoms %>%
   drop_na(doy, temp) %>%
   mutate(temp_c = temp - mean(temp),
@@ -829,7 +833,7 @@ tibble(.draw = seq_len(n),
 
 We can remove the intercept by removing the `a` parameter from the model.
 
-```{r e4h8-1, cache = TRUE}
+```{r e4h8-1, cache = TRUE, eval = FALSE}
 no_int <- quap(alist(D ~ dnorm(mu, sigma),
                      mu <- B %*% w,
                      w ~ dnorm(0, 10),
@@ -849,7 +853,7 @@ fitted_draws(no_int, cb_dat) %>%
 
 This looks a lot like our original model, except the left hand side of the spline is pulled down. This is likely due to the prior on `w`. The prior is centered on 0, but that assumes an intercept is present (i.e., the curves of the spline average a deviation of 0 from the mean). However, with the intercept, the prior drags the line down to actual zero when the first basis function in non-zero. By changing the prior of `w` to the same prior originally used for the intercept, we get almost our original model back.
 
-```{r e4h8-2, cache = TRUE}
+```{r e4h8-2, cache = TRUE, eval = FALSE}
 no_int2 <- quap(alist(D ~ dnorm(mu, sigma),
                       mu <- B %*% w,
                       w ~ dnorm(100, 10),
