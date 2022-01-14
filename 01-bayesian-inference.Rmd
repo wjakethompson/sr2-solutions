@@ -649,12 +649,22 @@ dist <- dist %>%
 dist
 ```
 
-Finally, we can visualize the posterior distribution.
+```{r w1h1-3, include = FALSE}
+set.seed(123)
+dist_samples <- dist %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE)
+```
 
-```{r w1h1-3}
-ggplot(dist, aes(x = p_grid, y = posterior)) +
-  geom_line() +
-  geom_point() +
+Finally, we can sample from and visualize the posterior distribution. The majority of the posterior is below 0.5, with a mean of `r sprintf("%0.2f", mean(dist_samples$p_grid))`. This is not surprising, given that this is what the data indicates (i.e., more land observed than water).
+
+```{r w1h1-4}
+set.seed(123)
+
+dist %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
+  ggplot(aes(x = p_grid)) +
+  stat_histinterval(.width = c(0.67, 0.89, 0.97), breaks = seq(0, 1, 0.02),
+                    point_interval = mean_hdci) +
   labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
 
@@ -673,12 +683,23 @@ dist <- tibble(p_grid = seq(from = 0, to = 1, length.out = 1000),
 dist
 ```
 
-We now see that the posterior distribution is truncated at .5. The peak is around .65, which is expected given that 4 out of 6 trials (two-thirds) were water.
+```{r w1h2-2, include = FALSE}
+set.seed(123)
 
-```{r w1h2-2}
-ggplot(dist, aes(x = p_grid, y = posterior)) +
-  geom_line() +
-  geom_point() +
+dist_samples <- dist %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE)
+```
+
+We now see that the posterior distribution is truncated at .5. The mean is around `r sprintf("%0.2f", mean(dist_samples$p_grid))`, which is expected given that 4 out of 6 trials (two-thirds) were water.
+
+```{r w1h2-3}
+set.seed(123)
+
+dist %>% 
+  slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
+  ggplot(aes(x = p_grid)) +
+  stat_histinterval(.width = c(0.67, 0.89, 0.97), breaks = seq(0, 1, 0.02),
+                    point_interval = mean_hdci) +
   labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
 
@@ -689,6 +710,8 @@ ggplot(dist, aes(x = p_grid, y = posterior)) +
 First, we take 10,000 samples from the posterior calculated in the previous question. Then we summarize with `PI()` and `HPDI()`.
 
 ```{r w1h3-1}
+set.seed(123)
+
 intervals <- dist %>% 
   slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
   summarize(bound = c("lower", "upper"),
@@ -751,85 +774,27 @@ biased_dat <- biased_globe(tosses = 20)
 biased_dat
 ```
 
-In our data, we observed `r biased_dat` waters. To get our unbiased estimate, we can incorporate our pre-existing scientific knowledge as a prior. We know that the true proportion of water should probably be somewhere between 60--80%. We can encode that as a 
+In our data, we observed `r biased_dat` waters. Our final step is to estimate the unbiased posterior. We can accomplish this by using the biased sampling rate of 0.8. That is, each true water observation has an 80% chance of actually being recorded as a water observation. This is shown in the `crtd_likelihood` line below. In the `dbinom()` function, rather than setting `prob = p_grid`, we set `prob = p_grid * 0.8`, to reflect the bias in sampling. We then see that the biased posterior peaks around 0.55, whereas correcting for the bias results in a posterior that peaks right around 0.70.
 
 ```{r w1h4-4}
 library(geomtextpath)
 
-bias_posterior <- tibble(p_grid = seq(0, 1, length.out = 1000)) %>% 
-  mutate(prior = dbeta(p_grid, shape1 = 28, shape2 = 12),
-         likelihood = dbinom(biased_dat, size = 20, prob = p_grid),
-         posterior = likelihood * prior,
-         across(-p_grid, ~ .x / sum(.x)))
+posterior <- tibble(p_grid = seq(0, 1, length.out = 1000)) %>% 
+  mutate(prior = dbeta(p_grid, shape1 = 1, shape2 = 1),
+         bias_likelihood = dbinom(biased_dat, size = 20, prob = p_grid),
+         crtd_likelihood = dbinom(biased_dat, size = 20, prob = p_grid * 0.8),
+         bias_posterior = bias_likelihood * prior,
+         crtd_posterior = crtd_likelihood * prior,
+         bias_posterior = bias_posterior / sum(bias_posterior),
+         crtd_posterior = crtd_posterior / sum(crtd_posterior))
 
-ggplot(bias_posterior, aes(x = p_grid)) +
-  geom_textline(aes(y = prior), linetype = "dashed", color = "grey80",
-                size = 6, linewidth = 1, label = "Prior", hjust = 0.45,
+ggplot(posterior, aes(x = p_grid)) +
+  geom_textline(aes(y = bias_posterior), linetype = "dashed", color = "grey70",
+                size = 6, linewidth = 1, label = "Biased", hjust = 0.45,
                 family = "Source Sans Pro") +
-  geom_textline(aes(y = likelihood), linetype = "solid", color = "grey80",
-                size = 6, linewidth = 1, label = "Likelihood", hjust = 0.4,
+  geom_textline(aes(y = crtd_posterior), linetype = "solid", color = "#009FB7",
+                size = 6, linewidth = 1, label = "Corrected", hjust = 0.4,
                 family = "Source Sans Pro") +
-  geom_textline(aes(y = posterior), linetype = "solid", color = "#009fb7",
-                size = 7, linewidth = 1, label = "Posterior", fontface = "bold",
-                family = "Source Sans Pro") +
-  scale_x_continuous(breaks = seq(0, 1, 0.1))
+  scale_x_continuous(breaks = seq(0, 1, 0.1)) +
+  labs(x = "Proportion Water (p)", y = "Posterior Density")
 ```
-
-```{r w1h4-5-hide, include = FALSE}
-set.seed(123)
-samples <- bias_posterior %>% 
-  slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
-  pull(p_grid)
-
-sample_mean <- mean(samples)
-sample_hpdi <- HPDI(samples, prob = 0.89)
-
-sample_mean
-
-sample_hpdi
-```
-
-Sampling from our posterior, the expected value (mean) of the true proportion of water is `r sprintf("%0.3f", sample_mean)`, with and 89% HDPI of `r glue("[{sprintf('%0.3f', sample_hpdi[1])}, {sprintf('%0.3f', sample_hpdi[2])}]")`. Thus, the true proportion of water 0.7 is consistent with this posterior, as that value is well within our plausible interval, even though the data itself is biased.
-
-```{r w1h4-5-show, ref.label = "w1h4-5-hide"}
-```
-
-However, this was only one sample of 20 tosses. To know whether we are consistently getting unbiased estimated, we can conduct another quick simulation that repeats the previous steps 1,000 times.
-
-```{r w1h4-6, cache = TRUE}
-calc_globe_posterior <- function(.x) {
-  biased_dat <- biased_globe(tosses = 20)
-  
-  bias_posterior <- tibble(p_grid = seq(0, 1, length.out = 1000)) %>% 
-    mutate(prior = dbeta(p_grid, shape1 = 28, shape2 = 12),
-           likelihood = dbinom(biased_dat, size = 20, prob = p_grid),
-           posterior = likelihood * prior,
-           across(-p_grid, ~ .x / sum(.x)))
-  
-  samples <- bias_posterior %>% 
-    slice_sample(n = 10000, weight_by = posterior, replace = TRUE) %>% 
-    pull(p_grid)
-  
-  sample_mean <- mean(samples)
-  sample_hpdi <- HPDI(samples, prob = 0.89)
-  
-  tibble(samples = list(samples),
-         mean = sample_mean,
-         lb = sample_hpdi[1],
-         ub = sample_hpdi[2])
-}
-
-set.seed(456)
-unbias <- map_dfr(seq_len(1000), calc_globe_posterior, .id = "rep")
-```
-
-```{r w1h4-7}
-unbias %>% 
-  ggplot(aes(x = mean)) +
-  stat_histinterval(.width = c(0.67, 0.89, 0.97),
-                    breaks = seq(0, 1, by = 0.01)) +
-  geom_vline(aes(xintercept = 0.7), linetype = "dashed", color = "red") +
-  expand_limits(x = c(0, 1)) +
-  labs(x = "Proportion Water (p)", y = "Simulations")
-```
-
