@@ -42,7 +42,7 @@ There are two parameters, $\mu$ and $\sigma$.
 :::
 
 $$
-\text{Pr}(\mu,\sigma|y) = \frac{\prod_i\text{Normal}(y_i|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)}{\int\int\prod_i\text{Normal}(y_i|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)d \mu d \sigma}
+\text{Pr}(\mu,\sigma|y) = \frac{\text{Normal}(y|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)}{\int\int\text{Normal}(y|\mu,\sigma)\text{Normal}(\mu|0,10)\text{Exponential}(\sigma|1)d \mu d \sigma}
 $$
 
 :::question
@@ -77,7 +77,7 @@ There are now three model parameters: $\alpha$, $\beta$, and $\sigma$. The mean,
 library(tidyverse)
 
 sim <- tibble(mu = rnorm(n = 10000, mean = 0, sd = 10),
-       sigma = rexp(n = 10000, rate = 1)) %>%
+              sigma = rexp(n = 10000, rate = 1)) %>%
   mutate(y = rnorm(n = 10000, mean = mu, sd = sigma))
 
 ggplot(sim, aes(x = y)) +
@@ -111,9 +111,9 @@ sigma ~ dexp( 1 )
 
 \begin{align}
   y_i &\sim \text{Normal}(\mu_i,\sigma) \\
-  \mu_i &= a + bx_i \\
-  a &\sim \text{Normal}(0, 10) \\
-  b &\sim \text{Uniform}(0, 1) \\
+  \mu_i &= \alpha + \beta x_i \\
+  \alpha &\sim \text{Normal}(0, 10) \\
+  \beta &\sim \text{Uniform}(0, 1) \\
   \sigma &\sim \text{Exponential}(1)
 \end{align}
 
@@ -122,14 +122,14 @@ sigma ~ dexp( 1 )
 :::
 
 \begin{align}
-  h_i &\sim \text{Normal}(\mu_i, \sigma) \\
-  \mu_i &= \alpha + \beta(x_i - \bar{x}) \\
+  h_{ij} &\sim \text{Normal}(\mu_{ij}, \sigma) \\
+  \mu_{ij} &= \alpha + \beta(y_j - \bar{y}) \\
   \alpha &\sim \text{Normal}(169, 20) \\
   \beta &\sim \text{Normal}(0, 8) \\
   \sigma &\sim \text{Exponential}(1)
 \end{align}
 
-Because height is centered, $\alpha$ represents the average height in the average year (i.e., year 2). The prior of $\text{Normal}(165,20)$ was chosen assuming that height is measured in centimeters and that that sample is of adults (e.g., college students). The mean of 169cm represents the average height people aged 20 and older in the United States [@avg_height]. Further, @avg_height report the 5th and 95th percentiles for females and males as [150,174] and [163,188], respectively. A standard deviation of 20 presumes 95% of the probability between 169 $\pm$ 40, or [129,209], easily encapsulating the ranges seen in previous observed data.
+Because height is centered, $\alpha$ represents the average height in the average year (i.e., year 2). The prior of $\text{Normal}(169,20)$ was chosen assuming that height is measured in centimeters and that that sample is of adults (e.g., college students). The mean of 169cm represents the average height people aged 20 and older in the United States [@avg_height]. Further, @avg_height report the 5th and 95th percentiles for females and males as [150,174] and [163,188], respectively. A standard deviation of 20 presumes 95% of the probability between 169 $\pm$ 40, or [129,209], easily encapsulating the ranges seen in previous observed data.
 
 At this point, we have no reason to believe that year would have any effect on height, as we're assuming that all students are adults, and therefore likely done growing. Accordingly, we choose a prior centered on zero. The standard deviation of the prior of 5 represents plausible growth (or shrinkage). During growth spurts, height growth averages 6--13 cm/year. The standard deviation of 8 encompasses the range we might expect to see if growth were occurring at a high rate.
 
@@ -145,12 +145,12 @@ tibble(group = seq_len(n),
   ggplot(aes(x = year, y = height, group = group)) +
   geom_line(alpha = 1/10) +
   geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
-  annotate(geom = "text", x = 1, y = 0, hjust = 0, vjust = 1,
-           label = "Embryo") +
-  annotate(geom = "text", x = 1, y = 272, hjust = 0, vjust = 0,
+  annotate(geom = "text", x = 1, y = -3, hjust = 0, vjust = 1,
+           label = "Embryo", family = "Source Sans Pro") +
+  annotate(geom = "text", x = 1, y = 275, hjust = 0, vjust = 0,
            label = "World's tallest person (272cm)") +
   coord_cartesian(ylim = c(-25, 300)) +
-  labs(x = "Year", y = "Height")
+  labs(x = "Year", y = "Height", family = "Source Sans Pro")
 ```
 
 Finally, the exponential prior on $\sigma$ assumes an average deviation of 1.
