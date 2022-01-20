@@ -34,6 +34,22 @@ div.question div.sourceCode {
   padding-left: 1.5rem;
 }
 
+div.table-question {
+  padding-left: 0.85em;
+  padding-top: 0.5em;
+  border-left: 4px solid #009fb7;
+  margin-left: -0.5em;
+}
+
+.table-question td,
+.table-question th {
+  background-color: white;
+}
+
+.table-question .table {
+  margin-bottom: 0.5em;
+}
+
 /*
 
 .book .book-body .page-wrapper .page-inner section.normal .question blockquote {
