@@ -124,36 +124,32 @@ sigma ~ dexp( 1 )
 \begin{align}
   h_{ij} &\sim \text{Normal}(\mu_{ij}, \sigma) \\
   \mu_{ij} &= \alpha + \beta(y_j - \bar{y}) \\
-  \alpha &\sim \text{Normal}(169, 20) \\
-  \beta &\sim \text{Normal}(0, 8) \\
+  \alpha &\sim \text{Normal}(100, 10) \\
+  \beta &\sim \text{Normal}(0, 10) \\
   \sigma &\sim \text{Exponential}(1)
 \end{align}
 
-Because height is centered, $\alpha$ represents the average height in the average year (i.e., year 2). The prior of $\text{Normal}(169,20)$ was chosen assuming that height is measured in centimeters and that that sample is of adults (e.g., college students). The mean of 169cm represents the average height people aged 20 and older in the United States [@avg_height]. Further, @avg_height report the 5th and 95th percentiles for females and males as [150,174] and [163,188], respectively. A standard deviation of 20 presumes 95% of the probability between 169 $\pm$ 40, or [129,209], easily encapsulating the ranges seen in previous observed data.
+Because height is centered, $\alpha$ represents the average height in the average year (i.e., year 2). The prior of $\text{Normal}(100, 10)$ was chosen assuming that height is measured in centimeters and that that sample is of children who are still growing. 
 
-At this point, we have no reason to believe that year would have any effect on height, as we're assuming that all students are adults, and therefore likely done growing. Accordingly, we choose a prior centered on zero. The standard deviation of the prior of 5 represents plausible growth (or shrinkage). During growth spurts, height growth averages 6--13 cm/year. The standard deviation of 8 encompasses the range we might expect to see if growth were occurring at a high rate.
-
-Prior predictive simulations for $\alpha$ and $\beta$ also appear to give reasonably plausible regression lines, given our current assumptions.
-
-```{r e4m4}
-n <- 1000
-tibble(group = seq_len(n),
-       alpha = rnorm(n, 169, 20),
-       beta = rnorm(n, 0, 8)) %>%
-  expand(nesting(group, alpha, beta), year = c(1, 3)) %>%
-  mutate(height = alpha + beta * (year - 2)) %>%
-  ggplot(aes(x = year, y = height, group = group)) +
-  geom_line(alpha = 1/10) +
-  geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
-  annotate(geom = "text", x = 1, y = -3, hjust = 0, vjust = 1,
-           label = "Embryo", family = "Source Sans Pro") +
-  annotate(geom = "text", x = 1, y = 275, hjust = 0, vjust = 0,
-           label = "World's tallest person (272cm)") +
-  coord_cartesian(ylim = c(-25, 300)) +
-  labs(x = "Year", y = "Height", family = "Source Sans Pro")
-```
+The slope is extremely vague. The a prior centered on zero, and the standard deviation of the prior of 10 represents a wide range of possible growth (or shrinkage). During growth spurts, height growth averages 6--13 cm/year. The standard deviation of 10 encompasses the range we might expect to see if growth were occurring at a high rate.
 
 Finally, the exponential prior on $\sigma$ assumes an average deviation of 1.
+
+Prior predictive simulations also appear to give reasonably plausible regression lines, given our current assumptions.
+
+```{r e4m4}
+n <- 50
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 100, 10),
+       beta = rnorm(n, 0, 10),
+       sigma = rexp(n, 1)) %>%
+  expand(nesting(group, alpha, beta, sigma), year = c(1, 2, 3)) %>%
+  mutate(height = rnorm(n(), alpha + beta * (year - mean(year)), sigma)) %>%
+  ggplot(aes(x = year, y = height, group = group)) +
+  geom_line() +
+  labs(x = "Year", y = "Height")
+```
+
 
 :::question
 > **4M5.** Now suppose I remind you that every student got taller each year. Does this information lead you to change your choice of priors? How?
@@ -162,44 +158,41 @@ Finally, the exponential prior on $\sigma$ assumes an average deviation of 1.
 Yes. Because we know that an increase in year will always lead to increased height, we know that $\beta$ will be positive. Therefore, our prior should reflect this by using, for example, a log-normal distribution.
 
 $$
-\beta \sim \text{Log-Normal}(2,0.5)
+\beta \sim \text{Log-Normal}(1,0.5)
 $$
 
-This log-normal prior has an 89% highest density interval between about 2.3 and 14.1cm growth per year. 
+This prior gives an expectation of about 3cm per year, with the 89% highest density interval between 0.87cm and 5.18cm per year.
 
 ```{r e4m5-1, cache = TRUE}
 library(tidybayes)
 
-samples <- rlnorm(1e8, 2, 0.5)
-bounds <- median_hdi(samples, .width = 0.89)
+set.seed(123)
+samples <- rlnorm(1e8, 1, 0.5)
+bounds <- mean_hdi(samples, .width = 0.89)
 
 ggplot() +
-  stat_function(data = tibble(x = c(0, 30)), mapping = aes(x = x),
+  stat_function(data = tibble(x = c(0, 10)), mapping = aes(x = x),
                 geom = "line", fun = dlnorm,
-                args = list(meanlog = 2, sdlog = 0.5)) +
+                args = list(meanlog = 1, sdlog = 0.5)) +
   geom_ribbon(data = tibble(x = seq(bounds$ymin, bounds$ymax, 0.01)),
-              aes(x = x, ymin = 0, ymax = dlnorm(x, 2, 0.5)),
+              aes(x = x, ymin = 0, ymax = dlnorm(x, 1, 0.5)),
               alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 10, 2)) +
   labs(x = expression(beta), y = "Density")
 ```
 
-Prior predictive simulations of plausible lines using this new log-normal prior indicate that these priors still represent plausible values, while also constraining all lines to have a positive slope.
+Prior predictive simulations of plausible lines using this new log-normal prior indicate that these priors still represent plausible values. Most the lines are positive, due to the prior constraint. However, because of variation around the mean, some lines do show a decrease in height. If it is truly impossible for students to shrink, then data like this might arise from measurement error.
 
 ```{r e4m5-2}
-n <- 1000
+n <- 50
 tibble(group = seq_len(n),
-       alpha = rnorm(n, 169, 20),
-       beta = rlnorm(n, 2, 0.75)) %>%
-  expand(nesting(group, alpha, beta), year = c(1, 3)) %>%
-  mutate(height = alpha + beta * (year - 2)) %>%
+       alpha = rnorm(n, 100, 10),
+       beta = rlnorm(n, 1, 0.5),
+       sigma = rexp(n, 1)) %>%
+  expand(nesting(group, alpha, beta, sigma), year = c(1, 2, 3)) %>%
+  mutate(height = rnorm(n(), alpha + beta * (year - mean(year)), sigma)) %>% 
   ggplot(aes(x = year, y = height, group = group)) +
-  geom_line(alpha = 1/10) +
-  geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
-  annotate(geom = "text", x = 1, y = 0, hjust = 0, vjust = 1,
-           label = "Embryo") +
-  annotate(geom = "text", x = 1, y = 272, hjust = 0, vjust = 0,
-           label = "World's tallest person (272cm)") +
-  coord_cartesian(ylim = c(-25, 300)) +
+  geom_line() +
   labs(x = "Year", y = "Height")
 ```
 
@@ -207,19 +200,13 @@ tibble(group = seq_len(n),
 > **4M6.** Now suppose I tell you that the variance among heights for students of the same age is never more than 64cm. How does this lead you to revise your priors?
 :::
 
-A variance of 64cm corresponds to a standard deviation of 8cm. Our current prior of $\sigma \sim \text{Exponential}(1)$ gives very little probability mass to values greater than 8. However, we can also see that the vast majority of the probability mass for this prior is less than 5cm. Therefore, if we think the standard deviation could get close to 8cm, we might consider reducing the rate of the exponential prior to allow for slightly larger values.
-
-```{r e4m6}
-ggplot(tibble(x = c(0, 20)), aes(x = x)) +
-  stat_function(fun = dexp, args = list(rate = 1)) +
-  labs(x = expression(sigma), y = "Density")
-```
+A variance of 64cm corresponds to a standard deviation of 8cm. Our current prior of $\sigma \sim \text{Exponential}(1)$ gives very little probability mass to values greater than 8. However, it is still theoretically possible. If we want to truly constrain the variance in this way, we could use a $\text{Uniform}(0,8)$ prior. This would eliminate all values that would result in a variance greater than 64cm.
 
 :::question
 > **4M7.** Refit model `m4.3` from the chapter, but omit the mean weight `xbar` this time. Compare the new model's posterior to that of the original model. In particular, look at the covariance among the parameters. What is different? Then compare the posterior predictions of both models.
 :::
 
-First, we'll reproduce `m4.3` using `quap()`, and then again using `brm()`. The covariance matrix from both is the same, as we would expect!
+First, we'll reproduce `m4.3` using `quap()`, and then again using `brm()`. The covariance matrix from both is the same, as we would expect.
 
 ```{r e4m7-1}
 library(rethinking)
@@ -321,22 +308,15 @@ ggplot(lines, aes(x = weight)) +
   transition_states(.draw, 0, 1)
 ```
 
+
 :::question
 > **4M8.** In the chapter, we used 15 knots with the cherry blossom spline. Increase the number of knots and observe what happens to the resulting spline. Then adjust also the width of the prior on the weights---change the standard deviation of the prior and watch what happens. What do you think the combination of know number and the prior on the weights controls?
 :::
 
-Because {brms} estimates splines a little differently than {rethinking} (see [here](https://bookdown.org/content/4857/geocentric-models.html#splines.)), I'll use {rethinking} for estimating the spline models. First lets look again at the 15-knot spline model, and then double the number of knots and play with the prior. As expected, increasing the number of knots increases the "wiggly-ness" of the spline. We can also see that tightening the prior on the weights takes away some of the "wiggly-ness". 
+First lets duplicate the 15-knot spline model from the chapter. Then we'll double the number of knots and play with the prior. 
 
-```{r e4m8-libs, include = FALSE}
+```{r e4m8-1}
 library(splines)
-library(tidybayes.rethinking)
-library(colorblindr)
-```
-
-```{r e4m8-1, cache = TRUE, eval = FALSE}
-library(splines)
-library(tidybayes.rethinking)
-library(colorblindr)
 
 data(cherry_blossoms)
 cb_dat <- cherry_blossoms %>%
@@ -345,69 +325,95 @@ cb_dat <- cherry_blossoms %>%
 # original m4.7 model
 knots_15 <- quantile(cb_dat$year, probs = seq(0, 1, length.out = 15))
 B_15 <- bs(cb_dat$year, knots = knots_15[-c(1, 15)],
-        degree = 3, intercept = TRUE)
+           degree = 3, intercept = TRUE)
 
-m4.7 <- quap(alist(D ~ dnorm(mu, sigma),
-                   mu <- a + B_15 %*% w,
-                   a ~ dnorm(100, 10),
-                   w ~ dnorm(0, 10),
-                   sigma ~ dexp(1)),
-             data = list(D = cb_dat$doy, B = B_15),
-             start = list(w = rep(0, ncol(B_15))))
+cb_dat_15 <- cb_dat %>% 
+  mutate(B = B_15)
 
+b4.7 <- brm(doy ~ 1 + B, data = cb_dat_15, family = gaussian,
+            prior = c(prior(normal(100, 10), class = Intercept),
+                      prior(normal(0, 10), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp4", "b4.7"))
+```
+
+Visualizing the model, we see that it looks very similar to the fitted model from the chapter.
+
+```{r e4m8-2, cache = TRUE}
+original_draws <- cb_dat_15 %>% 
+  add_epred_draws(b4.7) %>% 
+  summarize(mean_hdi(.epred, .width = 0.89),
+            .groups = "drop")
+
+ggplot(original_draws, aes(x = year, y = doy)) +
+  geom_vline(xintercept = knots_15, alpha = 0.5) +
+  geom_hline(yintercept = fixef(b4.7)[1, 1], linetype = "dashed") +
+  geom_point(alpha = 0.5) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax), fill = "#009FB7", alpha = 0.8) +
+  labs(x = "Year", y = "Day in Year")
+```
+
+Now we'll fit two additional models. The first uses 30 knots, and the second uses a tighter prior. 
+
+```{r e4m8-3}
 # double the number of knots
 knots_30 <- quantile(cb_dat$year, probs = seq(0, 1, length.out = 30))
 B_30 <- bs(cb_dat$year, knots = knots_30[-c(1, 30)],
-        degree = 3, intercept = TRUE)
+           degree = 3, intercept = TRUE)
 
-m4.7_30 <- quap(alist(D ~ dnorm(mu, sigma),
-                      mu <- a + B_30 %*% w,
-                      a ~ dnorm(100, 10),
-                      w ~ dnorm(0, 10),
-                      sigma ~ dexp(1)),
-                data = list(D = cb_dat$doy, B_30 = B_30),
-                start = list(w = rep(0, ncol(B_30))))
+cb_dat_30 <- cb_dat %>% 
+  mutate(B = B_30)
+
+b4.7_30 <- brm(doy ~ 1 + B, data = cb_dat_30, family = gaussian,
+               prior = c(prior(normal(100, 10), class = Intercept),
+                         prior(normal(0, 10), class = b),
+                         prior(exponential(1), class = sigma)),
+               iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp4", "b4.7_30"))
 
 # and modify the prior
-m4.7_30_tight_prior <- quap(alist(D ~ dnorm(mu, sigma),
-                                  mu <- a + B_30 %*% w,
-                                  a ~ dnorm(100, 10),
-                                  w ~ dnorm(0, 2),
-                                  sigma ~ dexp(1)),
-                            data = list(D = cb_dat$doy, B_30 = B_30),
-                            start = list(w = rep(0, ncol(B_30))))
+b4.7_30p <- brm(doy ~ 1 + B, data = cb_dat_30, family = gaussian,
+                prior = c(prior(normal(100, 10), class = Intercept),
+                          prior(normal(0, 2), class = b),
+                          prior(exponential(1), class = sigma)),
+                iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp4", "b4.7_30p"))
+```
 
+As expected, when we visualize these models we see that increasing the number of knots increases the "wiggly-ness" of the spline. We can also see that tightening the prior on the weights takes away some of the "wiggly-ness". 
+
+```{r e4m8-4, cache = TRUE}
 # create plot data
-spline_15 <- fitted_draws(m4.7, newdata = cb_dat) %>%
-  group_by(.row) %>%
-  slice_sample(n = 1000) %>%
-  group_by(year) %>%
-  median_hdci(.value, .width = 0.89) %>%
-  mutate(knots = "15 knots")
+spline_15 <- original_draws %>%
+  select(-B) %>% 
+  mutate(knots = "15 knots (original model)")
 
-spline_30 <- fitted_draws(m4.7_30, newdata = cb_dat) %>%
-  group_by(.row) %>%
-  slice_sample(n = 1000) %>%
-  group_by(year) %>%
-  median_hdci(.value, .width = 0.89) %>%
+spline_30 <- cb_dat_30 %>% 
+  add_epred_draws(b4.7_30) %>% 
+  summarize(mean_hdi(.epred, .width = 0.89),
+            .groups = "drop") %>% 
+  select(-B) %>% 
   mutate(knots = "30 knots")
 
-spline_30_tight_prior <- fitted_draws(m4.7_30_tight_prior, newdata = cb_dat) %>%
-  group_by(.row) %>%
-  slice_sample(n = 1000) %>%
-  group_by(year) %>%
-  median_hdci(.value, .width = 0.89) %>%
+spline_30p <- cb_dat_30 %>% 
+  add_epred_draws(b4.7_30p) %>% 
+  summarize(mean_hdi(.epred, .width = 0.89),
+            .groups = "drop") %>% 
+  select(-B) %>% 
   mutate(knots = "30 knots; Tight prior")
 
-all_splines <- bind_rows(spline_15, spline_30, spline_30_tight_prior)
+all_splines <- bind_rows(spline_15, spline_30, spline_30p)
 
-ggplot(cb_dat, aes(x = year)) +
-  geom_point(aes(y = doy), alpha = 0.2) +
-  geom_ribbon(data = all_splines, aes(ymin = .lower, ymax = .upper),
-              alpha = 0.7, fill = palette_OkabeIto[1]) +
+# make plot
+ggplot(all_splines, aes(x = year, y = doy)) +
+  geom_point(alpha = 0.5) +
+  geom_ribbon(aes(ymin = ymin, ymax = ymax), fill = "#009FB7", alpha = 0.8) +
   facet_wrap(~knots, ncol = 1) +
+  theme(strip.text = element_text(size = 12, hjust = 0)) +
   labs(x = "Year", y = "Day in Year")
 ```
+
 
 :::question
 > **4H1.** The weights listed below were recored in the !Kung census, but heights were not recorded for these individuals. Provide predicted heights and 89% intervals for each of these individuals. That is, fill in the table, below, using model-based predictions.
@@ -424,6 +430,8 @@ tibble(indiv = 1:5,
 ```
 :::
 
+The key function here is `r downlit::autolink("tidybayes::add_predicted_draws()")`, which samples from the posterior predictive distribution. We use model `b4.3` to make the predictions, which we estimated back in question **4M7**.
+
 ```{r e4h1}
 tibble(individual = 1:5,
        weight = c(46.95, 43.72, 64.78, 32.59, 54.63)) %>%
@@ -439,8 +447,10 @@ tibble(individual = 1:5,
       col.names = c("Individual", "weight", "expected height", "89% interval"))
 ```
 
+
 :::question
 > **4H2.** Select out all the rows in the `Howell1` data with ages below 18 years of age. If you do it right, you should end up with a new data frame with 192 rows in it.
+:::
 
 ```{r e4h2-1}
 young_how <- Howell1 %>%
@@ -449,6 +459,7 @@ young_how <- Howell1 %>%
 nrow(young_how)
 ```
 
+:::question
 > (a) Fit a linear regression to these data, using `quap`. Present and interpret the estimates. For every 10 units of increase in weight, how much taller does the model predict a child gets?
 :::
 
@@ -525,10 +536,10 @@ b4h3 <- brm(height ~ 1 + log_weight_c, data = full_how, family = gaussian,
 summary(b4h3)
 ```
 
-Conditional on the data and the model, the intercept estimate of `r sprintf("%0.1f", summary(b4h3)[["fixed"]]["Intercept", "Estimate"])` represents the predicted average height for an individual with an average log-weight (log-kg). The $\beta$ estimate of `r sprintf("%0.1f", summary(b4h3)[["fixed"]]["log_weight_c", "Estimate"])` represents the average expected increase in height associated with an one-unit increase in weight (log-kg).
+Conditional on the data and the model, the intercept estimate of ` sprintf("%0.1f", summary(b4h3)[["fixed"]]["Intercept", "Estimate"])` represents the predicted average height for an individual with an average log-weight (log-kg). The $\beta$ estimate of ` sprintf("%0.1f", summary(b4h3)[["fixed"]]["log_weight_c", "Estimate"])` represents the average expected increase in height associated with an one-unit increase in weight (log-kg).
 
 :::question
-> (b) Begin with this plot: `plot( height ~ weight , data = Howell1 )`. Then use samples fro the quadratic approximate posterior of the model in (a) to superimpose on the plot: (1) the predicted mean height as a function of weight, (2) the 97% interval for the mean, and (3) the 97% interval for predicted heights.
+> (b) Begin with this plot: `plot( height ~ weight , data = Howell1 )`. Then use samples from the quadratic approximate posterior of the model in (a) to superimpose on the plot: (1) the predicted mean height as a function of weight, (2) the 97% interval for the mean, and (3) the 97% interval for predicted heights.
 :::
 
 ```{r e4h3-2}
@@ -536,9 +547,9 @@ how_fits <- full_how %>%
   data_grid(weight = seq_range(weight, 100)) %>%
   mutate(log_weight = log(weight),
          log_weight_c = log_weight - mean(full_how$log_weight)) %>%
-  add_fitted_draws(b4h3) %>%
+  add_epred_draws(b4h3) %>%
   group_by(weight) %>%
-  mean_qi(.value, .width = 0.97)
+  mean_qi(.epred, .width = 0.97)
 
 how_preds <- full_how %>%
   data_grid(weight = seq_range(weight, 100)) %>%
@@ -553,10 +564,11 @@ ggplot(full_how, aes(x = weight)) +
   geom_ribbon(data = how_preds, aes(ymin = .lower, ymax = .upper),
               alpha = 0.2) +
   geom_lineribbon(data = how_fits,
-                  aes(y = .value, ymin = .lower, ymax = .upper),
+                  aes(y = .epred, ymin = .lower, ymax = .upper),
                   fill = "grey60", size = 1) +
   labs(x = "Weight", y = "Height")
 ```
+
 
 :::question
 > **4H4.** Plot the prior predictive distribution for the parabolic polynomial regression model in the chapter. You can modify the code that plots the linear regression prior predictive distribution. Can you modify the prior distributions of $\alpha$, $\beta_1$, and $\beta_2$ so that the prior predictions stay within the biologically reasonable outcome space? That is to say: Do not try to fit the data by hand. But do try to keep the curves consistent with what you know about height and weight, before seeing these exact data.
@@ -620,19 +632,20 @@ tibble(group = seq_len(n),
   ggplot(aes(x = weight, y = height, group = group)) +
   geom_line(alpha = 1 / 10) +
   geom_hline(yintercept = c(0, 272), linetype = 2:1, color = "red") +
-  annotate(geom = "text", x = 25, y = 0, hjust = 0, vjust = 1,
+  annotate(geom = "text", x = 25, y = -3, hjust = 0, vjust = 1,
            label = "Embryo") +
-  annotate(geom = "text", x = 25, y = 272, hjust = 0, vjust = 0,
+  annotate(geom = "text", x = 25, y = 275, hjust = 0, vjust = 0,
            label = "World's tallest person (272cm)") +
   coord_cartesian(ylim = c(-25, 300)) +
   labs(x = "Weight", y = "Height")
 ```
 
+
 :::question
 > **4H5.** Return to `data(cherry_blossoms)` and model the association between blossom date (`doy`) and March temperature (`temp`). Note that there are many missing values in both variables. You may consider a linear model, a polynomial, or a spline on temperature. How well does temperature trend predict the blossom trend?
 :::
 
-We'll try each type of model: linear, polynomial, and spline. For each, we'll fit the model, and then visualize the predictions with the observed data. Because we're no longer trying to replicate a spline model from the text, I'll use `brm()` to estimate this spline model. Overall the predictions from each model are remarkably similar. Therefore, I would go with a linear model, as that is the simplest of the models.
+We'll try each type of model: linear, polynomial, and spline. For each, we'll fit the model, and then visualize the predictions with the observed data.
 
 ```{r e4h5-1}
 data(cherry_blossoms)
@@ -673,38 +686,63 @@ cub_mod <- brm(doy ~ 1 + temp_s + temp_s2 + temp_s3, data = cb_temp,
                file = here("fits", "chp4", "b4h5-cubic"))
 
 # spline model
-spl_mod <- brm(doy ~ 1 + s(temp, bs = "bs"), data = cb_temp, family = gaussian,
+knots_30 <- quantile(cb_temp$temp, probs = seq(0, 1, length.out = 30))
+B_30 <- bs(cb_temp$temp, knots = knots_30[-c(1, 30)],
+           degree = 3, intercept = TRUE)
+
+cb_temp_30 <- cb_temp %>% 
+  mutate(B = B_30)
+
+spl_mod <- brm(doy ~ 1 + B, data = cb_temp_30, family = gaussian,
                prior = c(prior(normal(100, 10), class = Intercept),
                          prior(normal(0, 10), class = b),
-                         prior(normal(0, 10), class = sds),
                          prior(exponential(1), class = sigma)),
-               iter = 10000, warmup = 8000, chains = 4, cores = 4, seed = 1234,
-               control = list(adapt_delta = 0.99),
+               iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
                file = here("fits", "chp4", "b4h5-spline"))
 ```
 
-Now let's visualize the predictions from each model.
+Now let's visualize the predictions from each model. Overall the predictions from each model are remarkably similar. Therefore, I would go with a linear model, as that is the simplest of the models.
 
-```{r e4h5-2}
-grid <- cb_temp %>%
+```{r e4h5-2, cache = TRUE}
+grid <- cb_temp_30 %>%
   data_grid(temp = seq_range(temp, 100)) %>%
   mutate(temp_c = temp - mean(cb_temp$temp),
          temp_s = temp_c / sd(cb_temp$temp),
          temp_s2 = temp_s ^ 2,
          temp_s3 = temp_s ^ 3)
 
+knots_30 <- quantile(grid$temp, probs = seq(0, 1, length.out = 30))
+B_30 <- bs(grid$temp, knots = knots_30[-c(1, 30)],
+           degree = 3, intercept = TRUE)
+
+grid <- grid %>% 
+  mutate(B = B_30)
+
+
 fits <- bind_rows(
-  add_fitted_draws(grid, lin_mod) %>%
-    mean_qi(.width = c(0.67, 0.89, 0.97)) %>%
+  add_epred_draws(grid, lin_mod) %>%
+    summarize(mean_qi(.epred, .width = c(0.67, 0.89, 0.97)),
+              .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.epred = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Linear"),
-  add_fitted_draws(grid, qad_mod) %>%
-    mean_qi(.width = c(0.67, 0.89, 0.97)) %>%
+  add_epred_draws(grid, qad_mod) %>%
+    summarize(mean_qi(.epred, .width = c(0.67, 0.89, 0.97)),
+              .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.epred = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Quadratic"),
-  add_fitted_draws(grid, cub_mod) %>%
-    mean_qi(.width = c(0.67, 0.89, 0.97)) %>%
+  add_epred_draws(grid, cub_mod) %>%
+    summarize(mean_qi(.epred, .width = c(0.67, 0.89, 0.97)),
+              .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.epred = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Cubic"),
-  add_fitted_draws(grid, spl_mod) %>%
-    mean_qi(.width = c(0.67, 0.89, 0.97)) %>%
+  add_epred_draws(grid, spl_mod) %>%
+    summarize(mean_qi(.epred, .width = c(0.67, 0.89, 0.97)),
+              .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.epred = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Spline")
 ) %>%
   ungroup() %>%
@@ -713,16 +751,24 @@ fits <- bind_rows(
 
 preds <- bind_rows(
   add_predicted_draws(grid, lin_mod) %>%
-    mean_qi(.width = 0.89) %>%
+    summarize(mean_qi(.prediction, .width = 0.89), .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.prediction = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Linear"),
-  add_predicted_draws(grid, lin_mod) %>%
-    mean_qi(.width = 0.89) %>%
+  add_predicted_draws(grid, qad_mod) %>%
+    summarize(mean_qi(.prediction, .width = 0.89), .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.prediction = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Quadratic"),
-  add_predicted_draws(grid, lin_mod) %>%
-    mean_qi(.width = 0.89) %>%
+  add_predicted_draws(grid, cub_mod) %>%
+    summarize(mean_qi(.prediction, .width = 0.89), .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.prediction = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Cubic"),
-  add_predicted_draws(grid, lin_mod) %>%
-    mean_qi(.width = 0.89) %>%
+  add_predicted_draws(grid, spl_mod) %>%
+    summarize(mean_qi(.prediction, .width = 0.89), .groups = "drop") %>% 
+    select(-B) %>% 
+    rename(.prediction = y, .lower = ymin, .upper = ymax) %>% 
     mutate(model = "Spline")
 ) %>%
   ungroup() %>%
@@ -734,12 +780,14 @@ ggplot(cb_temp, aes(x = temp)) +
   geom_point(aes(y = doy), alpha = 0.2) +
   geom_ribbon(data = preds, aes(ymin = .lower, ymax = .upper),
               alpha = 0.2) +
-  geom_lineribbon(data = fits, aes(y = .value, ymin = .lower, ymax = .upper),
+  geom_lineribbon(data = fits, aes(y = .epred, ymin = .lower, ymax = .upper),
                   size = .6) +
   scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
   labs(x = "March Temperature", y = "Day in Year") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        strip.text = element_text(size = 12))
 ```
+
 
 :::question
 > **4H6.** Simulate the prior predictive distribution for the cherry blossom spline in the chapter. Adjust the prior on the weights and observe what happens. What do you think the prior on the weights is doing?
@@ -761,18 +809,17 @@ We'll also need to recreate the basis functions that that model uses:
 cb_dat <- cherry_blossoms %>%
   drop_na(doy)
 
-num_knots <- 15
-knot_list <- quantile(cb_dat$year, probs = seq(0, 1, length.out = num_knots))
+knot_list <- quantile(cb_dat$year, probs = seq(0, 1, length.out = 15))
 
 B <- bs(cb_dat$year,
-        knots = knot_list[-c(1, num_knots)],
+        knots = knot_list[-c(1, 15)],
         degree = 3, intercept = TRUE)
 ```
 
 Finally, we can generate data from the priors, and combine those parameters with the basis functions to get the prior predictive distributions.
 
 ```{r e4h6-2, cache = TRUE}
-n <- 1000
+n <- 50
 tibble(.draw = seq_len(n),
        alpha = rnorm(n, 100, 10),
        w = purrr::map(seq_len(n),
@@ -780,7 +827,7 @@ tibble(.draw = seq_len(n),
                         w <- rnorm(n = knots + 2, 0, 10)
                         return(w)
                       },
-                      knots = num_knots)) %>%
+                      knots = 15)) %>%
   mutate(mu = map2(alpha, w,
                    function(alpha, w, b) {
                      res <- b %*% w
@@ -793,23 +840,24 @@ tibble(.draw = seq_len(n),
                    b = B)) %>%
   unnest(cols = mu) %>%
   ggplot(aes(x = year, y = .value)) +
-  geom_line(aes(group = .draw), alpha = 0.1) +
-  geom_vline(xintercept = knot_list, color = palette_OkabeIto[2]) +
+  geom_vline(xintercept = knot_list, alpha = 0.5) +
+  geom_line(aes(group = .draw)) +
+  expand_limits(y = c(60, 140)) +
   labs(x = "Year", y = "Day in Year")
 ```
 
 Now let's tighten the prior on `w` to $\text{Normal}(0,2)$, as we used for exercise **4M8.** Now the lines are much less wiggly, which is consistent with what we found in the previous exercise, which used the observed data.
 
 ```{r e4h6-3, cache = TRUE}
-n <- 1000
+n <- 50
 tibble(.draw = seq_len(n),
        alpha = rnorm(n, 100, 10),
        w = purrr::map(seq_len(n),
                       function(x, knots) {
-                        w <- rnorm(n = knots + 2, 0, 2)
+                        w <- rnorm(n = knots + 2, 0, 1)
                         return(w)
                       },
-                      knots = num_knots)) %>%
+                      knots = 15)) %>%
   mutate(mu = map2(alpha, w,
                    function(alpha, w, b) {
                      res <- b %*% w
@@ -822,53 +870,64 @@ tibble(.draw = seq_len(n),
                    b = B)) %>%
   unnest(cols = mu) %>%
   ggplot(aes(x = year, y = .value)) +
-  geom_line(aes(group = .draw), alpha = 0.1) +
-  geom_vline(xintercept = knot_list, color = palette_OkabeIto[2]) +
+  geom_vline(xintercept = knot_list, alpha = 0.5) +
+  geom_line(aes(group = .draw)) +
+  expand_limits(y = c(60, 140)) +
   labs(x = "Year", y = "Day in Year")
 ```
+
 
 :::question
 > **4H8.** (sic; there is no **4H7** in the text, so I've kept this labeled **4H8** to be consistent with the book) The cherry blossom spline in the chapter used an intercept $\alpha$, but technically it doesn't require one. The first basis functions could substitute for the intercept. Try refitting the cherry blossom spline without the intercept. What else about the model do you need to change to make this work?
 :::
 
-We can remove the intercept by removing the `a` parameter from the model.
+We can remove the intercept by removing the `a` parameter from the model. In the {brms} formula, this means replace the `doy ~ 1 + B` from question **4M8** with `doy ~ 0 + B`. The `0` means "don't estimate the intercept."
 
-```{r e4h8-1, cache = TRUE, eval = FALSE}
-no_int <- quap(alist(D ~ dnorm(mu, sigma),
-                     mu <- B %*% w,
-                     w ~ dnorm(0, 10),
-                     sigma ~ dexp(1)),
-               data = list(D = cb_dat$doy, B = B),
-               start = list(w = rep(0, ncol(B))), control = list(maxit = 5000))
+```{r e4h8-1, cache = TRUE}
+cb_dat <- cherry_blossoms %>%
+  drop_na(doy)
 
-fitted_draws(no_int, cb_dat) %>%
-  mean_qi(.width = 0.89) %>%
+knots_15 <- quantile(cb_dat$year, probs = seq(0, 1, length.out = 15))
+B_15 <- bs(cb_dat$year, knots = knots_15[-c(1, 15)],
+           degree = 3, intercept = TRUE)
+
+cb_dat_15 <- cb_dat %>% 
+  mutate(B = B_15)
+
+b4h8 <- brm(doy ~ 0 + B, data = cb_dat_15, family = gaussian,
+            prior = c(prior(normal(0, 10), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp4", "b4h8"))
+
+epred_draws(b4h8, cb_dat_15) %>%
+  summarize(mean_qi(.epred, .width = 0.89), .groups = "drop") %>%
   ggplot(aes(x = year, y = doy)) +
   geom_point(alpha = 0.2) +
   geom_hline(yintercept = mean(cb_dat$doy), linetype = "dashed") +
-  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
-                  alpha = 0.5, fill = "grey20") +
+  geom_lineribbon(aes(y = y, ymin = ymin, ymax = ymax),
+                  alpha = 0.8, fill = "#009FB7") +
   labs(x = "Year", y = "Day in Year")
 ```
 
-This looks a lot like our original model, except the left hand side of the spline is pulled down. This is likely due to the prior on `w`. The prior is centered on 0, but that assumes an intercept is present (i.e., the curves of the spline average a deviation of 0 from the mean). However, with the intercept, the prior drags the line down to actual zero when the first basis function in non-zero. By changing the prior of `w` to the same prior originally used for the intercept, we get almost our original model back.
+This looks a lot like our original model, except the left hand side of the spline is pulled down. This is likely due to the prior on `w`. The prior is centered on 0, but that assumes an intercept is present (i.e., the curves of the spline average a deviation of 0 from the mean). However, without the intercept, the prior drags the line down to actual zero when the first basis function in non-zero. By changing the prior of `w` to the same prior originally used for the intercept, we get almost our original model back.
 
-```{r e4h8-2, cache = TRUE, eval = FALSE}
-no_int2 <- quap(alist(D ~ dnorm(mu, sigma),
-                      mu <- B %*% w,
-                      w ~ dnorm(100, 10),
-                      sigma ~ dexp(1)),
-                data = list(D = cb_dat$doy, B = B),
-                start = list(w = rep(0, ncol(B))), control = list(maxit = 5000))
+```{r e4h8-2, cache = TRUE}
+b4h8_2 <- brm(doy ~ 0 + B, data = cb_dat_15, family = gaussian,
+            prior = c(prior(normal(100, 10), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp4", "b4h8-2"))
 
-fitted_draws(no_int2, cb_dat) %>%
-  mean_qi(.width = 0.89) %>%
+epred_draws(b4h8_2, cb_dat_15) %>%
+  summarize(mean_qi(.epred, .width = 0.89), .groups = "drop") %>%
   ggplot(aes(x = year, y = doy)) +
   geom_point(alpha = 0.2) +
   geom_hline(yintercept = mean(cb_dat$doy), linetype = "dashed") +
-  geom_lineribbon(aes(y = .value, ymin = .lower, ymax = .upper),
-                  alpha = 0.5, fill = "grey20") +
+  geom_lineribbon(aes(y = y, ymin = ymin, ymax = ymax),
+                  alpha = 0.8, fill = "#009FB7") +
   labs(x = "Year", y = "Day in Year")
 ```
+
 
 ## Homework
