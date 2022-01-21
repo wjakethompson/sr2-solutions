@@ -1,6 +1,6 @@
 # Linear Models & Causal Inference
 
-The second week covers Chapter 4 (Geocentric Models).
+The second week covers [Chapter 4 (Geocentric Models)](https://bookdown.org/content/4857/geocentric-models.html).
 
 ## Lectures
 
@@ -430,7 +430,7 @@ tibble(indiv = 1:5,
 ```
 :::
 
-The key function here is `r downlit::autolink("tidybayes::add_predicted_draws()")`, which samples from the posterior predictive distribution. We use model `b4.3` to make the predictions, which we estimated back in question **4M7**.
+The key function here is `tidybayes::add_predicted_draws()`, which samples from the posterior predictive distribution. We use model `b4.3` to make the predictions, which we estimated back in question **4M7**.
 
 ```{r e4h1}
 tibble(individual = 1:5,
@@ -960,7 +960,7 @@ w2h1 <- brm(weight ~ 1 + height_c, data = how_dat, family = gaussian,
             file = here("fits", "hw2", "w2h1"))
 ```
 
-Using our model, we can again use `r downlit::autolink("tidybayes::add_predicted_draws()")` to get the model based predictions to fill in the table.
+Using our model, we can again use `tidybayes::add_predicted_draws()` to get the model based predictions to fill in the table.
 
 ```{r w2h1-2}
 tibble(individual = 1:3,
@@ -1010,22 +1010,21 @@ knitr::include_graphics(here("img", "w2h2-dag.png"))
 
 In this example, $H$ is a pipe. Including $H$ in the model would close the pipe, removing the indirect effect of age on weight. Therefore, we only include age as a predictor of weight in the model.
 
-To make the priors easier, we will standardize our variables. Using standardized variables, we can easily set priors that encompass the range of scientifically plausible regression lines. For the intercept, we'll use a $\text{Normal(0, 0.2)}$ prior, and for the slope we'll use a $\text{Normal(0, 0.5)}$ prior.
+For prior distributions, we can assume that there is a positive relationship between age and weight, so we'll use a lognormal prior for the slope. The intercept represents the weight at age 0 (i.e., birth weight). This is typically around 3-4 kg, so we'll use a normal prior with a mean of 4 and a standard deviation of 1. This results in a wide range of plausible regression lines:
 
 ```{r w2h2-1}
 set.seed(123)
 n <- 50
 tibble(group = seq_len(n),
-       alpha = rnorm(n, 0, 0.2),
-       beta = rnorm(n, 0, 0.5)) %>%
-  expand(nesting(group, alpha, beta), age_s = seq(-3, 3, by = 1)) %>%
-  mutate(weight = alpha + beta * age_s) %>%
-  ggplot(aes(x = age_s, y = weight, group = group)) +
+       alpha = rnorm(n, 4, 1),
+       beta = rlnorm(n, 0, 1)) %>%
+  expand(nesting(group, alpha, beta), age = 0:12) %>%
+  mutate(weight = alpha + beta * age) %>%
+  ggplot(aes(x = age, y = weight, group = group)) +
   geom_line() +
-  expand_limits(x = c(-3, 3), y = c(-3, 3)) +
-  scale_x_continuous(breaks = seq(-5, 5, 1)) +
-  scale_y_continuous(breaks = seq(-5, 5, 1)) +
-  labs(x = "Age (standardized)", y = "Weight (standardized)")
+  scale_x_continuous(breaks = seq(0, 12, 2)) +
+  coord_cartesian(xlim = c(0, 12), ylim = c(0, 30)) +
+  labs(x = "Age", y = "Weight")
 ```
 
 With these priors, we can now estimate our model.
@@ -1033,24 +1032,25 @@ With these priors, we can now estimate our model.
 ```{r w2h2-2}
 data(Howell1)
 kid_dat <- Howell1 %>%
-  filter(age < 13) %>%
-  mutate(age_s = standardize(age),
-         weight_s = standardize(weight))
+  filter(age < 13)
 
-w2h2 <- brm(weight_s ~ 1 + age_s, data = kid_dat, family = gaussian,
-            prior = c(prior(normal(0, 0.2), class = Intercept),
-                      prior(normal(0, 0.5), class = b),
+w2h2 <- brm(weight ~ 1 + age, data = kid_dat, family = gaussian,
+            prior = c(prior(normal(4, 1), class = Intercept),
+                      prior(normal(0, 1), class = b),
                       prior(exponential(1), class = sigma)),
             iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "hw2", "w2h2"))
 ```
 
-Visualizing our posterior, we see that there is a strong causal relationship between age and weight (`b_age_s`; assuming our DAG is correct). The posterior distribution for `b_age_s` is entirely well above 0.
+Visualizing our posterior, we see that the 89% compatibility interval for the causal effect of age on weight (`b_age`) is 1.25 to 1.42 kg/year.
 
 ```{r w2h2-3}
-gather_draws(w2h2, b_Intercept, b_age_s, sigma) %>% 
-  ggplot(aes(x = .value, y = .variable)) +
-  stat_halfeye() +
+draws <- gather_draws(w2h2, b_Intercept, b_age, sigma)
+
+mean_qi(draws, .width = 0.89)
+
+ggplot(draws, aes(x = .value, y = .variable)) +
+  stat_halfeye(.width = 0.89) +
   labs(x = "Parameter value", y = "Parameter")
 ```
 
@@ -1058,70 +1058,183 @@ gather_draws(w2h2, b_Intercept, b_age_s, sigma) %>%
 > **3.** Now suppose the causal association between age and weight might be different for boys and girls. Use a single linear regression, with a categorical variable for sex, to estimate the total causal effect of age on weight separately for boys and girls. How do girls and boys differ? Provide one or more posterior contrasts as a summary.
 :::
 
-We can create separate regression lines for each sex by sex (as a factor) to the model formula. Because we're now estimating an intercept for each sex, we use the `~ 0` code to indicate that we are not estimating a global intercept, and are treating the `sex` variable as an index variable.
+We can create separate regression lines for each sex by sex (as a factor) to the model formula. Because we're now estimating an intercept for each sex, we use the `~ 0` code to indicate that we are not estimating a global intercept, and are treating the `sex` variable as an index variable. We also have to use the non-linear syntax from {brms}. For details on this approach, see Solomon Kurz's section on [indicator variables](https://bookdown.org/content/4857/conditional-manatees.html#adding-an-indicator-variable-isnt-enough).
 
 ```{r w2h3-1}
 kid_dat <- kid_dat %>% 
   mutate(sex = male + 1,
          sex = factor(sex))
 
-w2h3 <- brm(weight_s ~ 0 + age_s + sex, data = kid_dat, family = gaussian,
-            prior = c(prior(normal(0, 0.5), class = b),
-                      prior(exponential(1), class = sigma)),
-            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
-            file = here("fits", "hw2", "w2h3"))
+w2h3 <- brm(
+  bf(weight ~ 0 + a + b * age,
+     a ~ 0 + sex,
+     b ~ 0 + sex,
+     nl = TRUE),
+  data = kid_dat, family = gaussian,
+  prior = c(prior(normal(4, 1), class = b, coef = sex1, nlpar = a),
+            prior(normal(4, 1), class = b, coef = sex2, nlpar = a),
+            prior(normal(0, 1), class = b, coef = sex1, nlpar = b),
+            prior(normal(0, 1), class = b, coef = sex2, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "hw2", "w2h3")
+)
 ```
 
-Looking at the posterior samples, we see that the slope, `b_age_s`, is very similar to the previous question. This makes since, because we are not estimating separate slopes for each sex. Rather, we estimated separate intercepts, resulting in two parallel lines. When comparing the two intercepts, we see that the posterior distribution for women (`b_sex1`) is lower on average than the distribution for mean (`b_sex2`).
+When comparing the two intercepts, we see that the posterior distribution for girls (`b_a_sex1`) is slightly lower on average than the distribution for boys (`b_a_sex2`); however, there is a lot of overlap in the those distributions. Similarly, the posterior distributions for the slopes also show that boys (`b_b_sex2`) have a slightly higher slope on average than girls (`b_b_sex1`).
 
 ```{r w2h3-2}
-gather_draws(w2h3, b_age_s, b_sex1, b_sex2, sigma) %>% 
-  ggplot(aes(x = .value, y = .variable)) +
-  stat_halfeye() +
+draws <- gather_draws(w2h3, b_a_sex1, b_a_sex2, b_b_sex1, b_b_sex2, sigma)
+
+mean_qi(draws, .width = 0.89)
+
+ggplot(draws, aes(x = .value, y = .variable)) +
+  stat_halfeye(.width = 0.89) +
   labs(x = "Parameter value", y = "Parameter")
 ```
 
-However, we are interested in the mean difference between men and women, not the difference in means. To estimate the contrast we need to calculate posterior simulations for each sex. This represents the distribution of expected weights for individuals of each sex, and is shown in the left panel below. Even though the intercepts are fairly distinct, the predictive distributions are quite similar. Finally, we can calculate the difference between the two predictive distributions. The posterior distribution of the difference is shown in the panel on the right, and shows that the difference is very small and centered right at zero. Thus, would conclude that there is no difference in the predicted weight for boys and girls when conditioning on height.
+Let visualize what these regression lines look like. Overall, the boys have a slightly higher intercept and do appear to increase at a slightly higher rate. But again, these distributions are pretty similar overall.
 
 <details><summary>Code to reproduce</summary>
 
-```{r w2h3-3, fig.show = "hide", fig.asp = 0.5}
-library(geomtextpath)
-library(patchwork)
+```{r w2h3-3, dev = "png", fig.show = "hide", cache = TRUE}
+new_age <- expand_grid(age = 0:12, sex = factor(c(1, 2)))
 
-post <- as_draws_df(w2h3) %>% 
-  mutate(female = rnorm(n(),
-                        mean = b_sex1 + rnorm(n(), 0, 1) * b_age_s,
-                        sd = sigma),
-         male = rnorm(n(),
-                      mean = b_sex2 + rnorm(n(), 0, 1) * b_age_s,
-                      sd = sigma),
-         diff = male - female)
+all_lines <- new_age %>% 
+  add_epred_draws(w2h3) %>% 
+  ungroup() %>% 
+  mutate(group = paste0(sex, "_", .draw))
 
-ggplot(post) +
-  geom_density(aes(x = diff)) -> p
-pg <- ggplot_build(p)
+plot_lines <- all_lines %>%
+  filter(.draw %in% sample(unique(.data$.draw), size = 1000)) %>% 
+  select(-.draw)
 
-ggplot(post) +
-  geom_textdensity(aes(x = female), label = "Women",
-                   hjust = 0.2, color = "#56B4E9", linewidth = 1, size = 4) +
-  geom_textdensity(aes(x = male), label = "Men",
-                   hjust = 0.3, color = "#E69F00", linewidth = 1, size = 4) +
-  labs(x = "Posterior predicted weight (kg, standardized)", y = "Density") -> p1
+animate_lines <- all_lines %>%
+  filter(.draw %in% sample(unique(.data$.draw), size = 50))
 
-ggplot(pg$data[[1]]) +
-  geom_area(data = ~filter(.x, x < 0), aes(x = x, y = y),
-            fill = "#56B4E9") +
-  geom_area(data = ~filter(.x, x >= 0), aes(x = x, y = y),
-            fill = "#E69F00") +
-  labs(x = "Posterior weight contrast (kg, standardized)", y = "Density") -> p2
-
-p1 + p2
+ggplot(animate_lines, aes(x = age, y = .epred, color = sex, group = group)) +
+  geom_line(data = plot_lines, alpha = 0.01, show.legend = FALSE) + 
+  geom_point(data = kid_dat, aes(x = age, y = weight, color = sex),
+             inherit.aes = FALSE) +
+  geom_line(alpha = 1, show.legend = FALSE, color = "black") +
+  scale_color_okabeito(labels = c("Girls", "Boys")) +
+  scale_x_continuous(breaks = seq(0, 12, 2)) +
+  labs(x = "Age", y = "Weight (kg)", color = NULL) +
+  guides(color = guide_legend(override.aes = list(size = 3))) +
+  theme(legend.position = "bottom") +
+  transition_states(.draw, 0, 1)
 ```
 
 </details>
 
-```{r w2h3-4, echo = FALSE, out.width = "90%"}
-knitr::include_graphics(knitr::fig_chunk("w2h3-3", "png"))
+```{r w2h3-4, echo = FALSE}
+knitr::include_graphics(knitr::fig_chunk("w2h3-3", "gif"))
 ```
 
+However, we are interested in the mean difference between boys and girls, not the difference in means. To estimate this contrast we need to calculate posterior simulations for each sex. This represents the distribution of expected weights for individuals of each sex. We can then take the difference of the two distributions. This is the posterior distribution of the difference, shown in the figure below. Overall, the difference is relatively small, but does appear to increase with age.
+
+```{r w2h3-5}
+contrast <- new_age %>% 
+  add_predicted_draws(w2h3) %>% 
+  ungroup() %>% 
+  select(age, sex, .draw, .prediction) %>% 
+  mutate(sex = fct_recode(sex,
+                          "Girls" = "1",
+                          "Boys" = "2")) %>% 
+  pivot_wider(names_from = sex, values_from = .prediction) %>% 
+  mutate(diff = Boys - Girls)
+
+ggplot(contrast, aes(x = age, y = diff)) +
+  stat_lineribbon(aes(fill_ramp = stat(.width)), .width = ppoints(50),
+                  fill = "#009FB7", show.legend = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_ramp_continuous(from = "transparent", range = c(1, 0)) +
+  scale_x_continuous(breaks = seq(0, 12, 2)) +
+  labs(x = "Age", y = "Weight difference (kg; Boys-Girls)")
+```
+
+:::question
+> **4 - OPTIONAL CHALLENGE.** The data in `data(Oxboys)` (`rethinking` package) are growth records for 26 boys measured over 9 periods. I want you to model their growth. Specifically, model the increments in growth from one period (`Occasion` in the data table) to the next. Each increment is simply the difference between height in one occasion and height in the previous occasion. Since none of these boys shrunk during the study, all of the growth increments are greater than zero. Estimate the posterior distribution of these increments. Constrain the distribution so it is always positive---it should not be possible for the model to think that boys can shrink from year to year. Finally compute the posterior distribution of the total growth over all 9 occasions.
+:::
+
+Let's start by looking at the data.
+
+```{r w2h4-1}
+data(Oxboys)
+head(Oxboys)
+```
+
+The first thing we need to do is convert the individual height measures into increments in height. This is straightforward using `dplyr::lag()`.
+
+```{r w2h4-2}
+increments <- Oxboys %>% 
+  group_by(Subject) %>% 
+  mutate(previous_height = lag(height),
+         change = height - previous_height) %>% 
+  filter(!is.na(change)) %>% 
+  ungroup()
+
+increments
+```
+
+Now we want to model the increments so they are always positive. This is not as easy as setting as prior, because the increments are the outcome, not a parameter in the model. We can do this in {brms} by using the `lognormal` family instead of the `gaussian` family we have used up to this point. This tell {brms} that our outcome is not normally distributed (i.e., `gaussian`), but rather lognormally distributed (i.e., constrained to be positive). Specifically, our model is defined as:
+
+\begin{align}
+  y_i &\sim \text{Lognormal}(\alpha,\sigma) \\
+  \alpha &\sim \text{Normal}(0,0.3) \\
+  \sigma &\sim \text{Exponential}(4)
+\end{align}
+
+Why these priors? A lot of trial and error and prior predictive simulations. The lognormal distribution is not super intuitive to me, so I played with different priors until I found some that looked reasonable to me. Here is the code for prior predictive simulation. The prior expects most growth increments to be around 1cm. The 89% interval is .41cm to 1.7cm per occasion. This seems reasonable, so we'll move forward.
+
+```{r w2h4-3}
+set.seed(123)
+
+n <- 1000
+tibble(alpha = rnorm(n, mean = 0, sd = 0.3),
+       sigma = rexp(n, rate = 4)) %>% 
+  mutate(sim_change = rlnorm(n, meanlog = alpha, sdlog = sigma)) %>% 
+  ggplot(aes(x = sim_change)) +
+  geom_density() +
+  labs(x = "Prior Expectation for Incremental Growth (cm)", y = "Density")
+```
+
+We estimate the model in {brms} by specifying `family = lognormal`.
+
+```{r w2h4-4}
+w2h4 <- brm(change ~ 1, data = increments, family = lognormal,
+            prior = c(prior(normal(0, 0.3), class = Intercept),
+                      prior(exponential(4), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw2", "w2h4"))
+```
+
+Using our model, we can examine the posterior distribution for incremental growth. On average, we would expect the boys to grow about 1.5cm per occasion.
+
+```{r w2h4-5}
+set.seed(234)
+
+as_draws_df(w2h4) %>% 
+  mutate(post_change = rlnorm(n(), meanlog = b_Intercept, sdlog = sigma)) %>% 
+  ggplot(aes(x = post_change)) +
+  geom_density() +
+  labs(x = "Posterior Distribution for Incremental Growth (cm)",
+       y = "Density")
+```
+
+For cumulative growth across all occasions, we need to simulation 8 incremental changes and sum them. Over all 9 occasions, we expect the boys to grow about 13cm, with an 89% highest density compatibility interval of 8.6cm to 18.5cm.
+
+```{r w2h4-6}
+set.seed(345)
+
+as_draws_df(w2h4) %>% 
+  mutate(all_change = map2_dbl(b_Intercept, sigma, ~sum(rlnorm(8, .x, .y)))) %>% 
+  ggplot(aes(x = all_change)) +
+  stat_halfeye(aes(fill = stat(between(x, 8.6, 18.5))), color = NA) +
+  scale_fill_manual(values = c("#009FB7", NA),
+                    labels = "89% Compatibility Interval",
+                    breaks = "TRUE", na.value = "#F0F0F0") +
+  labs(x = "Posterior Distribution for Cumulative Growth (cm)",
+       y = "Density", fill = NULL) +
+  theme(legend.position = "bottom")
+```

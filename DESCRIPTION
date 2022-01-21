@@ -25,6 +25,7 @@ Imports:
   geomtextpath,
   gganimate,
   ggdag,
+  ggdist,
   gghighlight,
   ggplot2,
   ggraph,
