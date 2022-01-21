@@ -931,3 +931,197 @@ epred_draws(b4h8_2, cb_dat_15) %>%
 
 
 ## Homework
+
+:::question
+> **1.** Construct a linear regression of weight as predicted by height, using the adults (age 18 or greater) from the Howell1 dataset. The heights listed below were recorded in the !Kung census, but weights were not recorded for these individuals. Provide predicted weights and 89% compatibility intervals for each of these individuals. That is, fill in the table below, using model-based predictions.
+
+```{r w2h1-inst, echo = FALSE, wrap = "table-question"}
+tibble(indiv = 1:3,
+       height = c(140, 160, 175),
+       exp_w = NA, int = NA) %>%
+  kbl(align = "c", booktabs = TRUE,
+      col.names = c("Individual", "height", "expected weight", "89% interval"))
+```
+:::
+
+This is very similar to question **4H1** above. But whereas in that problem we knew weight and wanted to predict height, here we know height and want to predict weight. We'll start be estimating our linear model.
+
+```{r w2h1-1}
+data(Howell1)
+how_dat <- Howell1 %>%
+  filter(age >= 18) %>%
+  mutate(height_c = height - mean(height))
+
+w2h1 <- brm(weight ~ 1 + height_c, data = how_dat, family = gaussian,
+            prior = c(prior(normal(178, 20), class = Intercept),
+                      prior(normal(0, 10), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw2", "w2h1"))
+```
+
+Using our model, we can again use `r downlit::autolink("tidybayes::add_predicted_draws()")` to get the model based predictions to fill in the table.
+
+```{r w2h1-2}
+tibble(individual = 1:3,
+       height = c(140, 160, 175)) %>%
+  mutate(height_c = height - mean(how_dat$height)) %>%
+  add_predicted_draws(w2h1) %>%
+  mean_qi(.prediction, .width = 0.89) %>%
+  mutate(range = glue("[{sprintf('%0.1f', .lower)}--",
+                      "{sprintf('%0.1f', .upper)}]"),
+         .prediction = sprintf("%0.1f", .prediction)) %>%
+  select(individual, height, exp = .prediction, range) %>%
+  kbl(align = "c", booktabs = TRUE,
+      col.names = c("Individual", "height", "expected weight", "89% interval"))
+```
+
+:::question
+> **2.** From the Howell1 dataset, consider only the people younger than 13 years old. Estimate the causal association between age and weight. Assume that age influences weight through two paths. First, age influences height, and height influences weight. Second, age directly influences weight through age-related changes in muscle growth and body proportions. All of this implies this causal model (DAG):
+
+```{r w2h2-dag, out.width = "40%", echo = FALSE, wrap = "table-question"}
+suppressPackageStartupMessages(library(ggdag))
+
+dag_coords <-
+  tibble(name = c("A", "H", "W"),
+         x    = c(1, 2, 3),
+         y    = c(1, 1.5, 1))
+
+dagify(W ~ A + H, H ~ A,
+       coords = dag_coords) %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA)) -> p
+
+ggsave("w2h2-dag.png", plot = p, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618),
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(here("img", "w2h2-dag.png"))
+```
+
+> Use a linear regression to estimate the **total** (not just direct) causal effect of each year of growth on weight. Be sure to carefully consider the priors. Try using prior predictive simulation to assess what they imply.
+:::
+
+In this example, $H$ is a pipe. Including $H$ in the model would close the pipe, removing the indirect effect of age on weight. Therefore, we only include age as a predictor of weight in the model.
+
+To make the priors easier, we will standardize our variables. Using standardized variables, we can easily set priors that encompass the range of scientifically plausible regression lines. For the intercept, we'll use a $\text{Normal(0, 0.2)}$ prior, and for the slope we'll use a $\text{Normal(0, 0.5)}$ prior.
+
+```{r w2h2-1}
+set.seed(123)
+n <- 50
+tibble(group = seq_len(n),
+       alpha = rnorm(n, 0, 0.2),
+       beta = rnorm(n, 0, 0.5)) %>%
+  expand(nesting(group, alpha, beta), age_s = seq(-3, 3, by = 1)) %>%
+  mutate(weight = alpha + beta * age_s) %>%
+  ggplot(aes(x = age_s, y = weight, group = group)) +
+  geom_line() +
+  expand_limits(x = c(-3, 3), y = c(-3, 3)) +
+  scale_x_continuous(breaks = seq(-5, 5, 1)) +
+  scale_y_continuous(breaks = seq(-5, 5, 1)) +
+  labs(x = "Age (standardized)", y = "Weight (standardized)")
+```
+
+With these priors, we can now estimate our model.
+
+```{r w2h2-2}
+data(Howell1)
+kid_dat <- Howell1 %>%
+  filter(age < 13) %>%
+  mutate(age_s = standardize(age),
+         weight_s = standardize(weight))
+
+w2h2 <- brm(weight_s ~ 1 + age_s, data = kid_dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw2", "w2h2"))
+```
+
+Visualizing our posterior, we see that there is a strong causal relationship between age and weight (`b_age_s`; assuming our DAG is correct). The posterior distribution for `b_age_s` is entirely well above 0.
+
+```{r w2h2-3}
+gather_draws(w2h2, b_Intercept, b_age_s, sigma) %>% 
+  ggplot(aes(x = .value, y = .variable)) +
+  stat_halfeye() +
+  labs(x = "Parameter value", y = "Parameter")
+```
+
+:::question
+> **3.** Now suppose the causal association between age and weight might be different for boys and girls. Use a single linear regression, with a categorical variable for sex, to estimate the total causal effect of age on weight separately for boys and girls. How do girls and boys differ? Provide one or more posterior contrasts as a summary.
+:::
+
+We can create separate regression lines for each sex by sex (as a factor) to the model formula. Because we're now estimating an intercept for each sex, we use the `~ 0` code to indicate that we are not estimating a global intercept, and are treating the `sex` variable as an index variable.
+
+```{r w2h3-1}
+kid_dat <- kid_dat %>% 
+  mutate(sex = male + 1,
+         sex = factor(sex))
+
+w2h3 <- brm(weight_s ~ 0 + age_s + sex, data = kid_dat, family = gaussian,
+            prior = c(prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw2", "w2h3"))
+```
+
+Looking at the posterior samples, we see that the slope, `b_age_s`, is very similar to the previous question. This makes since, because we are not estimating separate slopes for each sex. Rather, we estimated separate intercepts, resulting in two parallel lines. When comparing the two intercepts, we see that the posterior distribution for women (`b_sex1`) is lower on average than the distribution for mean (`b_sex2`).
+
+```{r w2h3-2}
+gather_draws(w2h3, b_age_s, b_sex1, b_sex2, sigma) %>% 
+  ggplot(aes(x = .value, y = .variable)) +
+  stat_halfeye() +
+  labs(x = "Parameter value", y = "Parameter")
+```
+
+However, we are interested in the mean difference between men and women, not the difference in means. To estimate the contrast we need to calculate posterior simulations for each sex. This represents the distribution of expected weights for individuals of each sex, and is shown in the left panel below. Even though the intercepts are fairly distinct, the predictive distributions are quite similar. Finally, we can calculate the difference between the two predictive distributions. The posterior distribution of the difference is shown in the panel on the right, and shows that the difference is very small and centered right at zero. Thus, would conclude that there is no difference in the predicted weight for boys and girls when conditioning on height.
+
+<details><summary>Code to reproduce</summary>
+
+```{r w2h3-3, fig.show = "hide", fig.asp = 0.5}
+library(geomtextpath)
+library(patchwork)
+
+post <- as_draws_df(w2h3) %>% 
+  mutate(female = rnorm(n(),
+                        mean = b_sex1 + rnorm(n(), 0, 1) * b_age_s,
+                        sd = sigma),
+         male = rnorm(n(),
+                      mean = b_sex2 + rnorm(n(), 0, 1) * b_age_s,
+                      sd = sigma),
+         diff = male - female)
+
+ggplot(post) +
+  geom_density(aes(x = diff)) -> p
+pg <- ggplot_build(p)
+
+ggplot(post) +
+  geom_textdensity(aes(x = female), label = "Women",
+                   hjust = 0.2, color = "#56B4E9", linewidth = 1, size = 4) +
+  geom_textdensity(aes(x = male), label = "Men",
+                   hjust = 0.3, color = "#E69F00", linewidth = 1, size = 4) +
+  labs(x = "Posterior predicted weight (kg, standardized)", y = "Density") -> p1
+
+ggplot(pg$data[[1]]) +
+  geom_area(data = ~filter(.x, x < 0), aes(x = x, y = y),
+            fill = "#56B4E9") +
+  geom_area(data = ~filter(.x, x >= 0), aes(x = x, y = y),
+            fill = "#E69F00") +
+  labs(x = "Posterior weight contrast (kg, standardized)", y = "Density") -> p2
+
+p1 + p2
+```
+
+</details>
+
+```{r w2h3-4, echo = FALSE, out.width = "90%"}
+knitr::include_graphics(knitr::fig_chunk("w2h3-3", "png"))
+```
+
