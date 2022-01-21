@@ -15,6 +15,7 @@ suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(geomtextpath))
+suppressPackageStartupMessages(library(dagitty))
 
 ggplot2::theme_set(ggplot2::theme_minimal(base_family = "Source Sans Pro"))
 
