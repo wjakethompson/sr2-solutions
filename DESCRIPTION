@@ -37,6 +37,7 @@ Imports:
   knitr,
   loo,
   modelr,
+  patchwork,
   purrr,
   ragg,
   ratlas,
