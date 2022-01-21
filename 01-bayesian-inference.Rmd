@@ -1,6 +1,6 @@
 # Bayesian Inference
 
-The first week covers Chapter 1 (The Golem of Prague), Chapter 2 (Small Worlds and Large Worlds), and Chapter 3 (Sampling the Imaginary).
+The first week covers [Chapter 1 (The Golem of Prague)](https://bookdown.org/content/4857/the-golem-of-prague.html), [Chapter 2 (Small Worlds and Large Worlds)](https://bookdown.org/content/4857/small-worlds-and-large-worlds.html), and [Chapter 3 (Sampling the Imaginary)](https://bookdown.org/content/4857/sampling-the-imaginary.html).
 
 ## Lectures
 
