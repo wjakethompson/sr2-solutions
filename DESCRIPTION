@@ -25,6 +25,7 @@ Imports:
   geomtextpath,
   gganimate,
   ggdag,
+  ggdist,
   gghighlight,
   ggplot2,
   ggraph,
@@ -37,6 +38,7 @@ Imports:
   knitr,
   loo,
   modelr,
+  patchwork,
   purrr,
   ragg,
   ratlas,
@@ -48,7 +50,8 @@ Imports:
   tidybayes,
   tidybayes.rethinking,
   tidygraph,
-  tidyverse
+  tidyverse,
+  transformr
 Remotes:
   stan-dev/cmdstanr,
   clauswilke/colorblindr,

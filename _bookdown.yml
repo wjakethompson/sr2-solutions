@@ -11,6 +11,7 @@ rmd_files: [
   "index.Rmd",
   
   "01-bayesian-inference.Rmd",
+  "02-linear-models-causal-inf.Rmd",
   
   "11-References.Rmd"
 ]
