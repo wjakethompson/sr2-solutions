@@ -22,7 +22,8 @@
 <link href="libs/_Fira%20Code-0.4.0/font.css" rel="stylesheet">
 <link href="libs/_Oxygen-0.4.0/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-spy="scroll" data-target="#toc">
 
@@ -46,6 +47,7 @@
         <ul class="book-toc list-unstyled">
 <li><a class="" href="index.html">Welcome</a></li>
 <li><a class="" href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></li>
+<li><a class="" href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></li>
 <li><a class="active" href="references.html">References</a></li>
 </ul>
 
@@ -67,8 +69,20 @@ Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with 
 <div id="ref-R-brms" class="csl-entry">
 Bürkner, P.-C. (2021). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using <span>Stan</span></em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
 </div>
+<div id="ref-avg_height" class="csl-entry">
+Fryar, C. D., Gu, Q., Ogden, C. L., &amp; Flegal, K. M. (2016). <em>Anthropometric reference data for children and adults: <span>United States</span>, 2011–2014</em> (Vital and Health Statistics Series 3, Issue 39). National Center for Health Statistics. <a href="https://www.cdc.gov/nchs/data/series/sr_03/sr03_039.pdf">https://www.cdc.gov/nchs/data/series/sr_03/sr03_039.pdf</a>
+</div>
+<div id="ref-hops1" class="csl-entry">
+Hullman, J., Resnick, P., &amp; Adar, E. (2015). Hypothetical outcome plots outperform error bars and violin plots for inferences about reliability of variable ordering. <em><span>PLoS ONE</span></em>, <em>10</em>, e0142444. <a href="https://doi.org/10.1371/journal.pone.0142444">https://doi.org/10.1371/journal.pone.0142444</a>
+</div>
+<div id="ref-hops2" class="csl-entry">
+Kale, A., Nguyen, F., Kay, M., &amp; Hullman, J. (2019). Hypothetical outcome plots help untrained observers judge trends in ambiguous data. <em>IEEE Transactions on Visualization &amp; Computer Graphics</em>, <em>25</em>, 892–902. <a href="https://doi.org/10.1109/TVCG.2018.2864909">https://doi.org/10.1109/TVCG.2018.2864909</a>
+</div>
 <div id="ref-sr2" class="csl-entry">
 McElreath, R. (2020). <em>Statistical rethinking: A <span>Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (2nd ed.). Chapman &amp; Hall/CRC.
+</div>
+<div id="ref-R-gganimate" class="csl-entry">
+Pedersen, T. L., &amp; Robinson, D. (2020). <em><span class="nocase">gganimate</span>: A grammar of animated graphics</em>. <a href="https://CRAN.R-project.org/package=gganimate">https://CRAN.R-project.org/package=gganimate</a>
 </div>
 <div id="ref-R-tidyverse" class="csl-entry">
 Wickham, H. (2021). <em><span class="nocase">tidyverse</span>: Easily install and load the tidyverse</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
@@ -80,7 +94,7 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
 
 </div>
   <div class="chapter-nav">
-<div class="prev"><a href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></div>
+<div class="prev"><a href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></div>
 <div class="empty"></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
@@ -101,7 +115,7 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-14.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-21.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
@@ -109,6 +123,34 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
   </div>
 
 </div></div>
-</footer>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script><script type="text/x-mathjax-config">const popovers = document.querySelectorAll('a.footnote-ref[data-toggle="popover"]');
+for (let popover of popovers) {
+  const div = document.createElement('div');
+  div.setAttribute('style', 'position: absolute; top: 0, left:0; width:0, height:0, overflow: hidden; visibility: hidden;');
+  div.innerHTML = popover.getAttribute('data-content');
+
+  var has_math = div.querySelector("span.math");
+  if (has_math) {
+    document.body.appendChild(div);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, div]);
+    MathJax.Hub.Queue(function() {
+      popover.setAttribute('data-content', div.innerHTML);
+      document.body.removeChild(div);
+    })
+  }
+}
+</script>
 </body>
 </html>

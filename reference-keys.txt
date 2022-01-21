@@ -5,3 +5,8 @@ chapter-1
 chapter-2
 chapter-3
 homework
+linear-models-causal-inference
+lectures-1
+exercises-1
+chapter-4
+homework-1

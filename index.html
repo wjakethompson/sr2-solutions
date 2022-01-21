@@ -22,7 +22,8 @@
 <link href="libs/_Fira%20Code-0.4.0/font.css" rel="stylesheet">
 <link href="libs/_Oxygen-0.4.0/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
-<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
+<script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
 </head>
 <body data-spy="scroll" data-target="#toc">
 
@@ -46,6 +47,7 @@
         <ul class="book-toc list-unstyled">
 <li><a class="active" href="index.html">Welcome</a></li>
 <li><a class="" href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></li>
+<li><a class="" href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></li>
 <li><a class="" href="references.html">References</a></li>
 </ul>
 
@@ -93,7 +95,7 @@
 <span class="co">#&gt;  collate  C.UTF-8</span>
 <span class="co">#&gt;  ctype    C.UTF-8</span>
 <span class="co">#&gt;  tz       UTC</span>
-<span class="co">#&gt;  date     2022-01-14</span>
+<span class="co">#&gt;  date     2022-01-21</span>
 <span class="co">#&gt;  pandoc   2.14.2 @ /usr/bin/ (via rmarkdown)</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; ─ Packages ───────────────────────────────────────────────────────────────────</span>
@@ -121,9 +123,11 @@
 <span class="co">#&gt;  callr                  3.7.0      2021-04-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  cellranger             1.1.0      2016-07-27 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  checkmate              2.0.0      2020-02-06 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cli                    3.1.0      2021-10-27 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  class                  7.3-19     2021-05-03 [2] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  classInt               0.4-3      2020-04-07 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  cli                    3.1.1      2022-01-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  clipr                  0.7.1      2020-10-08 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  cmdstanr             * 0.4.0.9001 2022-01-14 [1] Github (stan-dev/cmdstanr@a2a97d9)</span>
+<span class="co">#&gt;  cmdstanr             * 0.4.0.9001 2022-01-21 [1] Github (stan-dev/cmdstanr@a2a97d9)</span>
 <span class="co">#&gt;  coda                   0.19-4     2020-09-30 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  codetools              0.2-18     2020-11-04 [2] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  colorblindr            0.1.0      2022-01-06 [1] Github (clauswilke/colorblindr@e6730be)</span>
@@ -145,14 +149,15 @@
 <span class="co">#&gt;  downlit                0.4.0      2021-10-29 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  dplyr                * 1.0.7      2021-06-18 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  DT                     0.20       2021-11-15 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  dtplyr                 1.2.0      2021-12-05 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  dtplyr                 1.2.1      2022-01-19 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  dygraphs               1.1.1.6    2018-07-11 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  e1071                  1.7-9      2021-09-16 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  ellipsis               0.3.2      2021-04-29 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  emo                    0.0.0.9000 2022-01-06 [1] Github (hadley/emo@3f03b11)</span>
 <span class="co">#&gt;  evaluate               0.14       2019-05-28 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  extrafont              0.17       2014-12-08 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  extrafontdb            1.0        2012-06-11 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  fansi                  1.0.0      2022-01-10 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  fansi                  1.0.2      2022-01-14 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  farver                 2.1.0      2021-02-28 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  fastmap                1.1.0      2021-01-25 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  fontawesome            0.2.2      2021-07-02 [1] CRAN (R 4.1.2)</span>
@@ -162,10 +167,10 @@
 <span class="co">#&gt;  gargle                 1.2.0      2021-07-02 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  gdtools                0.2.3      2021-01-06 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  generics               0.1.1      2021-10-25 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  geomtextpath           0.1.0      2022-01-14 [1] Github (AllanCameron/geomtextpath@6299079)</span>
+<span class="co">#&gt;  geomtextpath         * 0.1.0      2022-01-21 [1] Github (AllanCameron/geomtextpath@efc9b55)</span>
 <span class="co">#&gt;  gganimate              1.0.7      2020-10-15 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  ggdag                  0.2.4      2021-10-10 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  ggdist                 3.0.1      2021-11-30 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  ggdist               * 3.0.1      2021-11-30 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  ggforce                0.3.3      2021-03-05 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  gghighlight            0.3.2      2021-06-05 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  ggplot2              * 3.3.5      2021-06-25 [1] CRAN (R 4.1.2)</span>
@@ -196,8 +201,9 @@
 <span class="co">#&gt;  inline                 0.3.19     2021-05-31 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  isoband                0.2.5      2021-07-13 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  jquerylib              0.1.4      2021-04-26 [1] CRAN (R 4.1.2)</span>
-<span class="co">#&gt;  jsonlite               1.7.2      2020-12-09 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  jsonlite               1.7.3      2022-01-17 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  kableExtra             1.3.4      2021-02-20 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  KernSmooth             2.23-20    2021-05-03 [2] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  knitr                  1.37       2021-12-16 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  labeling               0.4.2      2020-10-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  later                  1.3.0      2021-08-18 [1] CRAN (R 4.1.2)</span>
@@ -206,6 +212,7 @@
 <span class="co">#&gt;  lifecycle              1.0.1      2021-09-24 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  listenv                0.8.0      2019-12-05 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  loo                  * 2.4.1      2020-12-09 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  lpSolve                5.6.15     2020-01-24 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  lubridate              1.8.0      2021-10-07 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  magrittr               2.0.1      2020-11-17 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  markdown               1.1        2019-08-07 [1] CRAN (R 4.1.2)</span>
@@ -227,6 +234,7 @@
 <span class="co">#&gt;  openssl                1.4.6      2021-12-19 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  packrat                0.7.0      2021-08-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  parallelly             1.30.0     2021-12-17 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  patchwork              1.1.1      2020-12-17 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  pillar                 1.6.4      2021-10-18 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  pkgbuild               1.3.1      2021-12-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  pkgconfig              2.0.3      2019-09-22 [1] CRAN (R 4.1.2)</span>
@@ -237,6 +245,7 @@
 <span class="co">#&gt;  processx               3.5.2      2021-04-30 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  progress               1.2.2      2019-05-16 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  promises               1.2.0.1    2021-02-11 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  proxy                  0.4-26     2021-06-07 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  ps                     1.6.0      2021-02-28 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  purrr                * 0.3.4      2020-04-17 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  R6                     2.5.1      2021-08-19 [1] CRAN (R 4.1.2)</span>
@@ -265,11 +274,13 @@
 <span class="co">#&gt;  Rttf2pt1               1.3.9      2021-07-22 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  rvest                  1.0.2      2021-10-16 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  rvg                    0.2.5      2020-06-30 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  s2                     1.0.7      2021-09-28 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  sass                   0.4.0      2021-05-12 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  scales                 1.1.1      2020-05-11 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  selectr                0.4-2      2019-11-20 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  servr                  0.24       2021-11-16 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  sessioninfo            1.2.2      2021-12-06 [1] any (@1.2.2)</span>
+<span class="co">#&gt;  sf                     1.0-5      2021-12-17 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  shape                  1.4.6      2021-05-19 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  shiny                  1.7.1      2021-10-02 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  shinyjs                2.1.0      2021-12-23 [1] CRAN (R 4.1.2)</span>
@@ -294,8 +305,10 @@
 <span class="co">#&gt;  tidyselect             1.1.1      2021-04-30 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  tidyverse            * 1.3.1      2021-04-15 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  tinytex                0.36       2021-12-19 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  transformr             0.1.3      2020-07-05 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  tweenr                 1.0.2      2021-03-23 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  tzdb                   0.2.0      2021-10-27 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  units                  0.7-2      2021-06-08 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  utf8                   1.2.2      2021-07-24 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  uuid                   1.0-3      2021-11-01 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  V8                     4.0.0      2021-12-23 [1] CRAN (R 4.1.2)</span>
@@ -305,6 +318,7 @@
 <span class="co">#&gt;  vroom                  1.5.7      2021-11-30 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  webshot                0.5.2      2019-11-22 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  withr                  2.4.3      2021-11-30 [1] CRAN (R 4.1.2)</span>
+<span class="co">#&gt;  wk                     0.6.0      2022-01-03 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  xaringan               0.22       2021-06-23 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  xfun                   0.29       2021-12-14 [1] CRAN (R 4.1.2)</span>
 <span class="co">#&gt;  xml2                   1.3.3      2021-11-30 [1] CRAN (R 4.1.2)</span>
@@ -348,7 +362,7 @@
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-14.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-21.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
@@ -356,6 +370,34 @@
   </div>
 
 </div></div>
-</footer>
+</footer><!-- dynamically load mathjax for compatibility with self-contained --><script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script><script type="text/x-mathjax-config">const popovers = document.querySelectorAll('a.footnote-ref[data-toggle="popover"]');
+for (let popover of popovers) {
+  const div = document.createElement('div');
+  div.setAttribute('style', 'position: absolute; top: 0, left:0; width:0, height:0, overflow: hidden; visibility: hidden;');
+  div.innerHTML = popover.getAttribute('data-content');
+
+  var has_math = div.querySelector("span.math");
+  if (has_math) {
+    document.body.appendChild(div);
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, div]);
+    MathJax.Hub.Queue(function() {
+      popover.setAttribute('data-content', div.innerHTML);
+      document.body.removeChild(div);
+    })
+  }
+}
+</script>
 </body>
 </html>
