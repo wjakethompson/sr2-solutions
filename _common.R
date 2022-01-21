@@ -13,11 +13,13 @@ suppressPackageStartupMessages(library(hrbrthemes))
 suppressPackageStartupMessages(library(ratlas))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
+suppressPackageStartupMessages(library(geomtextpath))
 
 ggplot2::theme_set(ggplot2::theme_minimal(base_family = "Source Sans Pro"))
 
 ggplot2::update_geom_defaults("text", list(family = "Source Sans Pro"))
 ggplot2::update_geom_defaults("label", list(family = "Source Sans Pro"))
+ggplot2::update_geom_defaults("textdensity", list(family = "Source Sans Pro"))
 
 knitr::opts_chunk$set(
   comment = "#>",
