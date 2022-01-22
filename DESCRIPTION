@@ -29,6 +29,7 @@ Imports:
   gghighlight,
   ggplot2,
   ggraph,
+  ggtext,
   gifski,
   glue,
   grid,

@@ -47,18 +47,15 @@ We will denote animal diversity as $A$, latitude as $L$, and plant diversity as 
 > **5E3.** Write down a multiple regression to evaluate the claim: *Neither amount of funding nor size of laboratory is by itself a good predictor of time to PhD degree; but together these variables are both positively associated with time to degree*. Write down the model definition and indicate which side of zero each slope parameter should be on.
 :::
 
-We will denote time to PhD degree as $T$, amount of funding as $F$, and size of laboratory as $L$. The linear model can then be defined in three pieces. The first two pieces are bivariate regressions to assess the first part of the claim that neither predictor is itself a good predictor of time to PhD degree. The third piece evaluate the second half of the claim that together, both variables have a positive relationship with time to PhD degree. We would expect $\beta_{F(F)}$ and $\beta_{L(L)}$ to have positive slopes that are close to zero (i.e., in the bivariate regressions, we should see little effect of funding or laboratory size). We would expect to see larger positive slopes for both $\beta_F$ and $\beta_L$, as we expect to see funding and laboratory size to have a sizable impact when both are included in the model.
+We will denote time to PhD degree as $T$, amount of funding as $F$, and size of laboratory as $L$. The model is then defined as:
 
 \begin{align}
-  T_i &\sim \text{Normal}(\mu_{i(F)}, \sigma_F) \\
-  \mu_{i(F)} &= \alpha_F + \beta_{F(F)} F_i \\ \\
-  
-  T_i &\sim \text{Normal}(\mu_{i(L)}, \sigma_L) \\
-  \mu_{i(L)} &= \alpha_L + \beta_{L(L)} L_i \\ \\
-  
   T_i &\sim \text{Normal}(\mu_i, \sigma) \\
   \mu_i &= \alpha + \beta_F F_i + \beta_L L_i
 \end{align}
+
+Both $\beta_F$ and $\beta_L$ should be positive. In order for both funding and lab size to show a positive relationship together but no relationship separately, these two variables would need to be negatively correlated (i.e., large labs have less funding per student and small labs have more funding per student). Both could be positively associated with our outcome, but be negatively associated in the real world. Thus, analyzing the variables in isolation may mask the positive relationship.
+
 
 :::question
 > **5E4.** Suppose you have a single categorical predictor with 4 levels (unique values), labeled A, B, C and D. Let $A_i$ be an indicator variable that is 1 where case $i$ is in category $A$. Also suppose $B_i$, $C_i$, and $D_i$ for the other categories. Now which of the following linear models are inferentially equivalent ways to include the categorical variable in a regression? Model are inferentially equivalent when it's possible to compute one posterior distribution from the posterior distribution of another model.
@@ -81,9 +78,8 @@ Number 2 is not a valid model representation, as the model should only contain $
 
 In this (simulated) example, we'll predict ice cream sales from the temperature and the number of shark attacks. First, we'll fit two bivariate regressions, `mod_t` and `mod_s`, which include only temperature and shark attacks as predictors, respectively. Then we'll estimate multivariate regression, `mod_all`, which includes both predictors.
 
-```{r e5m1-1, eval = FALSE}
-# Generate data ----------------------------------------------------------------
-set.seed(2020)
+```{r e5m1-1}
+set.seed(2022)
 n <- 100
 temp <- rnorm(n)
 shark <- rnorm(n, temp)
@@ -92,7 +88,6 @@ ice_cream <- rnorm(n, temp)
 spur_exp <- tibble(ice_cream, temp, shark) %>%
   mutate(across(everything(), standardize))
 
-# Fit models -------------------------------------------------------------------
 mod_t <- brm(ice_cream ~ 1 + temp, data = spur_exp, family = gaussian,
              prior = c(prior(normal(0, 0.2), class = Intercept),
                        prior(normal(0, 0.5), class = b),
@@ -117,7 +112,7 @@ mod_all <- brm(ice_cream ~ 1 + temp + shark, data = spur_exp, family = gaussian,
 
 The plot below shows the posterior distributions of the $\beta$ coefficients for temperature and shark attacks. As expected, both have a positive relationship with ice cream sales in the bivariate models. However, when both predictors are included in `mod_all`, the posterior distribution for `b_shark` moves down to zero, whereas the distribution of `b_temp` remains basically the same. Thus, the relationship between ice cream sales and shark attacks is a spurious correlation, as both are informed by the temperature.
 
-```{r e5m1-2, eval = FALSE}
+```{r e5m1-2}
 bind_rows(
   spread_draws(mod_t, b_temp) %>%
     mutate(model = "mod_t"),
@@ -143,8 +138,7 @@ bind_rows(
 
 For this (also simulated) example, we'll predict an academic test score from the amount of instruction a student received and the number of days they missed class. First, we'll fit two bivariate regressions, `mod_i` and `mod_d`, which include only instruction and days away as predictors, respectively. Then we'll estimate multivariate regression, `mod_test`, which includes both predictors.
 
-```{r e5m2-1, eval = FALSE}
-# Generate data ----------------------------------------------------------------
+```{r e5m2-1}
 set.seed(2020)
 n <- 100
 u <- rnorm(n)
@@ -155,7 +149,6 @@ test_score <- rnorm(n, instruction - days_away)
 mask_exp <- tibble(test_score, instruction, days_away) %>%
   mutate(across(everything(), standardize))
 
-# Fit models -------------------------------------------------------------------
 mod_i <- brm(test_score ~ 1 + instruction, data = mask_exp, family = gaussian,
              prior = c(prior(normal(0, 0.2), class = Intercept),
                        prior(normal(0, 0.5), class = b),
@@ -181,7 +174,7 @@ mod_test <- brm(test_score ~ 1 + instruction + days_away, data = mask_exp,
 
 The figure below shows the posterior distributions of the $\beta$ parameters from each of the models. We can see that in full model, `mod_test`, `b_instruction` gets more positive and `b_days_away` gets more negative.
 
-```{r e5m2-2, eval = FALSE}
+```{r e5m2-2}
 bind_rows(
   spread_draws(mod_i, b_instruction) %>%
     mutate(model = "mod_i"),
@@ -212,10 +205,10 @@ A high divorce rate means that there are more people available in the population
 > **5M4.** In the divorce data, States with high numbers of members of the Church of Jesus Christ of Latter-day Saints (LDS) have much lower divorce rates than the regression models expected. Find a list of LDS population by State and use those numbers as a predictor variable, predicting divorce rate using marriage rate, median age at marriage, and percent LDS population (possibly standardized). You may want to consider transformations of the raw percent LDS variable.
 :::
 
-We can pull the LDS membership from the official LDS website, and state populations from the United States census website. Conveniently, this is all pulled together on [Wikipedia](https://en.wikipedia.org/wiki/The_Church_of_Jesus_Christ_of_Latter-day_Saints_membership_statistics_(United_States)) (copied on September 1, 2020). The data is saved in `data/lds-data.csv`. We can then combine this with our existing divorce data from `data("WaffleDivorce")`. For this analysis, I'll use LDS membership per capita. Specifically, the number of LDS members per 100,000 in the state's population. This will then be standardized, along with the other predictor variables, as was done in the chapter examples.
+We can pull the LDS membership from the official [LDS website](https://newsroom.churchofjesuschrist.org/facts-and-statistics/state/alabama), and state populations from the United States census website. Conveniently, this is all pulled together on [World Population Review](https://web.archive.org/web/20220104045513/https://worldpopulationreview.com/state-rankings/mormon-population-by-state) (copied on January 4, 2022). The data is saved in [`data/lds-data-2021.csv`](https://github.com/wjakethompson/sr2-solutions/blob/main/data/lds-data-2021.csv). We can then combine this with our existing divorce data from `data("WaffleDivorce")`. For this analysis, I'll use LDS membership per capita. Specifically, the number of LDS members per 100,000 in the state's population. This will then be standardized, along with the other predictor variables, as was done in the chapter examples.
 
-```{r e5m4-1, eval = FALSE}
-lds <- read_csv(here("data", "lds-data.csv"),
+```{r e5m4-1}
+lds <- read_csv(here("data", "lds-data-2021.csv"),
                 col_types = cols(.default = col_integer(),
                                  state = col_character())) %>%
   mutate(lds_prop = members / population,
@@ -228,14 +221,15 @@ lds_divorce <- WaffleDivorce %>%
   left_join(select(lds, state, lds_per_capita),
             by = c("Location" = "state")) %>%
   mutate(lds_per_capita = log(lds_per_capita)) %>%
-  mutate(across(where(is.numeric), standardize))
+  mutate(across(where(is.numeric), standardize)) %>% 
+  filter(!is.na(lds_per_capita))
 
 lds_divorce
 ```
 
 We're now ready to estimate our model.
 
-```{r e5m4-2, eval = FALSE}
+```{r e5m4-2}
 lds_mod <- brm(Divorce ~ 1 + Marriage + MedianAgeMarriage + lds_per_capita,
                data = lds_divorce, family = gaussian,
                prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -249,7 +243,7 @@ lds_mod <- brm(Divorce ~ 1 + Marriage + MedianAgeMarriage + lds_per_capita,
 
 Finally, we can visualize our estimates. The intercept and coefficients for `Marriage` and `MedianAgeMarriage` are nearly identical to those from model `m5.3` in the text. Thus, it appears that our new predictor, LDS per capita, is contributing unique information. As expected, a higher population of LDS members in a state is associated with a lower divorce rate.
 
-```{r e5m4-3, eval = FALSE}
+```{r e5m4-3}
 spread_draws(lds_mod, `b_.*`, regex = TRUE) %>%
   pivot_longer(starts_with("b_"), names_to = "parameter",
                values_to = "value") %>%
@@ -262,12 +256,18 @@ spread_draws(lds_mod, `b_.*`, regex = TRUE) %>%
 > **5M5.** One way to reason through multiple causation hypotheses is to imagine detailed mechanisms through which predictor variables may influence outcomes. For example, it is sometimes argued that the price of gasoline (predictor variable) is positively associated with lower obesity rates (outcome variable). However, there are at least two important mechanisms by which the price of gas could reduce obesity. First, it could lead to less driving and therefore more exercise. Second, it could lead to less driving, which leads to less eating out, which leds to less consumption of huge restaurant meals. Can you outline one or more multiple regressions that address these two mechanisms? Assume you can have any predictor data you need.
 :::
 
-Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($G$), average exercise ($E$), and restaurant revenue ($R$). Given these variables, we can define the linear model as follows:
+Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($G$), amount of driving ($D$), amount of exercise ($E$), and the rate of eating out at restaurants ($R$). Given these variables, we can outline the first proposed mechanism implies:
 
-\begin{align}
-  O_i &\sim \text{Normal}(\mu_i, \sigma) \\
-  \mu_i &= \alpha + \beta_G G_i + \beta_E E_i + \beta_R R_i
-\end{align}
+1. $D$ is negatively associated with $P$
+2. $E$ is negatively associated with $D$
+3. $O$ is negatively associated with $E$
+
+This is a chain of causality, where each outcome is the input of the next chain. The second mechanism is similar:
+
+1. $D$ is negatively associated with $P$
+2. $R$ is positively associated with $D$
+3. $O$ is positively associated with $R$
+
 
 :::question
 > **5H1.** In the divorce example, suppose the DAG is: $M \rightarrow A \rightarrow D$. What are the implied conditional independencies of the graph? Are the data consistent with it?
@@ -275,33 +275,33 @@ Let's assume we have four variables: rate of obesity ($O$), price of gasoline ($
 
 We can use {dagitty} [@R-dagitty] to see the implied conditional independencies. From this code we see that the DAG implies that divorce rate is independent of marriage rate conditional on median age of marriage. 
 
-```{r e5h1-1, eval = FALSE}
+```{r e5h1-1}
 library(dagitty)
 
-mad_dag <- dagitty("dag{ M -> A -> D}")
+mad_dag <- dagitty("dag{M -> A -> D}")
 impliedConditionalIndependencies(mad_dag)
 ```
 
-As shown in model `m5.3`, the data is consistent with this implied conditional independency. Thus this data is consistent with multiple DAGs. Specific, it would support all Markov Equivalent DAGs. The second DAG in this list, `D <- A -> M`, is the DAG that was investigated in the text.
+As shown in model `m5.3`, the data is consistent with this implied conditional independency. Thus this data is consistent with multiple DAGs. Specifically, it would support all Markov Equivalent DAGs. The second DAG in this list, `D <- A -> M`, is the DAG that was investigated in the text.
 
-```{r e5h1-2, eval = FALSE}
+```{r e5h1-2}
 equivalentDAGs(mad_dag)
 ```
 
 :::question
-> **5H2.** Assuming that the DAG for the divorce example is indeed $M \rightarrow A \rightarrow D$, fit a new model and use it ot estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
+> **5H2.** Assuming that the DAG for the divorce example is indeed $M \rightarrow A \rightarrow D$, fit a new model and use it to estimate the counterfactual effect of halving a State's marriage rate $M$. Using the counterfactual example from the chapter (starting on page 140) as a template.
 :::
 
 First, we'll estimate a model consistent this this DAG. Because there are two regressions here, we'll use {brms}'s multivariate syntax (i.e., `bf()`; see [here](https://paul-buerkner.github.io/brms/articles/brms_multivariate.html)).
 
-```{r e5h2-1, eval = FALSE}
+```{r e5h2-1}
 dat <- WaffleDivorce %>%
   select(A = MedianAgeMarriage,
          D = Divorce,
          M = Marriage) %>%
   mutate(across(everything(), standardize))
 
-d_model <- bf(D ~ 1 + A + M)
+d_model <- bf(D ~ 1 + A)
 a_model <- bf(A ~ 1 + M)
 
 b5h2 <- brm(d_model + a_model + set_rescor(FALSE),
@@ -315,31 +315,46 @@ b5h2 <- brm(d_model + a_model + set_rescor(FALSE),
                       prior(exponential(1), class = sigma, resp = A)),
             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "chp5", "b5h2"))
+
+summary(b5h2)
 ```
 
-We can then simulation our counterfactuals and plot with {ggplot2}.
+We can then simulate our counterfactuals and plot with {ggplot2}. We see that there is a negative relationship between marriage rate and age. That is, as marriage rate increases, the age at marriage decreases on average. Specifically, $A$ moves about -0.7 units for every 1 unit increase in $M$, which is reflected in the estimate of `A_M` in the model summary above. For the counterfactual of $M$ on $D$, we see a positive relationship. This is because both the relationship of $M$ to $A$ and $A$ to $D$ are negative. In other words, as $M$ increases $A$ decreases, and as $A$ decreases $D$ increases. For every one unit increase in $M$, we expect about a 0.4 unit increase in $D$. This can also be derived by multiplying the slope coefficients from the model summary (i.e., &minus;0.56 &times; &minus;0.69 &thickapprox; 0.4).
 
-```{r e5h2-2, eval = FALSE}
-posterior_samples(b5h2) %>%
+```{r e5h2-2}
+as_draws_df(b5h2) %>%
   as_tibble() %>%
-  rowid_to_column(var = "iter") %>%
-  expand(nesting(iter, b_D_Intercept, b_A_Intercept, b_D_A, b_D_M, b_A_M,
+  select(.draw, b_D_Intercept:sigma_A) %>% 
+  expand(nesting(.draw, b_D_Intercept, b_A_Intercept, b_D_A, b_A_M,
                  sigma_D, sigma_A),
          m = seq(from = -2, to = 2, length.out = 30)) %>%
   mutate(a_sim = rnorm(n(), mean = b_A_Intercept + b_A_M * m, sd = sigma_A),
-         d_sim = rnorm(n(), mean = b_D_Intercept + b_D_A * a_sim + b_D_M * m,
-                       sd = sigma_D)) %>%
+         d_sim = rnorm(n(), mean = b_D_Intercept + b_D_A * a_sim, sd = sigma_D)) %>%
   pivot_longer(ends_with("_sim"), names_to = "name", values_to = "value") %>%
   group_by(m, name) %>%
   mean_qi(value, .width = c(0.89)) %>%
   ungroup() %>%
-  mutate(name = case_when(name == "a_sim" ~ "Counterfactual effect M -> A",
-                          TRUE ~ "Total Counterfactual effect of M on D")) %>%
+  mutate(name = case_when(name == "a_sim" ~ "Counterfactual M &rarr; A",
+                          TRUE ~ "Counterfactual M &rarr; A &rarr; D")) %>%
   ggplot(aes(x = m, y = value, ymin = .lower, ymax = .upper)) +
   facet_wrap(~name, nrow = 1) +
   geom_smooth(stat = "identity") +
-  labs(x = "Manipulated M", y = "Counterfactual")
+  labs(x = "Manipulated M", y = "Counterfactual") +
+  theme(strip.text = element_markdown(size = 12))
 ```
+
+The question specifically asks for the counterfactual effect of halving a state's marriage rate. This is dependent on what the original marriage rate was. For this problem, we'll use the average marriage rate across all states, which is about 20. Half of that is 10, which in our standardized units that were used to fit the model is `r round((10 - mean(WaffleDivorce$Marriage)) / sd(WaffleDivorce$Marriage), 2)`. Looking at the counterfactual plot, moving from an $M$ of 0 to an $M$ of -2.66 would result in a decrease in the divorce rate of about 1 standard deviation. We can calculate this directly using code as well. Here we also see an estimated difference of -1.03 standard deviations, with an 89% posterior interval of -3.14 to 1.08.
+
+```{r e5h2-3}
+as_draws_df(b5h2) %>% 
+  mutate(a_avg = rnorm(n(), b_A_Intercept + b_A_M * 0, sigma_A),
+         a_hlf = rnorm(n(), b_A_Intercept + b_A_M * -2.66, sigma_A),
+         d_avg = rnorm(n(), b_D_Intercept + b_D_A * a_avg, sigma_D),
+         d_hlf = rnorm(n(), b_D_Intercept + b_D_A * a_hlf, sigma_D),
+         diff = d_hlf - d_avg) %>% 
+  mean_hdi(diff, .width = 0.89)
+```
+
 
 :::question
 > **5H3.** Return to the milk energy model, `m5.7`. Suppose that the true causal relationship among the variables is:
@@ -375,7 +390,7 @@ knitr::include_graphics(here("img", "e5h3-dag.png"))
 
 First, we need to estimate our model.
 
-```{r e5h3-1, eval = FALSE}
+```{r e5h3-1}
 data(milk)
 
 new_milk <- milk %>%
@@ -402,15 +417,17 @@ b5h3 <- brm(K_model + N_model + set_rescor(FALSE),
                       prior(exponential(1), class = sigma, resp = N)),
             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "chp5", "b5h3"))
+
+summary(b5h3)
 ```
 
 Now we can calculate the counterfactual. $M$ represents the mass, so we'll use evenly spaced values from 0.5 to 80, which captures the range of observed mass in the data. We'll then predict new values of $K$ from these masses. 
 
-```{r e5h3-2, eval = FALSE}
-milk_cf <- posterior_samples(b5h3) %>%
-  as_tibble() %>%
-  rowid_to_column(var = "iter") %>%
-  expand(nesting(iter, b_K_Intercept, b_N_Intercept, b_K_M, b_K_N, b_N_M,
+```{r e5h3-2}
+milk_cf <- as_draws_df(b5h3) %>%
+  as_tibble() %>% 
+  select(.draw, b_K_Intercept:sigma_N) %>% 
+  expand(nesting(.draw, b_K_Intercept, b_N_Intercept, b_K_M, b_K_N, b_N_M,
                  sigma_K, sigma_N),
          mass = seq(from = 0.5, to = 80, by = 0.5)) %>%
   mutate(log_mass = log(mass),
@@ -423,7 +440,7 @@ milk_cf <- posterior_samples(b5h3) %>%
   mean_qi(value, .width = c(0.89)) %>%
   ungroup() %>%
   filter(name == "k_sim") %>%
-  mutate(name = case_when(name == "n_sim" ~ "Counterfactual effect M -> N",
+  mutate(name = case_when(name == "n_sim" ~ "Counterfactual effect M on N",
                           TRUE ~ "Total Counterfactual effect of M on K"))
 
 ggplot(milk_cf, aes(x = mass, y = value, ymin = .lower, ymax = .upper)) +
@@ -431,7 +448,22 @@ ggplot(milk_cf, aes(x = mass, y = value, ymin = .lower, ymax = .upper)) +
   labs(x = "Manipulated Mass", y = "Counterfactual K")
 ```
 
-As we can see in the plot below, because mass is log-transformed in the model, there is a non-linear relationship between the manipulated mass and our counterfactual. Thus, the impact of doubling mass depends on the original mass. For example, expected causal effect of increasing the mass from 2 to 4 is a `sprintf("%0.3f", pull(filter(milk_cf, mass == 2), value) - pull(filter(milk_cf, mass == 4), value))` standard deviation decrease in $K$, whereas the expected causal effect of increasing the mass from 20 to 40 is a `sprintf("%0.3f", pull(filter(milk_cf, mass == 20), value) - pull(filter(milk_cf, mass == 40), value))` standard deviation decrease in $K$. 
+As we can see in the plot, because mass is log-transformed in the model, there is a non-linear relationship between the manipulated mass and our counterfactual. Thus, the impact of doubling mass depends on the original mass. As in the previous example, we'll use the average mass (&thickapprox;15kg) as the baseline. Thus in the standardized log units used to estimate our model, we're comparing an $M$ value of 0.746 to 1.154. The code below shows that doubling the mass has only a small effect on $K$ with a quick wide compatibility interval.
+
+```{r e5h3-3}
+(log(c(15, 30)) - mean(log(milk$mass))) / sd(log(milk$mass)) 
+
+as_draws_df(b5h3) %>% 
+  mutate(n_avg = rnorm(n(), b_N_Intercept + b_N_M * 0.746, sigma_N),
+         n_dbl = rnorm(n(), b_N_Intercept + b_N_M * 1.154, sigma_N),
+         k_avg = rnorm(n(), b_K_Intercept + b_K_M * 0.746 + b_K_N * n_avg,
+                       sigma_K),
+         k_dbl = rnorm(n(), b_K_Intercept + b_K_M * 1.154 + b_K_N * n_dbl,
+                       sigma_K),
+         diff = k_dbl - k_avg) %>% 
+  median_hdi(diff, .width = 0.89)
+```
+
 
 :::question
 > **5H4.** Here is an open practice problem to engage your imagination. In the divorce data, States in the southern United States have many of the highest divorce rates. Add the `South` indicator variable to the analysis. First, draw one or more DAGs that represent your ideas for how Southern American culture might influence any of the other three variables ($D$, $M$, or $A$). Then list the testable implications of your DAGs, if there are any, and fit one or more models to evaluate the implications. What do you think the influence of "Southerness" is?
@@ -439,7 +471,7 @@ As we can see in the plot below, because mass is log-transformed in the model, t
 
 First, let's draw a DAG using {ggdag} [@R-ggdag]. 
 
-```{r e5h4-1, out.width = "40%", eval = FALSE}
+```{r e5h4-1, out.width = "40%"}
 dag_coords <-
   tibble(name = c("S", "A", "M", "D"),
          x = c(1, 1, 2, 3),
@@ -459,14 +491,14 @@ dagify(D ~ A + M,
 
 In this proposed model, we are hypothesizing that southerness influences the median age at marriage and the marriage rate. We can use {dagitty} to view the testable implications:
 
-```{r e5h4-2, eval = FALSE}
+```{r e5h4-2}
 div_dag <- dagitty("dag{S -> M -> D; S -> A -> D; A -> M}")
 impliedConditionalIndependencies(div_dag)
 ```
 
 Given the DAG, divorce rate should be independent of southerness when we condition on median age at marriage and marriage rate. Let's estimate a model to test this. We'll include median age at marriage ($A$), marriage rate ($M$), and southerness ($S$) in the model. Because both $A$ and $M$ are included, we would expect the coefficient for $S$ to be zero, if the implied conditional independency holds.
 
-```{r e5h4-3, eval = FALSE}
+```{r e5h4-3}
 data("WaffleDivorce")
 
 south_divorce <- WaffleDivorce %>%
@@ -488,14 +520,14 @@ b5h4 <- brm(D ~ A + M + S, data = south_divorce, family = gaussian,
 
 Now we can look at the posterior distribution for the $\beta$ coefficient for southerness.
 
-```{r e5h4-4, eval = FALSE}
+```{r e5h4-4}
 spread_draws(b5h4, b_S) %>%
   ggplot(aes(x = b_S)) +
   stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
   labs(x = expression(beta[S]), y = "Density")
 ```
 
-The effect of southerness is close to zero, but slightly larger than we might have expected. Thus, we have some preliminary evidence that being in the south does not cause a higher divorce rate, but we would want to consider adding additional variables (e.g., religiosity) that we know also influence divorce rates and may also be correlated with southerness.
+The effect of southerness is close to zero, but slightly larger than we might have expected. Thus, we have some preliminary evidence that the DAG we have drawn may not be accurate. However, the evidence is not strong enough to refute our proposed DAG either.
 
 ### Chapter 6
 
