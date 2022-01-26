@@ -1252,3 +1252,236 @@ as_draws_df(ed_mod) %>%
 Here we can see that, as expected given the data is simulated, there is a strong effect of professional development on student performance. With students whose teachers received the professional development showing a 0.88 standard deviation increase in performance compared to students whose teachers did not receive the professional development.
 
 ## Homework
+
+:::question
+> **1.** The first two problems are based on the same data. The data in `data(foxes)` are 116 foxes from 30 different urban groups in England. These fox groups are like street gangs. Group size (`groupsize`) varies from 2 to 8 individuals. Each group maintains its own (almost exclusive) urban territory. Some territories are larger tahn others. The `area` variable encodes this information. Some territories also have more `avgfood` than others. And food influences the `weight` of each fox. Assume this DAG:
+
+```{r w3h1-inst, out.width = "40%", echo = FALSE, wrap = "table-question"}
+fox_dag <- dagitty("dag{ A -> F -> G -> W <- F }")
+coordinates(fox_dag) <- list(x = c(A = 2, `F` = 1, W = 2, G = 3),
+                             y = c(A = 3, `F` = 2, W = 1, G = 2))
+
+p <- fox_dag %>%
+  tidy_dagitty() %>%
+  as_tbl_graph() %>%
+  mutate(x = c(2, 1, 3, 2),
+         y = c(3, 2, 2, 1)) %>%
+  ggraph(x = x, y = y) +
+  geom_node_text(aes(label = name), color = "black", size = 10) + 
+  geom_edge_link(aes(start_cap = label_rect(node1.name, fontsize = 30),
+                     end_cap = label_rect(node2.name, fontsize = 30)),
+                 edge_color = "black", edge_width = 2,
+                 arrow = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  expand_limits(x = c(0.75, 3.25), y = c(0.9)) +
+  theme_graph() +
+  theme(plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+
+ggsave("w3h1-fox.png", plot = p, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(here("img", "w3h1-fox.png"))
+```
+
+> where $F$ is `avgfood`, $G$ is `groupsize`, $A$ is `area`, and $W$ is `weight`.
+
+> Use the backdoor criterion and estimate the total causal influence of $A$ on $F$. What effect would increasing the area of a territory have on the amount of food inside it?
+:::
+
+There is only one path from $A$ to $F$, the direct path. Thus there are no backdoors, and no additional variables that need to be included in the model. We can confirm with dagitty.
+
+```{r w3h1-1}
+fox_dag <- dagitty("dag{ A -> F -> G -> W <- F }")
+
+adjustmentSets(fox_dag, exposure = "A", outcome = "F")
+```
+
+Given that, we can estimate our model with {brms}. We'll standardize the variables to make setting the priors easier.
+
+```{r w3h1-2}
+data(foxes)
+
+fox_dat <- foxes %>%
+  as_tibble() %>%
+  select(area, avgfood, weight, groupsize) %>%
+  mutate(across(everything(), standardize))
+
+food_on_area <- brm(avgfood ~ 1 + area, data = fox_dat, family = gaussian,
+                    prior = c(prior(normal(0, 0.2), class = Intercept),
+                              prior(normal(0, 0.5), class = b,),
+                              prior(exponential(1), class = sigma)),
+                    iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                    file = here("fits", "hw3", "w3h1"))
+
+summary(food_on_area)
+```
+
+We see a fairly strong effect of area on the average amount of food. The credible interval for `area` is well above zero. For an increase of 1 standard deviation in `area` we would expect to see about a .9 standard deviation increase in `food`. Logically this makes sense, as a greater area means there are would be more prey available.
+
+:::question
+> **2.** Now infer both the **total** and **direct** causal effects of adding food $F$ to a territory on the weight $W$ of foxes. Which covariates do you need to adjust for in each case? In light of your estimates from this problem and the previous one, what do you think is going on with these foxes? Feel free to speculate---all that matters is that you justify your speculation.
+:::
+
+There are no backdoor paths from $F$ to $W$, so there are no covariates that need to be added when evaluating the total effect of food on weight. If we want the direct effect, then we need to close the path of $F \rightarrow G \rightarrow W$ by adding group size as a covariate. We can again confirm with dagitty.
+
+```{r w3h2-1}
+adjustmentSets(fox_dag, exposure = "F", outcome = "W", effect = "total")
+
+adjustmentSets(fox_dag, exposure = "F", outcome = "W", effect = "direct")
+```
+
+Now we estimate our models. First the total effect. In this model we see basically no effect of food on weight. The 95% interval in the {brms} output is -0.21 to 0.15 with a mean of -0.02. So the effect is just as likely to be positive as negative.
+
+```{r w3h2-2}
+food_total <- brm(weight ~ 1 + avgfood, data = fox_dat, family = gaussian,
+                  prior = c(prior(normal(0, 0.2), class = Intercept),
+                            prior(normal(0, 0.5), class = b,),
+                            prior(exponential(1), class = sigma)),
+                  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                  file = here("fits", "hw3", "w3h2-total"))
+
+summary(food_total)
+```
+
+Next we estimate the direct effect. Here we see that when we stratify by group size, we see a strong positive effect of food on weight. This indicates that within a given group size, more food is associated with more weight.
+
+```{r w3h2-3}
+food_direct <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
+                   family = gaussian,
+                   prior = c(prior(normal(0, 0.2), class = Intercept),
+                             prior(normal(0, 0.5), class = b,),
+                             prior(exponential(1), class = sigma)),
+                   iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                   file = here("fits", "hw3", "w3h2-direct"))
+
+summary(food_direct)
+```
+
+Altogether, these results seem to suggest a masking effect. That is, as more food is available, more foxes move into the territory, increasing the group size. This continues until an equilibrium is reached where the amount of food available is equally good (or equally bad) within each territory. Thus, the total effect of food is negligible because as more food becomes available, the group size increases such that the amount of food available for each individual fox remains relatively stable. 
+
+:::question
+> **3.** Reconsider the Table 2 Fallacy example (from Lecture 6), this time with an unobserved confound $U$ that influences both smoking $S$ and stroke $Y$. Here's the modified DAG:
+
+```{r w3h3-inst, out.width = "40%", echo = FALSE, wrap = "table-question"}
+stroke_dag <- dagitty("dag{
+  A -> S -> X -> Y;
+  A -> X; A -> Y; S -> Y;
+  S <- U -> Y 
+  X [exposure]
+  Y [outcome]
+  U [unobserved]
+}")
+coordinates(stroke_dag) <- list(
+  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
+  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
+)
+
+p <- stroke_dag %>%
+  tidy_dagitty() %>%
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "transparent", color = NA),
+        panel.background = element_rect(fill = "transparent", color = NA))
+
+ggsave("w3h3-stroke.png", plot = p, path = here("img"), width = (700 / 96),
+       height = (700 / 96) * (1 / 1.618), 
+       units = "in", dpi = 288, bg = "transparent")
+
+knitr::include_graphics(here("img", "w3h3-stroke.png"))
+```
+
+> First use the backdoor criterion to determine and adjustment set that allows you to estimate the causal effect of $X$ on $Y$, i.e., $P(Y|\text{do}(X))$. Second explain the proper interpretation of each coefficient implied by the regression model that corresponds to the adjustment set. Which coefficients (slopes) are causal and which are not? There is no need to fit any models. Just think through the implications.
+:::
+
+There are 5 paths from $X$ to $Y$:
+
+1. $X \rightarrow Y$
+2. $X \leftarrow S \rightarrow Y$
+3. $X \leftarrow A \rightarrow Y$
+4. $X \leftarrow A \rightarrow S \rightarrow Y$
+5. $X \leftarrow A \rightarrow S \leftarrow U \rightarrow Y$
+
+Path 1 is the effect of $X$ on $Y$, which we want. The rest are backdoor paths which must be closed. Conditioning on $A$ and $S$ will close all of the paths, which we can confirm with dagitty.
+
+```{r w3h3-1}
+stroke_dag <- dagitty("dag{
+  A -> S -> X -> Y;
+  A -> X; A -> Y; S -> Y;
+  S <- U -> Y 
+  X [exposure]
+  Y [outcome]
+  U [unobserved]
+}")
+
+adjustmentSets(stroke_dag)
+```
+
+However, the unobserved variable $U$ has important implications for the interpretation of the model. There are three slope coefficients that would be in the canonical Table 2: $\beta_X$, $\beta_S$, and $\beta_A$.
+
+We'll start with $X$. From the perspective of $X$, our DAG looks like this, conditional on $A$ and $S$. Thus, $\beta_X$ represents the direct (and total as there are no indirect paths) causal effect of $X$ on $Y$.
+
+```{r w3h3-2, out.width = "40%", echo = FALSE}
+x_dag <- dagitty("dag { X -> Y <- A -> S -> Y <- U -> S }")
+coordinates(x_dag) <- list(
+  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
+  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
+)
+
+tidy_dagitty(x_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+Next is $S$. Here is our updated DAG, with paths that are eliminated by conditioning on $X$ and $A$. Here, $\beta_S$ is confounded. It is not the total causal effect, because the path of $S$ through $X$ has been blocked. However, $\beta_S$ is also not the direct effect of $S$ on $Y$ because the backdoor path through $U$ is still open. Thus, $\beta_S$ is only a partial causal effect.
+
+```{r w3h3-3, out.width = "40%", echo = FALSE}
+s_dag <- dagitty("dag { U -> S -> Y <- X <- A -> Y <- U }")
+coordinates(s_dag) <- list(
+  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
+  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
+)
+
+tidy_dagitty(s_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+Finally, we'll look at $A$. In the full DAG, the path from $A \rightarrow S \leftarrow U -> Y$ is closed because $S$ is a collider. However, we have opened that path by conditioning on $S$. Thus, from the perspective of $A$, our DAG looks like the image below. We can see that $A$ is hopelessly confounded. Not all causal paths are included, and biased paths have been included (i.e., the collider). Interpret $\beta_A$ at your own risk.
+
+```{r w3h3-4, out.width = "40%", echo = FALSE}
+a_dag <- dagitty("dag { S -> X -> Y <- A -> S <- U -> Y <- S }")
+coordinates(a_dag) <- list(
+  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
+  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
+)
+
+tidy_dagitty(a_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+:::question
+> **4 - OPTIONAL CHALLENGE.** Write a synthetic data simulation for the causal model shown in **Problem 3**. Be sure to include the unobserved confound in the simulation. Choose any functional relationships that you like---you don't have to get the epidemiology correct. You just need to honor the causal structure. Then design a regression model to estimate the influence of $X$ on $Y$ and use it on your synthetic data. How large of a sample do you need to reliably estimate $P(Y|\text{do}(X))$? Define "reliably" as you like, but justify your definition.
+:::
