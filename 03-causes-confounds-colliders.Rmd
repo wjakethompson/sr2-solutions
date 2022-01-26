@@ -919,7 +919,7 @@ waff_mod <- brm(D ~ 1 + W + S, data = waffle, family = gaussian,
 
 Finally, we can see the causal estimate of Waffle Houses on divorce rate by looking at the posterior distribution of the `b_W` parameter. Here, we can see that the estimate is very small, indicating that the number of Waffle Houses has little to no causal impact on the divorce rate in a state.
 
-```{r e6h1-4, eval = FALSE}
+```{r e6h1-4}
 spread_draws(waff_mod, b_W) %>%
   ggplot(aes(x = b_W)) +
   stat_halfeye(.width = c(0.67, 0.89, 0.97)) +
