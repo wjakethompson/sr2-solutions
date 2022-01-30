@@ -480,17 +480,13 @@ summary(b4h2)
 :::
 
 ```{r e4h2-3, message = FALSE}
-library(modelr)
-
-mod_fits <- young_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+mod_fits <- tibble(weight = seq_range(young_how$weight, 100)) %>% 
   mutate(weight_c = weight - mean(young_how$weight)) %>%
   add_epred_draws(b4h2) %>%
   group_by(weight) %>%
   mean_qi(.epred, .width = 0.89)
 
-mod_preds <- young_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+mod_preds <- tibble(weight = seq_range(young_how$weight, 100)) %>% 
   mutate(weight_c = weight - mean(young_how$weight)) %>%
   add_predicted_draws(b4h2) %>%
   group_by(weight) %>%
@@ -542,16 +538,14 @@ Conditional on the data and the model, the intercept estimate of ` sprintf("%0.1
 :::
 
 ```{r e4h3-2}
-how_fits <- full_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+how_fits <- tibble(weight = seq_range(full_how$weight, 100)) %>% 
   mutate(log_weight = log(weight),
          log_weight_c = log_weight - mean(full_how$log_weight)) %>%
   add_epred_draws(b4h3) %>%
   group_by(weight) %>%
   mean_qi(.epred, .width = 0.97)
 
-how_preds <- full_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+how_preds <- tibble(weight = seq_range(full_how$weight, 100)) %>% 
   mutate(log_weight = log(weight),
          log_weight_c = log_weight - mean(full_how$log_weight)) %>%
   add_predicted_draws(b4h3) %>%
@@ -703,8 +697,7 @@ spl_mod <- brm(doy ~ 1 + B, data = cb_temp_30, family = gaussian,
 Now let's visualize the predictions from each model. Overall the predictions from each model are remarkably similar. Therefore, I would go with a linear model, as that is the simplest of the models.
 
 ```{r e4h5-2, cache = TRUE}
-grid <- cb_temp_30 %>%
-  data_grid(temp = seq_range(temp, 100)) %>%
+grid <- tibble(temp = seq_range(cb_temp_30$temp, 100)) %>% 
   mutate(temp_c = temp - mean(cb_temp$temp),
          temp_s = temp_c / sd(cb_temp$temp),
          temp_s2 = temp_s ^ 2,
