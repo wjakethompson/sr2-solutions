@@ -43,3 +43,8 @@ knitr::knit_hooks$set(wrap = function(before, options, envir){
     paste0('</div>')
   }
 })
+
+### Misc Functions -------------------------------------------------------------
+seq_range <- function (x, n) {
+  seq(min(x), max(x), length.out = n)
+}
