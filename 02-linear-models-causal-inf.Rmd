@@ -304,7 +304,6 @@ ggplot(lines, aes(x = weight)) +
   geom_line(aes(y = .epred, group = .draw)) +
   geom_point(data = how_dat, aes(y = height), shape = 1, alpha = 0.7) +
   labs(x = "Weight", y = "Height", fill = "Interval") +
-  theme(legend.position = "bottom") +
   transition_states(.draw, 0, 1)
 ```
 
@@ -783,9 +782,7 @@ ggplot(cb_temp, aes(x = temp)) +
   geom_lineribbon(data = fits, aes(y = .epred, ymin = .lower, ymax = .upper),
                   size = .6) +
   scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
-  labs(x = "March Temperature", y = "Day in Year") +
-  theme(legend.position = "bottom",
-        strip.text = element_text(size = 12))
+  labs(x = "March Temperature", y = "Day in Year")
 ```
 
 
@@ -1121,7 +1118,6 @@ ggplot(animate_lines, aes(x = age, y = .epred, color = sex, group = group)) +
   scale_x_continuous(breaks = seq(0, 12, 2)) +
   labs(x = "Age", y = "Weight (kg)", color = NULL) +
   guides(color = guide_legend(override.aes = list(size = 3))) +
-  theme(legend.position = "bottom") +
   transition_states(.draw, 0, 1)
 ```
 
@@ -1235,6 +1231,5 @@ as_draws_df(w2h4) %>%
                     labels = "89% Compatibility Interval",
                     breaks = "TRUE", na.value = "#F0F0F0") +
   labs(x = "Posterior Distribution for Cumulative Growth (cm)",
-       y = "Density", fill = NULL) +
-  theme(legend.position = "bottom")
+       y = "Density", fill = NULL)
 ```

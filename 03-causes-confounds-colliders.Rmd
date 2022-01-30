@@ -339,8 +339,7 @@ as_draws_df(b5h2) %>%
   ggplot(aes(x = m, y = value, ymin = .lower, ymax = .upper)) +
   facet_wrap(~name, nrow = 1) +
   geom_smooth(stat = "identity") +
-  labs(x = "Manipulated M", y = "Counterfactual") +
-  theme(strip.text = element_markdown(size = 12))
+  labs(x = "Manipulated M", y = "Counterfactual")
 ```
 
 The question specifically asks for the counterfactual effect of halving a state's marriage rate. This is dependent on what the original marriage rate was. For this problem, we'll use the average marriage rate across all states, which is about 20. Half of that is 10, which in our standardized units that were used to fit the model is `r round((10 - mean(WaffleDivorce$Marriage)) / sd(WaffleDivorce$Marriage), 2)`. Looking at the counterfactual plot, moving from an $M$ of 0 to an $M$ of -2.66 would result in a decrease in the divorce rate of about 1 standard deviation. We can calculate this directly using code as well. Here we also see an estimated difference of -1.03 standard deviations, with an 89% posterior interval of -3.14 to 1.08.
@@ -1423,65 +1422,104 @@ stroke_dag <- dagitty("dag{
 adjustmentSets(stroke_dag)
 ```
 
-However, the unobserved variable $U$ has important implications for the interpretation of the model. There are three slope coefficients that would be in the canonical Table 2: $\beta_X$, $\beta_S$, and $\beta_A$.
-
-We'll start with $X$. From the perspective of $X$, our DAG looks like this, conditional on $A$ and $S$. Thus, $\beta_X$ represents the direct (and total as there are no indirect paths) causal effect of $X$ on $Y$.
-
-```{r w3h3-2, out.width = "40%", echo = FALSE}
-x_dag <- dagitty("dag { X -> Y <- A -> S -> Y <- U -> S }")
-coordinates(x_dag) <- list(
-  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
-  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
-)
-
-tidy_dagitty(x_dag) %>% 
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
-  geom_dag_text(color = "black", size = 10) +
-  geom_dag_edges(edge_color = "black", edge_width = 2,
-                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
-                                              type = "closed")) +
-  theme_void()
-```
-
-Next is $S$. Here is our updated DAG, with paths that are eliminated by conditioning on $X$ and $A$. Here, $\beta_S$ is confounded. It is not the total causal effect, because the path of $S$ through $X$ has been blocked. However, $\beta_S$ is also not the direct effect of $S$ on $Y$ because the backdoor path through $U$ is still open. Thus, $\beta_S$ is only a partial causal effect.
-
-```{r w3h3-3, out.width = "40%", echo = FALSE}
-s_dag <- dagitty("dag { U -> S -> Y <- X <- A -> Y <- U }")
-coordinates(s_dag) <- list(
-  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
-  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
-)
-
-tidy_dagitty(s_dag) %>% 
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
-  geom_dag_text(color = "black", size = 10) +
-  geom_dag_edges(edge_color = "black", edge_width = 2,
-                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
-                                              type = "closed")) +
-  theme_void()
-```
-
-Finally, we'll look at $A$. In the full DAG, the path from $A \rightarrow S \leftarrow U -> Y$ is closed because $S$ is a collider. However, we have opened that path by conditioning on $S$. Thus, from the perspective of $A$, our DAG looks like the image below. We can see that $A$ is hopelessly confounded. Not all causal paths are included, and biased paths have been included (i.e., the collider). Interpret $\beta_A$ at your own risk.
-
-```{r w3h3-4, out.width = "40%", echo = FALSE}
-a_dag <- dagitty("dag { S -> X -> Y <- A -> S <- U -> Y <- S }")
-coordinates(a_dag) <- list(
-  x = c(A = 1, S = 1, X = 2, U = 2.5, Y = 3),
-  y = c(A = 1, S = 3, X = 2, U = 3,   Y = 2)
-)
-
-tidy_dagitty(a_dag) %>% 
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_node(data = ~filter(.x, name == "U"), color = "black", shape = 21) +
-  geom_dag_text(color = "black", size = 10) +
-  geom_dag_edges(edge_color = "black", edge_width = 2,
-                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
-                                              type = "closed")) +
-  theme_void()
-```
+However, the unobserved variable $U$ has important implications for the interpretation of the model. There are three slope coefficients that would be in the canonical Table 2: $\beta_X$, $\beta_S$, and $\beta_A$. The focus of our investigation, $\beta_X$ represents the causal effect of $X$ on $Y$. However, because $S$ is a collider, both $\beta_S$ and $\beta_A$ are confounded by $U$. Thus, these coefficients should not be interpreted as any type of causal effect.
 
 :::question
 > **4 - OPTIONAL CHALLENGE.** Write a synthetic data simulation for the causal model shown in **Problem 3**. Be sure to include the unobserved confound in the simulation. Choose any functional relationships that you like---you don't have to get the epidemiology correct. You just need to honor the causal structure. Then design a regression model to estimate the influence of $X$ on $Y$ and use it on your synthetic data. How large of a sample do you need to reliably estimate $P(Y|\text{do}(X))$? Define "reliably" as you like, but justify your definition.
 :::
+
+Since we're going to be simulating a bunch a data sets, we'll start by writing a function that will generate a single data set based on the DAG. The function allows us to specify a sample size and the relationship between $X$ and $Y$. Notice that although $U$ is used to generate the data, the variable is removed before return the data set, as it is unobserved (`select(-U)`).
+
+```{r w3h4-1}
+sim_dat <- function(n = 100, bx = 0) {
+  tibble(U = rnorm(n, 0, 1),
+         A = rnorm(n, 0, 1)) %>% 
+    mutate(S = rnorm(n, A + U, 1),
+           X = rnorm(n, A + S, 1),
+           Y = rnorm(n, A + S + (bx * X) + U, 1)) %>% 
+    select(-U) %>% 
+    mutate(across(everything(), standardize))
+}
+```
+
+We'll test one example data set. We use the `sim_dat()` function we just created to generate a data set with 10 subjects and a positive relationship between $X$ and $Y$ of 0.3. 
+
+```{r w3h4-2}
+dat1 <- sim_dat(n = 10, bx = 0.3)
+
+mod1 <- brm(Y ~ 1 + X + S + A, data = dat1, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b,),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw3", "w3h4"))
+
+summary(mod1, prob = 0.89)
+```
+
+And it worked! We got back an estimate of $X$ very close to 0.3, and equally likely to be positive or negative. This was with a sample size of only 10.
+
+The question asks us what sample size is needed for a *reliable* estimate of $\beta_X$. There are two ways (at least) we could think about this. The first is how "correct" our estimate is on average. That is, the mean difference between the true value (0.3 in our example data set) and the estimated posterior mean (0.37 in the above model summary). Thus, the difference here is 0.07. This measure is also referred to as the mean absolute difference. Here, absolute indicates that we normally take the absolute value of the difference so that positive and negative deviations don't cancel each other out.
+
+The other measure of reliability we might consider is the width of our chosen credible interval. If the posterior interval is very wide, we might say that we have an unreliable estimate of $\beta_X$, because there are a wide range of values the model views as plausible. A smaller interval would be more reliable, because this would indicate a high degree of confidence that our estimate is in a more narrow range of values.
+
+In the simulation, we'll generate 100 data sets with each sample size, fit a model to each data set, and calculate our outcome measures. To make things easier, we'll build another function. First we generate the data, then fit the model (`suppressMessages()` and `capture.output()` just suppress the model fitting messages since we'll be fitting many models), and then we use `mean_hdi()` to calculate our measures of reliability.
+
+```{r w3h4-3}
+sim_func <- function(n, bx = 0) {
+  dat <- sim_dat(n = n, bx = bx)
+  
+  suppressMessages(output <- capture.output(
+    mod <- brm(Y ~ 1 + X + S + A, data = dat, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = b,),
+                         prior(exponential(1), class = sigma)),
+               refresh = 0,
+               iter = 4000, warmup = 2000, chains = 4, cores = 4)
+  ))
+  
+  as_draws_df(mod, "b_X") %>% 
+    mean_hdi(.width = 0.89) %>% 
+    mutate(abs_error = abs(b_X - bx),
+           int_width = .upper - .lower) %>% 
+    select(abs_error, int_width)
+}
+```
+
+We'll investigate sample sizes of 10, 20, 50, 100, 250, 500, and 1,000. For each sample size, we'll conduct 100 replications (i.e., 100 data sets per sample size condition). The following code will create 100 rows for each sample size, and then apply our `sim_func()` to the sample size of each row.
+
+```{r w3h4-4, eval = !file.exists(here("fits", "hw3", "w3h4-sim.rds"))}
+sim_results <- expand_grid(sample_size = c(10, 20, 50, 100, 250, 500, 1000),
+                           replication = seq_len(100)) %>% 
+  mutate(results = map(sample_size, sim_func, bx = 0.3)) %>% 
+  unnest(results) %>% 
+  write_rds(here("fits", "hw3", "w3h4-sim.rds"))
+```
+
+```{r w3h4-5, include = FALSE, eval = file.exists(here("fits", "hw3", "w3h4-sim.rds"))}
+sim_results <- read_rds(here("fits", "hw3", "w3h4-sim.rds"))
+```
+
+Looking at our results we can see for each replication, the absolute value of the difference between the mean of the posterior and the true value (0.3; `abs_error`), as well as the width of the 89% compatibility interval.
+
+```{r w3h4-6}
+sim_results
+```
+
+Across all replications, we see that the that average absolute error is similar for all sample sizes. However, there is much more variability at the lower sample sizes. That is, with a sample size of 10, it's not unexpected for that we would see an estimate that is off by 0.5. With larger samples, the range of bias values gets narrower, and we are less likely to see estimates that are far off from the true value.
+
+We also see that small sample sizes result in large and more variable interval widths. As the sample size gets larger, the width of the 89% compatibility interval decreases and becomes more consistent (i.e., the width is very similar in each replication).
+
+```{r w3h4-7}
+sim_results %>% 
+  select(-replication) %>% 
+  pivot_longer(-sample_size, names_to = "measure", values_to = "value") %>% 
+  mutate(measure = factor(measure, levels = c("abs_error", "int_width"),
+                          labels = c("Absolute Error", "89% Interval Width"))) %>% 
+  ggplot(aes(x = factor(sample_size), y = value)) +
+  facet_wrap(~measure, nrow = 1) +
+  stat_interval(.width = c(0.67, 0.89, 0.97)) +
+  scale_color_manual(values = ramp_blue(seq(0.9, 0.1, length.out = 3)),
+                     breaks = c(0.67, 0.89, 0.97)) +
+  labs(x = "Sample Size", y = "Value", color = "Interval")
+```
