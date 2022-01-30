@@ -50,6 +50,17 @@ div.table-question {
   margin-bottom: 0.5em;
 }
 
+.table-question .figure {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.figure {
+  border: solid 2px #f1f1f1;
+  margin-bottom: 1rem;
+}
+
 /*
 
 .book .book-body .page-wrapper .page-inner section.normal .question blockquote {

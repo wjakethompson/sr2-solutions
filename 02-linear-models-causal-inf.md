@@ -329,7 +329,6 @@ ggplot(lines, aes(x = weight)) +
   geom_line(aes(y = .epred, group = .draw)) +
   geom_point(data = how_dat, aes(y = height), shape = 1, alpha = 0.7) +
   labs(x = "Weight", y = "Height", fill = "Interval") +
-  theme(legend.position = "bottom") +
   transition_states(.draw, 0, 1)
 ```
 
@@ -443,7 +442,6 @@ ggplot(all_splines, aes(x = year, y = doy)) +
   geom_point(alpha = 0.5) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax), fill = "#009FB7", alpha = 0.8) +
   facet_wrap(~knots, ncol = 1) +
-  theme(strip.text = element_text(size = 12, hjust = 0)) +
   labs(x = "Year", y = "Day in Year")
 ```
 
@@ -617,17 +615,13 @@ summary(b4h2)
 
 
 ```r
-library(modelr)
-
-mod_fits <- young_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+mod_fits <- tibble(weight = seq_range(young_how$weight, 100)) %>% 
   mutate(weight_c = weight - mean(young_how$weight)) %>%
   add_epred_draws(b4h2) %>%
   group_by(weight) %>%
   mean_qi(.epred, .width = 0.89)
 
-mod_preds <- young_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+mod_preds <- tibble(weight = seq_range(young_how$weight, 100)) %>% 
   mutate(weight_c = weight - mean(young_how$weight)) %>%
   add_predicted_draws(b4h2) %>%
   group_by(weight) %>%
@@ -701,16 +695,14 @@ Conditional on the data and the model, the intercept estimate of ` sprintf("%0.1
 
 
 ```r
-how_fits <- full_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+how_fits <- tibble(weight = seq_range(full_how$weight, 100)) %>% 
   mutate(log_weight = log(weight),
          log_weight_c = log_weight - mean(full_how$log_weight)) %>%
   add_epred_draws(b4h3) %>%
   group_by(weight) %>%
   mean_qi(.epred, .width = 0.97)
 
-how_preds <- full_how %>%
-  data_grid(weight = seq_range(weight, 100)) %>%
+how_preds <- tibble(weight = seq_range(full_how$weight, 100)) %>% 
   mutate(log_weight = log(weight),
          log_weight_c = log_weight - mean(full_how$log_weight)) %>%
   add_predicted_draws(b4h3) %>%
@@ -872,8 +864,7 @@ Now let's visualize the predictions from each model. Overall the predictions fro
 
 
 ```r
-grid <- cb_temp_30 %>%
-  data_grid(temp = seq_range(temp, 100)) %>%
+grid <- tibble(temp = seq_range(cb_temp_30$temp, 100)) %>% 
   mutate(temp_c = temp - mean(cb_temp$temp),
          temp_s = temp_c / sd(cb_temp$temp),
          temp_s2 = temp_s ^ 2,
@@ -951,9 +942,7 @@ ggplot(cb_temp, aes(x = temp)) +
   geom_lineribbon(data = fits, aes(y = .epred, ymin = .lower, ymax = .upper),
                   size = .6) +
   scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
-  labs(x = "March Temperature", y = "Day in Year") +
-  theme(legend.position = "bottom",
-        strip.text = element_text(size = 12))
+  labs(x = "March Temperature", y = "Day in Year")
 ```
 
 <img src="02-linear-models-causal-inf_files/figure-html/e4h5-2-1.png" width="80%" style="display: block; margin: auto;" />
@@ -1364,7 +1353,6 @@ ggplot(animate_lines, aes(x = age, y = .epred, color = sex, group = group)) +
   scale_x_continuous(breaks = seq(0, 12, 2)) +
   labs(x = "Age", y = "Weight (kg)", color = NULL) +
   guides(color = guide_legend(override.aes = list(size = 3))) +
-  theme(legend.position = "bottom") +
   transition_states(.draw, 0, 1)
 ```
 
@@ -1510,8 +1498,7 @@ as_draws_df(w2h4) %>%
                     labels = "89% Compatibility Interval",
                     breaks = "TRUE", na.value = "#F0F0F0") +
   labs(x = "Posterior Distribution for Cumulative Growth (cm)",
-       y = "Density", fill = NULL) +
-  theme(legend.position = "bottom")
+       y = "Density", fill = NULL)
 ```
 
 <img src="02-linear-models-causal-inf_files/figure-html/w2h4-6-1.png" width="80%" style="display: block; margin: auto;" />

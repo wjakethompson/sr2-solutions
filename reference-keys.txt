@@ -10,3 +10,9 @@ lectures-1
 exercises-1
 chapter-4
 homework-1
+causes-confounds-colliders
+lectures-2
+exercises-2
+chapter-5
+chapter-6
+homework-2
