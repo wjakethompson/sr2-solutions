@@ -409,7 +409,6 @@ ggplot(all_splines, aes(x = year, y = doy)) +
   geom_point(alpha = 0.5) +
   geom_ribbon(aes(ymin = ymin, ymax = ymax), fill = "#009FB7", alpha = 0.8) +
   facet_wrap(~knots, ncol = 1) +
-  theme(strip.text = element_text(size = 12, hjust = 0)) +
   labs(x = "Year", y = "Day in Year")
 ```
 
