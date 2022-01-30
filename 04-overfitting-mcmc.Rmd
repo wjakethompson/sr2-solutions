@@ -1,19 +1,19 @@
-# Overfitting
+# Overfitting / MCMC
 
-The fourth week covers Chapter 7 (Ulysses' Compass) and Chapter 8 (Conditional Manatees).
+The fourth week covers [Chapter 7 (Ulysses' Compass)](https://bookdown.org/content/4857/ulysses-compass.html), [Chapter 8 (Conditional Manatees)](https://bookdown.org/content/4857/conditional-manatees.html), and [Chapter 9 (Markov Chain Monte Carlo)](https://bookdown.org/content/4857/markov-chain-monte-carlo.html).
 
 ## Lectures
 
 Lecture 7:
 
 ```{r lecture-7, echo = FALSE, out.width = "100%"}
-knitr::include_url("https://www.youtube.com/embed/")
+knitr::include_url("https://www.youtube.com/embed/odGAAJDlgp8")
 ```
 
 Lecture 8:
 
 ```{r lecture-8, echo = FALSE, out.width = "100%"}
-knitr::include_url("https://www.youtube.com/embed/")
+knitr::include_url("https://www.youtube.com/embed/Qqz5AJjyugM")
 ```
 
 ## Exercises
@@ -46,7 +46,7 @@ Entropy is the average log-probability of an event. The formula is given as
 
 Thus, for each probability $p_i$, we multiply $p_i$ by $\log(p_i)$, sum all the values, and then multiply the sum by negative one. To implement this, we'll first write a couple of functions to do the calculations. We could do this without functions, but functions will allow us to handle cases where $p_i = 0$, as will be the case in a couple of problems. The first function, `p_logp()`, returns `0` if `p` is 0, and returns `p * log(p)` otherwise. The `calc_entropy()` function is a wrapper around `p_logp()`, applying `p_logp()` to each element of a vector of probabilities, summing the results, and multiplying the sum by -1.
 
-```{r e7e2-1}
+```{r e7e2-1, eval = FALSE}
 p_logp <- function(p) {
   if (p == 0) return(0)
   p * log(p)
@@ -59,7 +59,7 @@ calc_entropy <- function(x) {
 
 Applying these functions to the probabilities in this problem results in an entropy of about 0.61. Note this is the same as the weather example in the text, because in both cases there were two events with probabilities of 0.3 and 0.7.
 
-```{r e7e2-2}
+```{r e7e2-2, eval = FALSE}
 probs <- c(0.7, 0.3)
 calc_entropy(probs)
 ```
@@ -70,7 +70,7 @@ calc_entropy(probs)
 
 Now we have four outcomes. We can reuse our code from above, substituting the new probabilities into the vector `probs`. This results in an entropy of about 1.38. As expected, because there are now more outcomes, the entropy is higher than what was observed in the previous problem.
 
-```{r e7e3}
+```{r e7e3, eval = FALSE}
 probs <- c(0.20, 0.25, 0.25, 0.30)
 calc_entropy(probs)
 ```
@@ -81,7 +81,7 @@ calc_entropy(probs)
 
 Again, we can copy our code from above, replace the probabilities. Even though there are four outcomes specified, there are effectively three outcomes, as the outcome "4" has probability 0. Thus, we would expect entropy to decrease, as there are fewer possible outcomes than in the previous problem. This is indeed what we find, as this die's entropy is about 1.1.
 
-```{r e7e4}
+```{r e7e4, eval = FALSE}
 probs <- c(1, 1, 1, 0)
 probs <- probs / sum(probs)
 probs
@@ -161,13 +161,13 @@ sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
   unnest(infc)
 ```
 
-```{r e7m3-2, include = FALSE, cache = TRUE}
+```{r e7m3-2, include = FALSE, cache = TRUE, eval = FALSE}
 sample_sim <- read_rds(here("fits", "chp7", "sim-7m3-small.rds"))
 ```
 
 Now, we can visualize the distribution of the LPPD, WAIC, and PSIS. As predicted, the LPPD gets more negative as the sample size increases, even though the data generation process and estimated model are identical. Accordingly, the WAIC and PSIS increase. Note that the WAIC and PSIS values are approximately $-2 \times \text{lppd}$. Thus, if we fit one model with 100 observations and second model with 1,000 observations, we might conclude from the WAIC and PSIS that the first model with 100 observations has much better predictive accuracy, because the WAIC and PSIS values are lower. However, this would be only an artifact of different sample sizes, and may not actually represent true differences between the models.
 
-```{r e7m3-3}
+```{r e7m3-3, eval = FALSE}
 sample_sim %>%
   pivot_longer(cols = c(lppd, waic, psis)) %>%
   mutate(sample_size = glue("N = {sample_size}"),
@@ -230,13 +230,13 @@ prior_sim <- tibble(prior_sd = rep(c(0.1, 1, 10), each = 100)) %>%
   unnest(infc)
 ```
 
-```{r e7m4-2, include = FALSE, cache = TRUE}
+```{r e7m4-2, include = FALSE, cache = TRUE, eval = FALSE}
 prior_sim <- read_rds(here("fits", "chp7", "sim-7m4-small.rds"))
 ```
 
 Visualizing the results, we can see that the more constricted prior does indeed result in a smaller penalty or effective number of parameters.
 
-```{r e7m4-3}
+```{r e7m4-3, eval = FALSE}
 prior_sim %>%
   pivot_longer(cols = c(p_waic, p_loo)) %>%
   mutate(prior_sd = glue("sd~'='~{prior_sd}"),
@@ -269,7 +269,7 @@ In contrast to the previous question, making the prior too informative can be to
 
 First, let's standardize the data and fit a straight line, a quadratic line, and a spline model.
 
-```{r e7h1-1}
+```{r e7h1-1, eval = FALSE}
 data(Laffer)
 
 laf_dat <- Laffer %>%
@@ -304,7 +304,7 @@ laf_spln <- brm(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), data = laf_dat,
 
 Let's visualize the models:
 
-```{r e7h1-2, echo = FALSE}
+```{r e7h1-2, echo = FALSE, eval = FALSE}
 tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
   mutate(tax_rate2 = tax_rate ^ 2,
          tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
@@ -352,7 +352,7 @@ ggplot() +
 
 They all look pretty similar, but the spline does show a slight curve. Next, we can look at the PSIS (called LOO in {brms} and {rstan}) and WAIC comparisons. Both the PSIS and WAIC prefer the spline model. However, the standard error of the difference in PSIS and WAIC is larger than the actual difference for all models. Thus, neither the PSIS or WAIC is really able to differentiate the models in a meaningful way. However, it should be noted that both the PSIS and WAIC have Pareto or penalty values that are exceptionally large, which could make the criteria unreliable.
 
-```{r e7h1-3}
+```{r e7h1-3, eval = FALSE}
 library(loo)
 
 laf_line <- add_criterion(laf_line, criterion = c("loo", "waic"),
@@ -372,7 +372,7 @@ loo_compare(laf_line, laf_quad, laf_spln, criterion = "loo")
 
 Because I used `brms::brm()` to estimate the models, we can't use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models, and observation 1 is also problematic in the spline model.
 
-```{r e7h2-1}
+```{r e7h2-1, eval = FALSE}
 library(gghighlight)
 
 criteria_influence <- function(mod) {
@@ -403,7 +403,7 @@ ggplot(influ, aes(x = pareto_k, y = p_waic)) +
 
 Let's refit the model using a Student's t distribution to put larger tails on our outcome distribution, and then visualize our new models.
 
-```{r e7h2-2}
+```{r e7h2-2, eval = FALSE}
 laf_line2 <- brm(bf(tax_revenue ~ 1 + tax_rate, nu = 1),
                  data = laf_dat, family = student,
                  prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -431,7 +431,7 @@ laf_spln2 <- brm(bf(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), nu = 1),
                  file = here("fits", "chp7", "bh72-spln.rds"))
 ```
 
-```{r e7h2-3, echo = FALSE}
+```{r e7h2-3, echo = FALSE, eval = FALSE}
 tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
   mutate(tax_rate2 = tax_rate ^ 2,
          tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
@@ -479,7 +479,7 @@ ggplot() +
 
 The prediction intervals are a little bit narrower, which makes sense as the predictions are no longer being as influenced by the outlier. When we look at the new PSIS and WAIC estimates, we are no longer getting warning messages about large Pareto *k* values; however, we do still see warnings about large $p_{\Tiny\text{WAIC}}$ values. The comparisons also tell the same story as before, with the spline as the preferred model, but no distinguishable differences between the models.
 
-```{r 7h2-4}
+```{r 7h2-4, eval = FALSE}
 laf_line2 <- add_criterion(laf_line2, criterion = c("loo", "waic"),
                            overwrite = TRUE)
 laf_quad2 <- add_criterion(laf_quad2, criterion = c("loo", "waic"),
@@ -494,7 +494,7 @@ loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
 :::{.question .code-question}
 > **7H3.** Consider three fictional Polynesian islands. On each there is a Royal Ornithologist charged by the king with surveying the bird population. They have each found the following proportions of 5 important bird species:
 
-```{r e7h3-intro, message = FALSE, echo = FALSE, wrap = "table-question"}
+```{r e7h3-intro, message = FALSE, echo = FALSE, wrap = "table-question", eval = FALSE}
 library(kableExtra)
 tibble(island = paste("Island", 1:3),
        a = c(0.2, 0.8, 0.05),
@@ -513,7 +513,7 @@ tibble(island = paste("Island", 1:3),
 
 First, lets compute the entropy for each each island.
 
-```{r e7h3-1}
+```{r e7h3-1, eval = FALSE}
 islands <- tibble(island = paste("Island", 1:3),
        a = c(0.2, 0.8, 0.05),
        b = c(0.2, 0.1, 0.15),
@@ -537,7 +537,7 @@ D_{KL} = \sum_i p_i(\log(p_i) - \log(q_i))
 $$
 We'll write a function to do this calculation.
 
-```{r e7h3-2}
+```{r e7h3-2, eval = FALSE}
 d_kl <- function(p, q) {
   sum(p * (log(p) - log(q)))
 }
@@ -545,7 +545,7 @@ d_kl <- function(p, q) {
 
 Now, let's calculate $D_{KL}$ for each set of islands.
 
-```{r e7h3-3}
+```{r e7h3-3, eval = FALSE}
 crossing(model = paste("Island", 1:3),
          predicts = paste("Island", 1:3)) %>%
   filter(model != predicts) %>%
@@ -568,7 +568,7 @@ These results show us that when using Island 1 to predict Island 2, the KL diver
 
 As a reminder, here is the DAG for this example, where $H$ is happiness, $M$ is marriage, and $A$ is age.
 
-```{r e7h4-1, message = FALSE, out.width = "40%"}
+```{r e7h4-1, message = FALSE, out.width = "40%", eval = FALSE}
 library(dagitty)
 library(ggdag)
 
@@ -586,7 +586,7 @@ ggplot(hma_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
 
 First, let's regenerate the data and estimate the models.
 
-```{r e7h4-2, cache = TRUE}
+```{r e7h4-2, cache = TRUE, eval = FALSE}
 d <- sim_happiness(seed = 1977, N_years = 1000)
 dat <- d %>%
   filter(age > 17) %>%
@@ -611,7 +611,7 @@ b6.10 <- brm(happiness ~ 1 + a, data = dat, family = gaussian,
 
 For the model comparison we'll use PSIS.
 
-```{r e7h4-3}
+```{r e7h4-3, eval = FALSE}
 b6.9 <- add_criterion(b6.9, criterion = "loo")
 b6.10 <- add_criterion(b6.10, criterion = "loo")
 
@@ -620,7 +620,7 @@ loo_compare(b6.9, b6.10)
 
 PSIS shows a strong preference for `b6.9`, which is the model that includes both age and marriage status. However, `b6.10` provides the correct causal inference, as no additional conditioning is needed.
 
-```{r e7h4-4}
+```{r e7h4-4, eval = FALSE}
 adjustmentSets(hma_dag, exposure = "A", outcome = "H")
 ```
 
@@ -640,7 +640,7 @@ The reason is that in this model, marital status is a collider. Adding this vari
 
 First, let's estimate the five models.
 
-```{r e7h5-1}
+```{r e7h5-1, eval = FALSE}
 data(foxes)
 
 fox_dat <- foxes %>%
@@ -691,7 +691,7 @@ b7h5_5 <- brm(weight ~ 1 + area, data = fox_dat,
 
 Then we can calculate the WAIC for each model and the model comparisons.
 
-```{r e7h5-2, warning = FALSE}
+```{r e7h5-2, warning = FALSE, eval = FALSE}
 b7h5_1 <- add_criterion(b7h5_1, criterion = "waic")
 b7h5_2 <- add_criterion(b7h5_2, criterion = "waic")
 b7h5_3 <- add_criterion(b7h5_3, criterion = "waic")
@@ -704,7 +704,7 @@ comp
 
 Overall, the WAIC values are very similar, and the differences all fall within the 99% intervals for the differences. 
 
-```{r e7h5-3, echo = FALSE}
+```{r e7h5-3, echo = FALSE, eval = FALSE}
 plot_comp <- comp %>%
   as_tibble(rownames = "model") %>%
   mutate(across(-model, as.numeric),
@@ -738,7 +738,7 @@ ggplot() +
 
 However, there does seem to be two groups of model: `b7h5_1`, `b7h5_2`, and `b7h5_3` are all nearly identical; and `b7h5_4` and `b7h5_5` are nearly identical. To understand why this is, we can return to the DAG for this example.
 
-```{r e7h5-fox-dag, out.width = "40%", echo = FALSE}
+```{r e7h5-fox-dag, out.width = "40%", echo = FALSE, eval = FALSE}
 suppressPackageStartupMessages(library(tidygraph))
 suppressPackageStartupMessages(library(ggraph))
 
@@ -868,7 +868,7 @@ In order to predict raven population size based on wolf population size, we shou
 
 There are a few issues constraining different coefficients with bounded parameters (especially negative parameters) in {brms}. For some details, see [this thread](https://discourse.mc-stan.org/t/negative-prior-distribution/18093/2) on the Stan discourse. To get around this, rather than constrain the shade parameter to be negative, we'll create a new variable which is the opposite of shade, `light` and the corresponding `light_cent`. We can then constrain this parameter to be positive, just as the `water_cent` parameter is constrained to be positive. Finally, because of the new `light` variable the positivity constraints on the main effects, we also want to constrain the interaction term to be positive. That is, if both water and light increase, we expect an additional additive effect.
 
-```{r e8m4-1}
+```{r e8m4-1, eval = FALSE}
 library(rethinking)
 data("tulips")
 
@@ -894,7 +894,7 @@ summary(b8m4)
 
 Looking at the the posterior predicted blooms, the results are very similar to what we saw in Figure 8.7 from the text. This indicates that the prior constraints did not have a large effect on the predicted values.
 
-```{r e8m4-2}
+```{r e8m4-2, eval = FALSE}
 new_tulip <- crossing(water_cent = -1:1, 
                       light_cent = -1:1)
 
@@ -922,7 +922,7 @@ fitted(b8m4, newdata = new_tulip, summary = FALSE, nsamples = 50) %>%
 
 Finally, let's look at the prior predictive simulation for this model. Overall the priors might be a little too uninformative, especially for the interaction. The interaction has the most impact in the far right panel of the below figure, and there are many lines that exceed the expected boundaries in this panel.
 
-```{r e8m4-3}
+```{r e8m4-3, eval = FALSE}
 b8m4p <- update(b8m4, sample_prior = "only",
                 iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
                 file = here("fits", "chp8", "b8m4p.rds"))
@@ -952,7 +952,7 @@ fitted(b8m4p, newdata = new_tulip, summary = FALSE, nsamples = 50) %>%
 
 The `bed` variable is already a factor variable in the `tulips` data, so we can just add it to the formula in `brm()`. To use indicator variables instead of a dummy variable, we remove the separate intercept (i.e., `~ 0` in the formula below). Because of what's coming in the next question, we'll use `light` instead of `shade` for this model also.
 
-```{r e8h1}
+```{r e8h1, eval = FALSE}
 b8h1 <- brm(blooms_std ~ 0 + water_cent + light_cent + bed + 
               water_cent:light_cent,
             data = tulip_dat, family = gaussian,
@@ -978,7 +978,7 @@ For the comparison, we'll compare `b8h1` to the model `b8m4`, which is the model
 
 Model `b8h1` is the preferred model; however, the standard error of the difference is larger than the magnitude of the difference, indicating that the WAIC is not able to meaningfully differentiate between the two models. For predictive purposes, this means that the inclusion of the `bed` variable does not significantly improve the model. It should also be noted that both of the models have some exceptionally large penalty values, so these analyses may be unreliable, and we should consider re-fitting the models with a distribution with fatter tails.
 
-```{r e8h2}
+```{r e8h2, eval = FALSE}
 b8m4 <- add_criterion(b8m4, criterion = "waic",
                       overwrite = TRUE, force_save = TRUE)
 b8h1 <- add_criterion(b8h1, criterion = "waic",
@@ -997,7 +997,7 @@ loo_compare(b8m4, b8h1, criterion = "waic") %>%
 
 In the text, model `m8.5` uses the tulips data, so I'm assuming this is a typo and we should be looking at model `m8.3`, which is the interaction model from the terrain ruggedness example in the chapter. So, let's first create a {brms} version of model `m8.3`.
 
-```{r e8h3-1}
+```{r e8h3-1, eval = FALSE}
 data("rugged")
 rugged_dat <- rugged %>%
   as_tibble() %>%
@@ -1032,7 +1032,7 @@ summary(b8h3)
 
 Now let's take a look at the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values from the model. Seychelles does appear to be influential. The Pareto $k$ value is not above the above the 0.7 threshold; however, the $p_{WAIC}$ value is above the 0.4 threshold. In addition to Seychelles, Switzerland also appears to be influential. Like Seychelles, Switzerland is also an extremely rugged country that gets a great deal of economic activity through tourism.
 
-```{r e8h3-2}
+```{r e8h3-2, eval = FALSE}
 library(gghighlight)
 
 tibble(pareto_k = b8h3$criteria$loo$diagnostics$pareto_k,
@@ -1053,7 +1053,7 @@ tibble(pareto_k = b8h3$criteria$loo$diagnostics$pareto_k,
 
 Now for part (b), we'll use a Student-t distribution with $\nu = 2$.
 
-```{r e8h3-3}
+```{r e8h3-3, eval = FALSE}
 b8h3_t <- brm(
   bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
      a ~ 0 + cid,
@@ -1075,13 +1075,13 @@ b8h3_t <- add_criterion(b8h3_t, criterion = c("loo", "waic"), overwrite = TRUE)
 
 A comparison of PSIS-LOO criterion indicates that our Student-t model may be overfit, as the original model is strongly preferred.
 
-```{r e8h3-4}
+```{r e8h3-4, eval = FALSE}
 loo_compare(b8h3, b8h3_t)
 ```
 
 Looking at the parameter estimates, it doesn't appear that the Student-t distribution had too much of an effect, as the estimates and interval are pretty similar across the two models.
 
-```{r e8h3-5}
+```{r e8h3-5, eval = FALSE}
 fixef(b8h3)
 
 fixef(b8h3_t)
@@ -1113,7 +1113,7 @@ d$lang.per.cap <- d$num.lang / d$k.pop
 
 First, let's calculate some new variables we'll need for these models. We'll also go ahead and standardize everything to make setting the priors a little bit easier.
 
-```{r e8h4-1}
+```{r e8h4-1, eval = FALSE}
 data(nettle)
 
 nettle <- nettle %>%
@@ -1133,7 +1133,7 @@ summary(nettle)
 
 The first model we'll fit will predict `lang_per_cap_std` from `mean_growing_std` and `area_std`. To start, we'll look at some prior predictive simulations to check our priors. After some fiddling, a `normal(0, 0.3)` prior for the predictor coefficients seems to give us plausible lines that are generally within the expected bounds.
 
-```{r e8h4-2}
+```{r e8h4-2, eval = FALSE}
 b8h4p_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
                data = nettle, family = gaussian,
                prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1171,7 +1171,7 @@ fitted(b8h4p_a, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
 
 Now we can estimate the full model, with the likelihood. As we can see in the model summary and in the following plot of posterior predictions, there is in fact a positive relationship between the average length of the growing season and the number of languages per capita, after controlling for the size of the country.
 
-```{r e8h4-3}
+```{r e8h4-3, eval = FALSE}
 b8h4_a <- brm(lang_per_cap_std ~ mean_growing_std + area_std,
               data = nettle, family = gaussian,
               prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1202,7 +1202,7 @@ new_nettle %>%
 
 For the second part, we replace `mean_growing_std` with `sd_growing_std`. Again, we'll first look at the prior predictive simulations. It looks like the same priors we used in the previous model will work here as well.
 
-```{r e8h4-4}
+```{r e8h4-4, eval = FALSE}
 b8h4p_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
                data = nettle, family = gaussian,
                prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1236,7 +1236,7 @@ fitted(b8h4p_b, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
 
 Adding the likelihood into the model, we see the expected negative association between the standard deviation of the length of the growing season and the number of languages per capita, after controlling for the size of the country. However, when we look at the estimate for `sd_growing_std`, we see that the 95% compatibility interval ranges from -0.37 to 0.10. Thus, there is a non-negligible proportion of the posterior distribution that would result in a *positive* association between the standard deviation of the length of the growing season and language diversity. Therefore, I would not conclude from this analysis that there is indeed a negative association here.
 
-```{r e8h4-5}
+```{r e8h4-5, eval = FALSE}
 b8h4_b <- brm(lang_per_cap_std ~ sd_growing_std + area_std,
               data = nettle, family = gaussian,
               prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1267,7 +1267,7 @@ new_nettle %>%
 
 In the third part of the question, we are asked to add the interaction term. As with the previous two models, we'll begin by looking at the prior predictive simulations. The priors look a little too uncertain under extreme values, but maybe that isn't the worst thing as we probably should be more uncertain when observing extreme values. 
 
-```{r e8h4-6}
+```{r e8h4-6, eval = FALSE}
 b8h4p_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
                data = nettle, family = gaussian,
                prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1302,7 +1302,7 @@ fitted(b8h4p_c, newdata = new_nettle, summary = FALSE, nsamples = 50) %>%
 
 Let's now fit the model. In the model summary, we see a negative interaction term, which is illustrated in the posterior distributions below. When there is below average variability in the length of the growing season, we see a positive relationship between average length of the growing season and language diversity (the left two columns). Conversely, when there is high variability, we see a negative relationship between average length of the growing season and language diversity.
 
-```{r e8h4-7}
+```{r e8h4-7, eval = FALSE}
 b8h4_c <- brm(lang_per_cap_std ~ mean_growing_std * sd_growing_std + area_std,
               data = nettle, family = gaussian,
               prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1336,7 +1336,7 @@ new_nettle %>%
 
 Now that we've estimated all of the models, we can compare the models using LOO. I'm using LOO instead of WAIC, as all models have observations with problematic $p_{WAIC}$ values, but none have problematic Pareto $k$ values.
 
-```{r e8h4-8, echo = FALSE}
+```{r e8h4-8, echo = FALSE, eval = FALSE}
 bind_rows(tibble(pareto_k = b8h4_a$criteria$loo$diagnostics$pareto_k,
                  p_waic = b8h4_a$criteria$waic$pointwise[, "p_waic"]) %>%
             rowid_to_column(var = "obs") %>%
@@ -1368,7 +1368,7 @@ bind_rows(tibble(pareto_k = b8h4_a$criteria$loo$diagnostics$pareto_k,
 
 When we look at the LOO comparisons, we see that the interaction is the preferred model. However, the difference between the interaction model and model with only average length of the the growing season (model A), is barely larger than the standard error of the difference, indicating that the LOO isn't really able to differentiate between these two models. Even the model with only variability in growing season included had a difference that is only 1.89 times the standard error of the difference. Therefore, I would conclude that all models perform roughly the same statistically, and the choice of model should be driven by the causal model.
 
-```{r e8h4-9}
+```{r e8h4-9, eval = FALSE}
 loo_compare(b8h4_a, b8h4_b, b8h4_c)
 ```
 
@@ -1378,7 +1378,7 @@ loo_compare(b8h4_a, b8h4_b, b8h4_c)
 
 First, let's prepare the data. We'll standardize the score and create index variables for both `judge` and `wine`.
 
-```{r b8h5-1}
+```{r b8h5-1, eval = FALSE}
 data(Wines2012)
 
 wine <- Wines2012 %>%
@@ -1393,7 +1393,7 @@ wine <- Wines2012 %>%
 
 Next, we'll fit the model, remembering to remove the overall intercept (i.e., `~ 0`) so that the index variables are estimated correctly. Because the scores have been standardized, we can use the `normal(0, 0.5)` prior we've used previously and which is used throughout much of the text. We'll also extract the posterior draws so that we can explore the posterior for each judge and wine individually.
 
-```{r b8h5-2}
+```{r b8h5-2, eval = FALSE}
 b8h5 <- brm(bf(score_std ~ 0 + j + w,
                j ~ 0 + judge_ind,
                w ~ 0 + wine_ind,
@@ -1416,7 +1416,7 @@ draws <- posterior_samples(b8h5) %>%
 
 Looking at the distributions by judge, we can see that John Foy tends to give the highest scores, whereas Robert Hodgson and Jean-M Cardebat give the lowest scores on average.
 
-```{r b8h5-3}
+```{r b8h5-3, eval = FALSE}
 draws %>%
   filter(type == "judge") %>%
   mutate(num = factor(num)) %>%
@@ -1435,7 +1435,7 @@ draws %>%
 
 For wines, B2, J2, D2, D1, and B1 received the highest scores on average, and wine I2 was clearly the lowest rated of the wines. However, overall, there is more variability among the judges than among the wines.
 
-```{r b8h5-4}
+```{r b8h5-4, eval = FALSE}
 draws %>%
   filter(type == "wine") %>%
   mutate(num = factor(num)) %>%
@@ -1464,7 +1464,7 @@ draws %>%
 
 We can estimate the {brms} model as defined below. In this definition, we're using indicator variables rather than index variables, as that will make the next question a little bit easier. We'll use our standard `normal(0, 0.2)` prior for the intercept, since that will have to be near zero given that the `score` has been standardized. For the coefficients, we have to ask what a reasonable difference in scores would be between New Jersey and French wines, New Jersey and French judges, and red and white wine. One standard deviation seems reasonable, so 
 
-```{r e8h6-1}
+```{r e8h6-1, eval = FALSE}
 b8h6 <- brm(score_std ~ wine_amer + judge_amer + red,
             data = wine, family = gaussian,
             prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -1481,6 +1481,11 @@ fixef(b8h6)
 :::question
 > **8H7.** Now consider two-way interactions among the three features. You should end up with three different interaction terms in your model. These will be easier to build, if you use indicator variables. Again justify your priors. Explain what each interaction means. Be sure to interpret the model's predictions on the outcome scale (`mu`, the expected score), not on the scale of individual parameters. You can use `link` to help with this, or just use your knowledge of the linear model instead. What do you conclude about the features and teh scores? Can you relate the results of your model(s) to the individual judge and wine inferences from **8H5**?
 :::
+
+Something...
+
+
+### Chapter 9
 
 Something...
 
