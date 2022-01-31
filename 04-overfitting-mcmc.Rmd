@@ -46,7 +46,7 @@ Entropy is the average log-probability of an event. The formula is given as
 
 Thus, for each probability $p_i$, we multiply $p_i$ by $\log(p_i)$, sum all the values, and then multiply the sum by negative one. To implement this, we'll first write a couple of functions to do the calculations. We could do this without functions, but functions will allow us to handle cases where $p_i = 0$, as will be the case in a couple of problems. The first function, `p_logp()`, returns `0` if `p` is 0, and returns `p * log(p)` otherwise. The `calc_entropy()` function is a wrapper around `p_logp()`, applying `p_logp()` to each element of a vector of probabilities, summing the results, and multiplying the sum by -1.
 
-```{r e7e2-1, eval = FALSE}
+```{r e7e2-1}
 p_logp <- function(p) {
   if (p == 0) return(0)
   p * log(p)
@@ -59,7 +59,7 @@ calc_entropy <- function(x) {
 
 Applying these functions to the probabilities in this problem results in an entropy of about 0.61. Note this is the same as the weather example in the text, because in both cases there were two events with probabilities of 0.3 and 0.7.
 
-```{r e7e2-2, eval = FALSE}
+```{r e7e2-2}
 probs <- c(0.7, 0.3)
 calc_entropy(probs)
 ```
@@ -70,7 +70,7 @@ calc_entropy(probs)
 
 Now we have four outcomes. We can reuse our code from above, substituting the new probabilities into the vector `probs`. This results in an entropy of about 1.38. As expected, because there are now more outcomes, the entropy is higher than what was observed in the previous problem.
 
-```{r e7e3, eval = FALSE}
+```{r e7e3}
 probs <- c(0.20, 0.25, 0.25, 0.30)
 calc_entropy(probs)
 ```
@@ -81,7 +81,7 @@ calc_entropy(probs)
 
 Again, we can copy our code from above, replace the probabilities. Even though there are four outcomes specified, there are effectively three outcomes, as the outcome "4" has probability 0. Thus, we would expect entropy to decrease, as there are fewer possible outcomes than in the previous problem. This is indeed what we find, as this die's entropy is about 1.1.
 
-```{r e7e4, eval = FALSE}
+```{r e7e4}
 probs <- c(1, 1, 1, 0)
 probs <- probs / sum(probs)
 probs
@@ -127,59 +127,83 @@ $$
 \text{lppd}(y,\Theta) = \sum_i\log\frac{1}{S}\sum_sp(y_i|\Theta_s)
 $$
 
-In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a smaller log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent (i.e., when the LPPD values are negative, the sum will get more negative as the sample size increases). More observations are entered into the sum, leading to a smaller final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets, estimate a linear model, and then calculate the LPPD, WAIC, and PSIS for each.
+In words, this means take the log of the average probability across samples of each observation $i$ and sum them together. Thus, a larger sample size will necessarily lead to a smaller log-pointwise-predictive-density, even if the data generating process and models are exactly equivalent (i.e., when the LPPD values are negative, the sum will get more negative as the sample size increases). More observations are entered into the sum, leading to a smaller final lppd, which will in turn increase the information criteria. We can run a quick simulation to demonstrate. For three different sample sizes, we'll simulate 100 data sets from the exact same data generation process, estimate a the exact same linear model, and then calculate the LPPD, WAIC, and PSIS for each.
 
-```{r e7m3-1, eval = FALSE}
-set.seed(2020)
+Visualizing the distribution of the LPPD, WAIC, and PSIS across simulated data sets with each sample size, we see that the LPPD gets more negative as the sample size increases, even though the data generation process and estimated model are identical. Accordingly, the WAIC and PSIS increase. Note that the WAIC and PSIS values are approximately $-2 \times \text{lppd}$. Thus, if we fit one model with 100 observations and second model with 1,000 observations, we might conclude from the WAIC and PSIS that the first model with 100 observations has much better predictive accuracy, because the WAIC and PSIS values are lower. However, this would be only an artifact of different sample sizes, and may not actually represent true differences between the models.
+
+<details><summary>Simulation Code</summary>
+
+```{r e7m3-1, eval = !file.exists(here("fits", "chp7", "b7m3-sim.rds"))}
+gen_data <- function(n) {
+  tibble(x1 = rnorm(n = n)) %>%
+    mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1),
+           across(everything(), standardize))
+}
+fit_model <- function(dat) {
+  suppressMessages(output <- capture.output(
+    mod <- brm(y ~ 1 + x1, data = dat, family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior(normal(0, 0.5), class = "b"),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 3000, chains = 4, cores = 4, seed = 1234)
+  ))
+  
+  return(mod)
+}
+calc_info <- function(model) {
+  mod_lppd <- log_lik(model) %>% 
+    as_tibble(.name_repair = "minimal") %>% 
+    set_names(paste0("obs_", 1:ncol(.))) %>% 
+    rowid_to_column(var = "iter") %>% 
+    pivot_longer(-iter, names_to = "obs", values_to = "logprob") %>% 
+    mutate(prob = exp(logprob)) %>% 
+    group_by(obs) %>% 
+    summarize(log_prob_score = log(mean(prob))) %>% 
+    pull(log_prob_score) %>% 
+    sum()
+  
+  mod_waic <- suppressWarnings(waic(model)$estimates["waic", "Estimate"])
+  mod_psis <- suppressWarnings(loo(model)$estimates["looic", "Estimate"])
+  
+  tibble(lppd = mod_lppd, waic = mod_waic, psis = mod_psis)
+}
 
 sample_sim <- tibble(sample_size = rep(c(100, 500, 1000), each = 100)) %>%
-  mutate(
-    sample_data = map(sample_size,
-                      function(n) {
-                        tibble(x1 = rnorm(n = n)) %>%
-                          mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1),
-                                 across(everything(), standardize))
-                      }),
-    model = map(sample_data,
-                function(df) {
-                  mod <- quap(alist(y ~ dnorm(mu, sigma),
-                                    mu <- alpha + beta * x1,
-                                    alpha ~ dnorm(0, 0.2),
-                                    beta ~ dnorm(0, 0.5),
-                                    sigma ~ dexp(1)),
-                              data = df, start = list(alpha = 0, beta = 0))
-                  return(mod)
-                }),
-    lppd = map_dbl(model, ~sum(rethinking::lppd(.x))),
-    infc = map(model,
-               function(mod) {
-                 w <- rethinking::WAIC(mod)
-                 p <- suppressMessages(rethinking::PSIS(mod))
-                 tibble(waic = w$WAIC, psis = p$PSIS)
-               })
-  ) %>%
-  unnest(infc)
+  mutate(sample_data = map(sample_size, gen_data),
+         model = map(sample_data, fit_model),
+         infc = map(model, calc_info)) %>%
+  select(-sample_data, -model) %>% 
+  unnest(infc) %>% 
+  write_rds(here("fits", "chp7", "b7m3-sim.rds"), compress = "gz")
 ```
 
-```{r e7m3-2, include = FALSE, cache = TRUE, eval = FALSE}
-sample_sim <- read_rds(here("fits", "chp7", "sim-7m3-small.rds"))
+```{r e7m3-2, include = FALSE, eval = file.exists(here("fits", "chp7", "b7m3-sim.rds"))}
+sample_sim <- read_rds(here("fits", "chp7", "b7m3-sim.rds"))
 ```
 
-Now, we can visualize the distribution of the LPPD, WAIC, and PSIS. As predicted, the LPPD gets more negative as the sample size increases, even though the data generation process and estimated model are identical. Accordingly, the WAIC and PSIS increase. Note that the WAIC and PSIS values are approximately $-2 \times \text{lppd}$. Thus, if we fit one model with 100 observations and second model with 1,000 observations, we might conclude from the WAIC and PSIS that the first model with 100 observations has much better predictive accuracy, because the WAIC and PSIS values are lower. However, this would be only an artifact of different sample sizes, and may not actually represent true differences between the models.
+```{r e7m3-3, fig.show = "hide"}
+library(ggridges)
 
-```{r e7m3-3, eval = FALSE}
 sample_sim %>%
   pivot_longer(cols = c(lppd, waic, psis)) %>%
-  mutate(sample_size = glue("N = {sample_size}"),
-         sample_size = fct_inorder(sample_size),
+  mutate(sample_size = fct_inorder(as.character(sample_size)),
          name = str_to_upper(name),
          name = fct_inorder(name)) %>%
-ggplot(aes(x = value)) +
-  facet_grid(rows = vars(sample_size), cols = vars(name), scales = "free_x") +
-  geom_histogram(aes(y = stat(density)), binwidth = 50) +
-  labs(x = "Value", y = "Density") +
-  theme(panel.border = element_rect(fill = NA))
+  ggplot(aes(x = value, y = sample_size)) +
+  facet_wrap(~name, nrow = 1, scales = "free_x") +
+  geom_density_ridges(bandwidth = 4) +
+  scale_y_discrete(expand = c(0, .1)) +
+  scale_x_continuous(breaks = seq(-2000, 3000, by = 750)) +
+  coord_cartesian(clip = "off") +
+  labs(x = "Value", y = "Sample Size")
 ```
+
+</details>
+
+```{r e7m3-3-show, echo = FALSE}
+knitr::include_graphics(knitr::fig_chunk("e7m3-3", "png"))
+```
+
 
 :::question
 > **7M4.** What happens to the effective number of parameters, as measured by PSIS or WAIC, as a prior becomes more concentrated? Why? Perform some experiments, if you are not sure.
@@ -193,62 +217,71 @@ $$
 
 Smaller variances in log probabilities will results in a lower penalty. If we restrict the prior to become more concentrated, we restrict the plausible range of the parameters. In other words, we restrict the variability in the posterior distribution. As the parameters become more consistent, the log probability of each observation will necessarily become more consistent also. Thus, the penalty term, or effective number of parameters, becomes smaller. We can again confirm with a small simulation.
 
-```{r e7m4-1, eval = FALSE}
-set.seed(2020)
+In this simulation we keep everything constant (i.e., data generation, model), with the exception of the prior for the slope coefficients. We'll try three different priors: $\text{Normal}(0, 0.1)$, $\text{Normal}(0, 1)$, and $\text{Normal}(0, 10)$. Visualizing the results, we can see that the more constricted prior does indeed result in a smaller penalty or effective number of parameters.
 
-prior_sim <- tibble(prior_sd = rep(c(0.1, 1, 10), each = 100)) %>%
-  mutate(
-    sample_data = map(1:n(),
-                      function(x) {
-                        n <- 20
-                        tibble(x1 = rnorm(n = n),
-                               x2 = rnorm(n = n),
-                               x3 = rnorm(n = n)) %>%
-                          mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1 +
-                                             0.6 * x2 + 1.2 * x3),
-                                 across(everything(), standardize))
-                      }),
-    model = map2(sample_data, prior_sd,
-                function(df, p_sd) {
-                  mod <- brm(y ~ 1 + x1 + x2 + x3, data = df,
-                             family = gaussian,
-                             prior = c(prior(normal(0, 0.2), class = Intercept),
-                                       prior_string(glue("normal(0, {p_sd})"), class = "b"),
-                                       prior(exponential(1), class = sigma)),
-                             iter = 4000, warmup = 3000, chains = 4, cores = 4,
-                             seed = 1234)
-                  return(mod)
-                }),
-    infc = map(model,
-               function(mod) {
-                 w <- suppressWarnings(brms::waic(mod))
-                 p <- suppressWarnings(brms::loo(mod))
-                 
-                 tibble(p_waic = w$estimates["p_waic", "Estimate"],
-                        p_loo = p$estimates["p_loo", "Estimate"])
-               })) %>%
-  unnest(infc)
+<details><summary>Simulation Code</summary>
+
+```{r e7m4-1, eval = !file.exists(here("fits", "chp7", "b7m4-sim.rds"))}
+gen_data <- function(n) {
+  tibble(x1 = rnorm(n = n),
+         x2 = rnorm(n = n),
+         x3 = rnorm(n = n)) %>%
+    mutate(y = rnorm(n = n, mean = 0.3 + 0.8 * x1 +
+                       0.6 * x2 + 1.2 * x3),
+           across(everything(), standardize))
+}
+fit_model <- function(dat, p_sd) {
+  suppressMessages(output <- capture.output(
+    mod <- brm(y ~ 1 + x1 + x2 + x3, data = dat,
+               family = gaussian,
+               prior = c(prior(normal(0, 0.2), class = Intercept),
+                         prior_string(glue("normal(0, {p_sd})"), class = "b"),
+                         prior(exponential(1), class = sigma)),
+               iter = 4000, warmup = 3000, chains = 4, cores = 4, seed = 1234)
+  ))
+  
+  return(mod)
+}
+calc_info <- function(model) {
+  w <- suppressWarnings(brms::waic(model))
+  p <- suppressWarnings(brms::loo(model))
+  
+  tibble(p_waic = w$estimates["p_waic", "Estimate"],
+         p_loo = p$estimates["p_loo", "Estimate"])
+}
+
+prior_sim <- tibble(sample_size = 20,
+                    prior_sd = rep(c(0.1, 1, 10), each = 100)) %>%
+  mutate(sample_data = map(sample_size, gen_data),
+         model = map2(sample_data, prior_sd, fit_model),
+         infc = map(model, calc_info)) %>%
+  select(-sample_data, -model) %>% 
+  unnest(infc) %>% 
+  write_rds(here("fits", "chp7", "b7m4-sim.rds"), compress = "gz")
 ```
 
-```{r e7m4-2, include = FALSE, cache = TRUE, eval = FALSE}
-prior_sim <- read_rds(here("fits", "chp7", "sim-7m4-small.rds"))
+```{r e7m4-2, include = FALSE, eval = file.exists(here("fits", "chp7", "b7m4-sim.rds"))}
+prior_sim <- read_rds(here("fits", "chp7", "b7m4-sim.rds"))
 ```
 
-Visualizing the results, we can see that the more constricted prior does indeed result in a smaller penalty or effective number of parameters.
-
-```{r e7m4-3, eval = FALSE}
+```{r e7m4-3, fig.show = "hide"}
 prior_sim %>%
   pivot_longer(cols = c(p_waic, p_loo)) %>%
-  mutate(prior_sd = glue("sd~'='~{prior_sd}"),
+  mutate(prior_sd = glue("&sigma; = {prior_sd}"),
          prior_sd = fct_inorder(prior_sd),
          name = factor(name, levels = c("p_waic", "p_loo"),
-                       labels = c("p[WAIC]", "p[PSIS]"))) %>%
-ggplot(aes(x = value)) +
-  facet_grid(rows = vars(prior_sd), cols = vars(name),
-             labeller = label_parsed) +
-  geom_histogram(aes(y = stat(density)), binwidth = 0.2) +
-  labs(x = "Value", y = "Density") +
-  theme(panel.border = element_rect(fill = NA))
+                       labels = c("p<sub>WAIC</sub>", "p<sub>PSIS</sub>"))) %>%
+  ggplot(aes(x = value, y = prior_sd, height = stat(density))) +
+  facet_wrap(~name, nrow = 1) +
+  geom_density_ridges(stat = "binline", bins = 20) +
+  labs(x = "Effective Parameters", y = "Prior") +
+  theme(axis.text.y = element_markdown())
+```
+
+</details>
+
+```{r e7m4-3-show, echo = FALSE}
+knitr::include_graphics(knitr::fig_chunk("e7m4-3", "png"))
 ```
 
 :::question
@@ -269,12 +302,12 @@ In contrast to the previous question, making the prior too informative can be to
 
 First, let's standardize the data and fit a straight line, a quadratic line, and a spline model.
 
-```{r e7h1-1, eval = FALSE}
+```{r e7h1-1}
 data(Laffer)
 
 laf_dat <- Laffer %>%
-  mutate(tax_rate2 = tax_rate ^ 2,
-         across(everything(), standardize))
+  mutate(across(everything(), standardize),
+         tax_rate2 = tax_rate ^ 2)
 
 laf_line <- brm(tax_revenue ~ 1 + tax_rate, data = laf_dat, family = gaussian,
                 prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -298,18 +331,18 @@ laf_spln <- brm(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), data = laf_dat,
                           prior(normal(0, 0.5), class = sds),
                           prior(exponential(1), class = sigma)),
                 iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-                control = list(adapt_delta = 0.99),
+                control = list(adapt_delta = 0.95),
                 file = here("fits", "chp7", "bh71-spln.rds"))
 ```
 
 Let's visualize the models:
 
-```{r e7h1-2, echo = FALSE, eval = FALSE}
+<details><summary>Code to reproduce</summary>
+
+```{r e7h1-2, fig.show = "hide", cache = TRUE}
 tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
-  mutate(tax_rate2 = tax_rate ^ 2,
-         tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
-         tax_rate2 = (tax_rate2 - mean(Laffer$tax_rate ^ 2)) /
-           sd(Laffer$tax_rate ^ 2))
+  mutate(tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
+         tax_rate2 = tax_rate ^ 2)
 
 predictions <- bind_rows(
   predicted_draws(laf_line, newdata = tr_seq) %>%
@@ -324,43 +357,48 @@ predictions <- bind_rows(
 )
 
 fits <- bind_rows(
-  fitted_draws(laf_line, newdata = tr_seq) %>%
+  epred_draws(laf_line, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Linear"),
-  fitted_draws(laf_quad, newdata = tr_seq) %>%
+  epred_draws(laf_quad, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Quadratic"),
-  fitted_draws(laf_spln, newdata = tr_seq) %>%
+  epred_draws(laf_spln, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Spline")
 )
 
 ggplot() +
-  facet_wrap(~type, ncol = 2) +
+  facet_wrap(~type, nrow = 1) +
   geom_ribbon(data = predictions,
               aes(x = tax_rate, ymin = .lower, ymax = .upper),
               alpha = 0.2) +
   geom_lineribbon(data = fits,
-                  aes(x = tax_rate, y = .value, ymin = .lower, ymax = .upper),
+                  aes(x = tax_rate, y = .epred, ymin = .lower, ymax = .upper),
                   size = 0.6) +
   geom_point(data = laf_dat, aes(x = tax_rate, y = tax_revenue),
              alpha = 0.5) +
-  scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
-  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue") +
-  theme(legend.position = "bottom")
+  scale_fill_manual(values = ramp_blue(seq(0.9, 0.1, length.out = 3)),
+                    breaks = c(0.67, 0.89, 0.97)) +
+  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue",
+       fill = "Interval")
 ```
 
-They all look pretty similar, but the spline does show a slight curve. Next, we can look at the PSIS (called LOO in {brms} and {rstan}) and WAIC comparisons. Both the PSIS and WAIC prefer the spline model. However, the standard error of the difference in PSIS and WAIC is larger than the actual difference for all models. Thus, neither the PSIS or WAIC is really able to differentiate the models in a meaningful way. However, it should be noted that both the PSIS and WAIC have Pareto or penalty values that are exceptionally large, which could make the criteria unreliable.
+</details>
 
-```{r e7h1-3, eval = FALSE}
+```{r e7h1-2-show, echo = FALSE, out.width = "95%"}
+knitr::include_graphics(knitr::fig_chunk("e7h1-2", "png"))
+```
+
+
+They all look pretty similar, but the quadratic and spline models do show a slight curve. Next, we can look at the PSIS (called LOO in {brms} and {rstan}) and WAIC comparisons. Neither the PSIS or WAIC is really able to differentiate the models in a meaningful way. However, it should be noted that both the PSIS and WAIC have Pareto or penalty values that are exceptionally large, which could make the criteria unreliable.
+
+```{r e7h1-3}
 library(loo)
 
-laf_line <- add_criterion(laf_line, criterion = c("loo", "waic"),
-                          overwrite = TRUE, force_save = TRUE)
-laf_quad <- add_criterion(laf_quad, criterion = c("loo", "waic"),
-                          overwrite = TRUE, force_save = TRUE)
-laf_spln <- add_criterion(laf_spln, criterion = c("loo", "waic"),
-                          overwrite = TRUE, force_save = TRUE)
+laf_line <- add_criterion(laf_line, criterion = c("loo", "waic"))
+laf_quad <- add_criterion(laf_quad, criterion = c("loo", "waic"))
+laf_spln <- add_criterion(laf_spln, criterion = c("loo", "waic"))
 
 loo_compare(laf_line, laf_quad, laf_spln, criterion = "waic")
 loo_compare(laf_line, laf_quad, laf_spln, criterion = "loo")
@@ -370,9 +408,9 @@ loo_compare(laf_line, laf_quad, laf_spln, criterion = "loo")
 > **7H2.** In the `Laffer` data, there is one country with a high tax revenue that is an outlier. Use PSIS and WAIC to measure the importance of this outlier in the models you fit in the previous problem. Then use robust regression with a Student's t distribution to revist the curve fitting problem. How much does a curved relationship depend upon the outlier point.
 :::
 
-Because I used `brms::brm()` to estimate the models, we can't use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models, and observation 1 is also problematic in the spline model.
+Because I used `brms::brm()` to estimate the models, we can't use the convenience functions to get the pointwise values for the PSIS and WAIC that are available in the {rethinking} package. So I'll write my own, called `criteria_influence()`. When we plot the Pareto *k* and $p_{\Tiny\text{WAIC}}$ values, we see that observation 12 is problematic in all three models.
 
-```{r e7h2-1, eval = FALSE}
+```{r e7h2-1, out.width = "95%"}
 library(gghighlight)
 
 criteria_influence <- function(mod) {
@@ -391,19 +429,18 @@ influ <- bind_rows(
 )
 
 ggplot(influ, aes(x = pareto_k, y = p_waic)) +
-  facet_wrap(~type, ncol = 2) +
+  facet_wrap(~type, nrow = 1) +
   geom_vline(xintercept = 0.7, linetype = "dashed") +
   geom_hline(yintercept = 0.4, linetype = "dashed") +
   geom_point() +
   gghighlight(pareto_k > 0.7 | p_waic > 0.4, n = 1, label_key = obs,
               label_params = list(size = 3)) +
-  labs(x = expression(Pareto~italic(k)), y = expression(p[WAIC])) +
-  theme(panel.border = element_rect(fill = NA))
+  labs(x = "Pareto *k*", y = "p<sub>WAIC</sub>")
 ```
 
 Let's refit the model using a Student's t distribution to put larger tails on our outcome distribution, and then visualize our new models.
 
-```{r e7h2-2, eval = FALSE}
+```{r e7h2-2}
 laf_line2 <- brm(bf(tax_revenue ~ 1 + tax_rate, nu = 1),
                  data = laf_dat, family = student,
                  prior = c(prior(normal(0, 0.2), class = Intercept),
@@ -431,13 +468,9 @@ laf_spln2 <- brm(bf(tax_revenue ~ 1 + s(tax_rate, bs = "bs"), nu = 1),
                  file = here("fits", "chp7", "bh72-spln.rds"))
 ```
 
-```{r e7h2-3, echo = FALSE, eval = FALSE}
-tr_seq <- tibble(tax_rate = seq(0, 40, length.out = 100)) %>%
-  mutate(tax_rate2 = tax_rate ^ 2,
-         tax_rate = (tax_rate - mean(Laffer$tax_rate)) / sd(Laffer$tax_rate),
-         tax_rate2 = (tax_rate2 - mean(Laffer$tax_rate ^ 2)) /
-           sd(Laffer$tax_rate ^ 2))
+<details><summary>Code to reproduce</summary>
 
+```{r e7h2-3, fig.show = "hide", cache = TRUE}
 predictions <- bind_rows(
   predicted_draws(laf_line2, newdata = tr_seq) %>%
     median_qi(.width = 0.89) %>%
@@ -451,41 +484,46 @@ predictions <- bind_rows(
 )
 
 fits <- bind_rows(
-  fitted_draws(laf_line2, newdata = tr_seq) %>%
+  epred_draws(laf_line2, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Linear"),
-  fitted_draws(laf_quad2, newdata = tr_seq) %>%
+  epred_draws(laf_quad2, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Quadratic"),
-  fitted_draws(laf_spln2, newdata = tr_seq) %>%
+  epred_draws(laf_spln2, newdata = tr_seq) %>%
     median_qi(.width = c(0.67, 0.89, 0.97)) %>%
     mutate(type = "Spline")
 )
 
 ggplot() +
-  facet_wrap(~type, ncol = 2) +
+  facet_wrap(~type, nrow = 1) +
   geom_ribbon(data = predictions,
               aes(x = tax_rate, ymin = .lower, ymax = .upper),
               alpha = 0.2) +
   geom_lineribbon(data = fits,
-                  aes(x = tax_rate, y = .value, ymin = .lower, ymax = .upper),
+                  aes(x = tax_rate, y = .epred, ymin = .lower, ymax = .upper),
                   size = 0.6) +
   geom_point(data = laf_dat, aes(x = tax_rate, y = tax_revenue),
              alpha = 0.5) +
-  scale_fill_brewer(palette = "Blues", breaks = c(0.67, 0.89, 0.97)) +
-  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue") +
-  theme(legend.position = "bottom")
+  scale_fill_manual(values = ramp_blue(seq(0.9, 0.1, length.out = 3)),
+                    breaks = c(0.67, 0.89, 0.97)) +
+  labs(x = "Standardized Tax Rate", y = "Standardized Tax Revenue",
+       fill = "Interval")
 ```
 
-The prediction intervals are a little bit narrower, which makes sense as the predictions are no longer being as influenced by the outlier. When we look at the new PSIS and WAIC estimates, we are no longer getting warning messages about large Pareto *k* values; however, we do still see warnings about large $p_{\Tiny\text{WAIC}}$ values. The comparisons also tell the same story as before, with the spline as the preferred model, but no distinguishable differences between the models.
+</details>
 
-```{r 7h2-4, eval = FALSE}
-laf_line2 <- add_criterion(laf_line2, criterion = c("loo", "waic"),
-                           overwrite = TRUE)
-laf_quad2 <- add_criterion(laf_quad2, criterion = c("loo", "waic"),
-                           overwrite = TRUE)
-laf_spln2 <- add_criterion(laf_spln2, criterion = c("loo", "waic"),
-                           overwrite = TRUE)
+```{r e7h2-3-show, echo = FALSE, out.width = "95%"}
+knitr::include_graphics(knitr::fig_chunk("e7h2-3", "png"))
+```
+
+
+The prediction intervals are a little bit narrower, which makes sense as the predictions are no longer being as influenced by the outlier. When we look at the new PSIS and WAIC estimates, we are no longer getting warning messages about large Pareto *k* values; however, we do still see warnings about large $p_{\Tiny\text{WAIC}}$ values. The comparisons also tell the same story as before, with no distinguishable differences between the models.
+
+```{r 7h2-4}
+laf_line2 <- add_criterion(laf_line2, criterion = c("loo", "waic"))
+laf_quad2 <- add_criterion(laf_quad2, criterion = c("loo", "waic"))
+laf_spln2 <- add_criterion(laf_spln2, criterion = c("loo", "waic"))
 
 loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "waic")
 loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
@@ -494,7 +532,7 @@ loo_compare(laf_line2, laf_quad2, laf_spln2, criterion = "loo")
 :::{.question .code-question}
 > **7H3.** Consider three fictional Polynesian islands. On each there is a Royal Ornithologist charged by the king with surveying the bird population. They have each found the following proportions of 5 important bird species:
 
-```{r e7h3-intro, message = FALSE, echo = FALSE, wrap = "table-question", eval = FALSE}
+```{r e7h3-intro, message = FALSE, echo = FALSE, wrap = "table-question"}
 library(kableExtra)
 tibble(island = paste("Island", 1:3),
        a = c(0.2, 0.8, 0.05),
@@ -502,7 +540,7 @@ tibble(island = paste("Island", 1:3),
        c = c(0.2, 0.05, 0.7),
        d = c(0.2, 0.025, 0.05),
        e = c(0.2, 0.025, 0.05)) %>%
-  mutate(across(where(is.double), fmt_prop, digits = 3)) %>%
+  mutate(across(where(is.double), ~sprintf("%0.3f", .x))) %>%
   kbl(align = c("l", rep("c", 5)), linesep = "",
       col.names = c(" ", paste("Species", LETTERS[1:5]))) %>%
   kable_styling()
@@ -513,7 +551,7 @@ tibble(island = paste("Island", 1:3),
 
 First, lets compute the entropy for each each island.
 
-```{r e7h3-1, eval = FALSE}
+```{r e7h3-1}
 islands <- tibble(island = paste("Island", 1:3),
        a = c(0.2, 0.8, 0.05),
        b = c(0.2, 0.1, 0.15),
@@ -535,9 +573,10 @@ For the second part of the question, we need to compute the KL divergence for ea
 $$
 D_{KL} = \sum_i p_i(\log(p_i) - \log(q_i))
 $$
+
 We'll write a function to do this calculation.
 
-```{r e7h3-2, eval = FALSE}
+```{r e7h3-2}
 d_kl <- function(p, q) {
   sum(p * (log(p) - log(q)))
 }
@@ -545,7 +584,7 @@ d_kl <- function(p, q) {
 
 Now, let's calculate $D_{KL}$ for each set of islands.
 
-```{r e7h3-3, eval = FALSE}
+```{r e7h3-3}
 crossing(model = paste("Island", 1:3),
          predicts = paste("Island", 1:3)) %>%
   filter(model != predicts) %>%
@@ -568,7 +607,7 @@ These results show us that when using Island 1 to predict Island 2, the KL diver
 
 As a reminder, here is the DAG for this example, where $H$ is happiness, $M$ is marriage, and $A$ is age.
 
-```{r e7h4-1, message = FALSE, out.width = "40%", eval = FALSE}
+```{r e7h4-1, message = FALSE, out.width = "40%"}
 library(dagitty)
 library(ggdag)
 
@@ -586,7 +625,7 @@ ggplot(hma_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
 
 First, let's regenerate the data and estimate the models.
 
-```{r e7h4-2, cache = TRUE, eval = FALSE}
+```{r e7h4-2, cache = TRUE}
 d <- sim_happiness(seed = 1977, N_years = 1000)
 dat <- d %>%
   filter(age > 17) %>%
@@ -611,7 +650,7 @@ b6.10 <- brm(happiness ~ 1 + a, data = dat, family = gaussian,
 
 For the model comparison we'll use PSIS.
 
-```{r e7h4-3, eval = FALSE}
+```{r e7h4-3}
 b6.9 <- add_criterion(b6.9, criterion = "loo")
 b6.10 <- add_criterion(b6.10, criterion = "loo")
 
@@ -620,7 +659,7 @@ loo_compare(b6.9, b6.10)
 
 PSIS shows a strong preference for `b6.9`, which is the model that includes both age and marriage status. However, `b6.10` provides the correct causal inference, as no additional conditioning is needed.
 
-```{r e7h4-4, eval = FALSE}
+```{r e7h4-4}
 adjustmentSets(hma_dag, exposure = "A", outcome = "H")
 ```
 
@@ -640,7 +679,7 @@ The reason is that in this model, marital status is a collider. Adding this vari
 
 First, let's estimate the five models.
 
-```{r e7h5-1, eval = FALSE}
+```{r e7h5-1}
 data(foxes)
 
 fox_dat <- foxes %>%
@@ -691,7 +730,7 @@ b7h5_5 <- brm(weight ~ 1 + area, data = fox_dat,
 
 Then we can calculate the WAIC for each model and the model comparisons.
 
-```{r e7h5-2, warning = FALSE, eval = FALSE}
+```{r e7h5-2, warning = FALSE}
 b7h5_1 <- add_criterion(b7h5_1, criterion = "waic")
 b7h5_2 <- add_criterion(b7h5_2, criterion = "waic")
 b7h5_3 <- add_criterion(b7h5_3, criterion = "waic")
@@ -702,29 +741,27 @@ comp <- loo_compare(b7h5_1, b7h5_2, b7h5_3, b7h5_4, b7h5_5, criterion = "waic")
 comp
 ```
 
-Overall, the WAIC values are very similar, and the differences all fall within the 99% intervals for the differences. 
+In general, the models don't appear all that different from each other. However, there does seem to be two groups of models: `b7h5_1`, `b7h5_2`, and `b7h5_3` are all nearly identical; and `b7h5_4` and `b7h5_5` are nearly identical.
 
-```{r e7h5-3, echo = FALSE, eval = FALSE}
+<details><summary>Code to reproduce</summary>
+
+```{r e7h5-3, fig.show = "hide"}
 plot_comp <- comp %>%
   as_tibble(rownames = "model") %>%
   mutate(across(-model, as.numeric),
-         model = factor(model, levels = paste0("b7h5_", 1:5)))
+         model = fct_inorder(model))
 
 waic_val <- plot_comp %>%
   select(model, waic, se = se_waic) %>%
-  mutate(lb = waic - (se * 2.6),
-         ub = waic + (se * 2.6),
-         type = "waic")
+  mutate(lb = waic - se,
+         ub = waic + se)
 
 diff_val <- plot_comp %>%
   select(model, waic, se = se_diff) %>%
   mutate(se = se * 2) %>%
-  mutate(lb = waic - (se * 2.6),
-         ub = waic + (se * 2.6),
-         type = "diff") %>%
+  mutate(lb = waic - se,
+         ub = waic + se) %>%
   filter(se != 0)
-
-all_val <- bind_rows(waic_val, diff_val)
 
 ggplot() +
   geom_pointrange(data = waic_val, mapping = aes(x = waic, xmin = lb, xmax = ub,
@@ -732,13 +769,19 @@ ggplot() +
   geom_pointrange(data = diff_val, mapping = aes(x = waic, xmin = lb, xmax = ub,
                                                  y = fct_rev(model)),
                   position = position_nudge(y = 0.2), shape = 2,
-                  color = palette_okabeito[2]) +
+                  color = "#009FB7") +
   labs(x = "Deviance", y = NULL)
 ```
 
-However, there does seem to be two groups of model: `b7h5_1`, `b7h5_2`, and `b7h5_3` are all nearly identical; and `b7h5_4` and `b7h5_5` are nearly identical. To understand why this is, we can return to the DAG for this example.
+</details>
 
-```{r e7h5-fox-dag, out.width = "40%", echo = FALSE, eval = FALSE}
+```{r e7h5-3-show, echo = FALSE}
+knitr::include_graphics(knitr::fig_chunk("e7h5-3", "png"))
+```
+
+To understand why this is, we can return to the DAG for this example.
+
+```{r e7h5-fox-dag, out.width = "40%", echo = FALSE}
 suppressPackageStartupMessages(library(tidygraph))
 suppressPackageStartupMessages(library(ggraph))
 
@@ -764,7 +807,7 @@ fox_dag %>%
   theme_graph()
 ```
 
-The first three models (`b7h5_1`, `b7h5_2`, and `b7h5_3`) all contains `groupsize` and one or both of `area` and `avgfood`. The reason these models is the same is that there are no back-door path from `area` or `avgfood` to `weight`. In other words, the effect of `area` adjusting for `groupsize` is the same as the effect of `avgfood` adjusting for `groupsize`, because the effect of `area` is routed entirely through `avgfood`.
+The first three models (`b7h5_1`, `b7h5_2`, and `b7h5_3`) all contain `groupsize` and one or both of `area` and `avgfood`. The reason these models is the same is that there are no back-door path from `area` or `avgfood` to `weight`. In other words, the effect of `area` adjusting for `groupsize` is the same as the effect of `avgfood` adjusting for `groupsize`, because the effect of `area` is routed entirely through `avgfood`.
 
 Similarly, the last two models (`b7h5_4` and `b7h5_5`) are also nearly identical because of the relationship of `area` to `avgfood`. Because the effect of `area` is routed entirely through `avgfood`, including only `avgfood` or `area` should result in the same inferences.
 
