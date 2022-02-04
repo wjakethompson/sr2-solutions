@@ -1556,7 +1556,7 @@ b6.10 <- brm(happiness ~ 1 + a, data = dat, family = gaussian,
              file = here("fits", "hw4", "w4h1-6.10"))
 ```
 
-Now we'll compare both PSIS and WAIC. The results from PSIS and WAIC are identical, with both showing a very strong preference for `b6.9` which includes marriage as a predictor. Thus, if we are interested only in predicting happiness, we should use model `b6.9`. However, due to the causal model, the coefficients can't be interpreted. The coefficient for age is confounded by the collider. Similarly, the coefficient for marriage is odd, because in the DAG, marriage does not cause happiness. If we ignore the direction of the arrow, then this would be partial causal effect of marriage on happiness, as age is explaining some of the variance in marriage.
+Now we'll compare both PSIS and WAIC. The results from PSIS and WAIC are identical, with both showing a very strong preference for `b6.9` which includes marriage as a predictor. Thus, if we are interested only in predicting happiness, we should use model `b6.9`. However, due to the causal model, the coefficients can't be interpreted. The coefficient for age is confounded by the collider. Similarly, the coefficient for marriage is odd, because in the DAG, marriage does not cause happiness, it is a cause of happiness. Thus, all of the parameters represents conditional associations. None are causal effects.
 
 ```{r w4h1-3}
 b6.9 <- add_criterion(b6.9, criterion = c("waic", "loo"))
@@ -1586,7 +1586,7 @@ ggplot(fox_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
   theme_void()
 ```
 
-In last week's homework, we estimated 2 models to predict weight. Let's restimate them here and add the PSIS and WAIC scores.
+Last week we estimated many models to the fox data. Here are five models that predict weight with various combinations of predictors.
 
 ```{r w4h2-2}
 data(foxes)
@@ -1596,34 +1596,74 @@ fox_dat <- foxes %>%
   select(area, avgfood, weight, groupsize) %>%
   mutate(across(everything(), standardize))
 
-food_1 <- brm(weight ~ 1 + avgfood, data = fox_dat, family = gaussian,
-              prior = c(prior(normal(0, 0.2), class = Intercept),
-                        prior(normal(0, 0.5), class = b,),
-                        prior(exponential(1), class = sigma)),
-              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-              file = here("fits", "hw4", "w4h2-1"))
+fox_1 <- brm(weight ~ 1 + avgfood + groupsize + area, data = fox_dat,
+             family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b,),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "hw4", "w4h2-1"))
 
-food_2 <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
-              family = gaussian,
-              prior = c(prior(normal(0, 0.2), class = Intercept),
-                        prior(normal(0, 0.5), class = b,),
-                        prior(exponential(1), class = sigma)),
-              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
-              file = here("fits", "hw4", "w4h2-2"))
+fox_2 <- brm(weight ~ 1 + avgfood + groupsize, data = fox_dat,
+             family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b,),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "hw4", "w4h2-2"))
 
-food_1 <- add_criterion(food_1, criterion = c("waic", "loo"))
-food_2 <- add_criterion(food_2, criterion = c("waic", "loo"))
+fox_3 <- brm(weight ~ 1 + groupsize + area, data = fox_dat,
+             family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b,),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "hw4", "w4h2-3"))
+
+fox_4 <- brm(weight ~ 1 + avgfood + area, data = fox_dat,
+             family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b,),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "hw4", "w4h2-4"))
+
+fox_5 <- brm(weight ~ 1 + area, data = fox_dat,
+             family = gaussian,
+             prior = c(prior(normal(0, 0.2), class = Intercept),
+                       prior(normal(0, 0.5), class = b,),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "hw4", "w4h2-5"))
+
+fox_1 <- add_criterion(fox_1, criterion = c("waic", "loo"))
+fox_2 <- add_criterion(fox_2, criterion = c("waic", "loo"))
+fox_3 <- add_criterion(fox_3, criterion = c("waic", "loo"))
+fox_4 <- add_criterion(fox_4, criterion = c("waic", "loo"))
+fox_5 <- add_criterion(fox_5, criterion = c("waic", "loo"))
 ```
 
-Here again, the WAIC and PSIS scores are identical. Both models prefer model 2, with both food and group size included in the model. However, the difference isn't too much larger than the standard error, so the preference is not overly strong.
+Here again, the WAIC and PSIS scores are very similar. Both methods prefer model 1, which includes all three predictors in the model. However, the differences are often smaller than the standard error of difference, so the preference is not overly strong.
 
 ```{r w4h2-3}
-loo_compare(food_1, food_2, criterion = "waic")
+loo_compare(fox_1, fox_2, fox_3, fox_4, fox_5, criterion = "waic")
 
-loo_compare(food_1, food_2, criterion = "loo")
+loo_compare(fox_1, fox_2, fox_3, fox_4, fox_5, criterion = "loo")
 ```
 
-In this model, the food coefficient represents the direct effect of food on the number of wolves, because conditioning on group size closes the indirect path from food to wolves. From the perspective of group size, food is a fork. So by closing this path, the group size coefficient represents the total (and also direct since this is only one path remaining) causal effect of group size on the number of wolves.
+We can interpret the coefficients for `fox_1` using the DAG. First for `avgfood`. Since, `groupsize` is in the model, the indirect path from food to weight is closed. Therefore, the coefficient for `avgfood` represents the direct effect of food on `weight`. Second, for `groupsize`, `avgfood` is a backdoor fork. So by closing this path, the group size coefficient represents the total (and also direct since this is only one path remaining) causal effect of group size on weight.
+
+Finally, `area` is a little weird. Because `avgfood` is a pipe, mediating the relationship between `area` and `weight`, including `avgfood` should block the association between `area` and `weight`. This is indeed what we see in model 4, which includes only `area` and `avgfood`. There is a good deal of posterior probability on both sides of 0, indicating that the effect of `area` is could plausibly be negative or positive.
+
+```{r w4h2-4}
+fixef(fox_4)
+```
+
+However, when `groupsize` is added as in the first model, we see that the association between `area` and `weight` increases, even though `avgfood` should still be blocking the path. Therefore, this indicates that something else may be going on in the data, or our DAG might be incorrect.
+
+```{r w4h2-5}
+fixef(fox_1)
+```
 
 
 :::question
@@ -1639,7 +1679,8 @@ library(splines)
 
 data(cherry_blossoms)
 cb_dat <- cherry_blossoms %>%
-  drop_na(doy, temp)
+  select(doy, temp) %>% 
+  drop_na(everything()) 
 
 linear <- brm(doy ~ 1 + temp, data = cb_dat, family = gaussian,
               prior = c(prior(normal(100, 10), class = Intercept),
@@ -1703,3 +1744,171 @@ ggplot(preds, aes(x = .prediction)) +
 >
 > This is a challenging exercise, because the data are so scarce. But it is also a realistic example, because people publish *Nature* papers with even less data. So do your best, and I look forward to seeing your growth curves.
 :::
+
+Not being familiar with biological growth models, this question stumped me. So I'll be pulling from [McElreath's solution](https://github.com/rmcelreath/stat_rethinking_2022/blob/main/homework/week04_solutions.pdf), but translating everything to {tidyverse} and {brms}.
+
+We start by loading the data and normalizing mass to be the proportion of maximum mass within each species. We also create sub-sample of just one dinosaur to more easily illustrate the various models we'll explore.
+
+```{r w4h4-1}
+data(Dinosaurs)
+
+dino_dat <- Dinosaurs %>% 
+  as_tibble() %>% 
+  select(species_name = species, species = sp_id, age, mass) %>% 
+  group_by(species) %>% 
+  mutate(prop_mass = mass / max(mass),
+         species = factor(species)) %>% 
+  ungroup()
+
+one_dino <- filter(dino_dat, species == 1)
+```
+
+First up is a straight linear regression. This model looks just like all of the other regressions we've fit with {brms} so far.
+
+```{r w4h4-2}
+one_dino_linear <- brm(prop_mass ~ 1 + age, data = one_dino, family = gaussian,
+                       prior = c(prior(normal(0, 1), class = Intercept),
+                                 prior(normal(0, 1), class = b),
+                                 prior(exponential(1), class = sigma)),
+                       iter = 2000, warmup = 1000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "hw4", "w4h4-one-linear"))
+```
+
+Visualizing the model, we see that it actually does a pretty good job of fitting the data points for this one dinosaur, but leads to impossible predictions. For example, ages 0 to about 4 are predicted to have negative mass. Additionally, from a scientific perspective, linear growth doesn't make any biological sense.
+
+```{r w4h4-3}
+new_dat <- tibble(age = seq(0, 16, length.out = 50))
+
+new_dat %>% 
+  add_epred_draws(one_dino_linear) %>% 
+  ggplot(aes(x = age, y = .epred)) +
+  stat_lineribbon(.width = 0.89, fill = "#009FB7", alpha = 0.4,
+                  color = NA) +
+  stat_lineribbon(fill = "transparent") +
+  geom_point(data = one_dino, aes(y = prop_mass), size = 2) +
+  scale_x_continuous(breaks = seq(0, 15, by = 5)) +
+  coord_cartesian(ylim = c(0, 1.05), expand = FALSE) +
+  labs(x = "Age", y = "Mass (normalized)")
+```
+
+The next model is a classic biological model called the von Bertalanffy growth model [-@bertalanffy]. Under this models, organisms grow at a certain rate given the differential equation (my notation shifts a bit from McElreath's solution to make the model fitting in {brms} easier):
+
+$$
+\frac{dM}{dA} = k(\phi - M)
+$$
+
+where $M$ is mass, $A$ is age, $k$ is a rate, and $\phi$ is the maximum adult size. Solving the equation gives us:
+
+$$
+M(A) = \phi(1 - \exp(-kA))
+$$
+
+We can define this equation in {brms} using the non-linear syntax, as [described by Solomon Kurz](https://bookdown.org/content/4857/generalized-linear-madness.html#statistical-model.).
+
+```{r w4h4-4}
+one_dino_bio <- brm(bf(prop_mass ~ phi * (1 - exp(-k * age)),
+                       phi + k ~ 1,
+                       nl = TRUE), data = one_dino, family = gaussian,
+                    prior = c(prior(normal(1, 0.5), nlpar = phi),
+                              prior(exponential(1), nlpar = k, lb = 0),
+                              prior(exponential(1), class = sigma)),
+                    iter = 4000, warmup = 3000, chains = 4, cores = 4, seed = 1234,
+                    control = list(adapt_delta = 0.95),
+                    file = here("fits", "hw4", "w4h4-one-bio"))
+
+new_dat %>% 
+  add_epred_draws(one_dino_bio) %>% 
+  ggplot(aes(x = age, y = .epred)) +
+  stat_lineribbon(.width = 0.89, fill = "#009FB7", alpha = 0.4,
+                  color = NA) +
+  stat_lineribbon(fill = "transparent") +
+  geom_point(data = one_dino, aes(y = prop_mass), size = 2) +
+  scale_x_continuous(breaks = seq(0, 15, by = 5)) +
+  coord_cartesian(ylim = c(0, 1.05), expand = FALSE) +
+  labs(x = "Age", y = "Mass (normalized)")
+```
+
+This looks worse that our original line, except for the fact that we no longer get implausible predictions. So that's a win. The problem is that we want growth to be slow at first and then accelerate around age 5. In the von Bertalanffy growth model, this is accomplished by raising the growth function to a power, $\theta$:
+
+$$
+M(A) = \phi(1 - \exp(-kA))^\theta
+$$
+
+We can again fit this model using the non-linear {brms} syntax.
+
+```{r w4h4-5}
+one_dino_acc <- brm(bf(prop_mass ~ phi * (1 - exp(-k * age)) ^ theta,
+                       phi + k + theta ~ 1,
+                       nl = TRUE), data = one_dino, family = gaussian,
+                    prior = c(prior(normal(1, 0.5), nlpar = phi),
+                              prior(exponential(1), nlpar = k, lb = 0),
+                              prior(exponential(0.1), nlpar = theta, lb = 0),
+                              prior(exponential(1), class = sigma)),
+                    iter = 20000, warmup = 19000, chains = 4, cores = 4, seed = 1234,
+                    control = list(adapt_delta = 0.999, max_treedepth = 15),
+                    file = here("fits", "hw4", "w4h4-one-acc"))
+
+new_dat %>% 
+  add_epred_draws(one_dino_acc) %>% 
+  ggplot(aes(x = age, y = .epred)) +
+  stat_lineribbon(.width = 0.89, fill = "#009FB7", alpha = 0.4,
+                  color = NA) +
+  stat_lineribbon(fill = "transparent") +
+  geom_point(data = one_dino, aes(y = prop_mass), size = 2) +
+  scale_x_continuous(breaks = seq(0, 15, by = 5)) +
+  coord_cartesian(ylim = c(0, 1.05), expand = FALSE) +
+  labs(x = "Age", y = "Mass (normalized)")
+```
+
+This looks pretty good! Comparing our models with PSIS, we see that the accelerated growth model is preferred, even after taking the standard errors into consideration.
+
+```{r w4h4-6}
+one_dino_linear <- add_criterion(one_dino_linear, criterion = "loo")
+one_dino_bio <- add_criterion(one_dino_bio, criterion = "loo")
+one_dino_acc <- add_criterion(one_dino_acc, criterion = "loo")
+
+loo_compare(one_dino_linear, one_dino_bio, one_dino_acc,
+            criterion = "loo")
+```
+
+Now let's fit that model to all of the dinosaurs in our data set. The only difference here is that we know index `phi`, `k`, and `theta` by species so that each will get their own curve.
+
+```{r w4h4-7, cache = TRUE}
+all_dinos <- brm(bf(prop_mass ~ phi * (1 - exp(-k * age)) ^ theta,
+                    phi ~ 0 + species,
+                    k ~ 0 + species,
+                    theta ~ 0 + species,
+                    nl = TRUE), data = dino_dat, family = gaussian,
+                 prior = c(prior(normal(1, 0.5), nlpar = phi),
+                           prior(exponential(1), nlpar = k, lb = 0),
+                           prior(exponential(0.1), nlpar = theta, lb = 0),
+                           prior(exponential(1), class = sigma)),
+                 iter = 10000, warmup = 9000, chains = 4, cores = 4, seed = 1234,
+                 control = list(adapt_delta = 0.95),
+                 file = here("fits", "hw4", "w4h4-all"))
+
+p <- distinct(dino_dat, species_name, species) %>% 
+  expand_grid(age = seq(0, 16, length.out = 50)) %>% 
+  add_epred_draws(all_dinos) %>% 
+  ggplot(aes(x = age, y = .epred, fill = species_name, color = species_name)) +
+  stat_lineribbon(.width = 0.89, alpha = 0.6, color = NA) +
+  stat_lineribbon(fill = "transparent") +
+  geom_point(data = dino_dat, aes(y = prop_mass), size = 2) +
+  scale_fill_viridis_d(option = "turbo") +
+  scale_color_viridis_d(option = "turbo") +
+  scale_x_continuous(breaks = seq(0, 15, by = 5)) +
+  coord_cartesian(ylim = c(0, 2.05), expand = FALSE) +
+  labs(x = "Age", y = "Mass (normalized)", fill = "Species",
+       color = "Species")
+
+p
+```
+
+There's a lot of uncertainty in each curve, which isn't unexpected given how few data points we have. To me it's a little easier to digest if we split each species into it's own plot. Overall, it looks like our models are doing a pretty good job of estimating the dinosaur growth!
+
+```{r w4h4-8, cache = TRUE, fig.width = 8.75, out.width = "95%"}
+p +
+  facet_wrap(~species_name, ncol = 3) +
+  guides(fill = "none", color = "none")
+```
+
