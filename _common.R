@@ -16,6 +16,7 @@ suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(geomtextpath))
 suppressPackageStartupMessages(library(ggtext))
 suppressPackageStartupMessages(library(dagitty))
+suppressPackageStartupMessages(library(bayesplot))
 
 ggplot2::theme_set(wjake::theme_wjake(base_family = "Source Sans Pro"))
 
