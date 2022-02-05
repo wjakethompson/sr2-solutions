@@ -1505,7 +1505,258 @@ wine %>%
 
 ### Chapter 9
 
-Something...
+:::question
+> **9E1.** Which of the following is a requirement of the simple Metropolis algorithm?
+
+> (1) The parameters must be discrete.
+> (2) The likelihood must be Gaussian.
+> (3) The proposal distribution must be symmetric.
+:::
+
+Only (3) is required.
+
+:::question
+> **9E2.** Gibbs sampling is more efficient than the Metropolis algorithm. How does it achieve tis extra efficiency? Are there any limitations to the Gibbs sampling strategy?
+:::
+
+Gibbs sampling is more efficient because it makes smarter proposals. This is accomplished through conjugate priors, which make it possible to get analytical solutions to the posterior for each parameter in the model. However, this is also limiting, because we are constrained in which prior distributions we are able to select. Additionally, like the Metropolis algorithm, Gibbs samplers can get stuck in one area of the posterior if parameters are highly correlated or if the parameters are in a high-dimensional space.
+
+:::question
+> **9E3.** Which sort of parameters can Hamiltonian Monte Carlo not handle? Can you explain why?
+:::
+
+Hamiltonian Monte Carlo cannot handle discrete parameters. This is because the method uses a physics simulation to glide an imaginary particle over the surface of the posterior. If parameters are discrete, that breaks the surface and the particle cannot glide.
+
+:::question
+> **9E4.** Explain the difference between the effective number of samples, `n_eff` as calculated by Stan, and the actual number of samples.
+:::
+
+The actual number of samples is simply the number of draws we make from the posterior distribution. These draws may be autocorrelated, so the effective number of samples is an estimate of the number of completely independent (i.e., uncorrelated) draws that would contain the same amount of information. As autocorrelation increases, the number of effective samples decreases. Usually, `n_eff` will be smaller than the actual number of samples. However, there are times when Stan can make better than independent draws, which would result in an `n_eff` great than the actual number of samples.
+
+:::question
+> **9E5.** Which value should `Rhat` approach, when a chain is sampling the posterior distribution correctly?
+:::
+
+The `Rhat` should approach 1 from above. That is, bad chains will result in an `Rhat` greater than 1.
+
+:::question
+> **9E6.** Sketch a good trace plot for a Markov chain, one that is effectively sampling from the posterior distribution. What is good about its shape? Then sketch a trace plot for a malfunctioning Markov chain. What about its shape indicates malfunction?
+:::
+
+Below is an example of a good Markov chain. Here I've simulated 3 chains. They are all stationary and mixing well. Additionally, they are all jumbled together, so you can't see any patterns of the different chains sampling different spaces.
+
+```{r e9e6-1}
+iters <- 1000
+
+good_chain <- tibble(.iter = seq_len(iters),
+                     chain1 = rnorm(n = iters, mean = 0, sd = 1),
+                     chain2 = rnorm(n = iters, mean = 0, sd = 1),
+                     chain3 = rnorm(n = iters, mean = 0, sd = 1)) %>% 
+  pivot_longer(-.iter, names_to = "chain", values_to = "value")
+
+ggplot(good_chain, aes(x = .iter, y = value, color = chain)) +
+  geom_line(show.legend = FALSE) +
+  scale_color_okabeito() +
+  labs(x = "Iteration", y = "Value")
+```
+
+In contrast this plot shows a bad chain. Here, one of the chains has gotten stuck in a different area of the posterior. All three chains are fairly stationary, but one chain is clearly not mixing with the others. We should rexamine our model to figure out what might be causing this behavior.
+
+```{r e9e6-2}
+bad_chain <- tibble(.iter = seq_len(iters),
+                    chain1 = rnorm(n = iters, mean = 0, sd = 1),
+                    chain2 = rnorm(n = iters, mean = 0, sd = 1),
+                    chain3 = rnorm(n = iters, mean = 3, sd = .5)) %>% 
+  pivot_longer(-.iter, names_to = "chain", values_to = "value")
+
+ggplot(bad_chain, aes(x = .iter, y = value, color = chain)) +
+  geom_line(show.legend = FALSE) +
+  scale_color_okabeito() +
+  labs(x = "Iteration", y = "Value")
+```
+
+
+:::question
+> **9E7.** Repeat the problem above, but now for a trace rank plot.
+:::
+
+This one is harder, because I like the look of McElreath's trace rank plots. Specifically, he uses outline of the histogram only, without lines to separate the individual bars. So I wrote a function called `make_trank()` that will automate this work. It takes a data frame with one column per parameter and an additional column named `Chain`. It returns a data frame suitable for making trace rank plots in {ggplot2} with `geom_line()`.
+
+Let's look at a good trace rank plot. Here we see a good mixing, with a fairly consistent number of samples from each bin in each chain.
+
+<details><summary>View `make_trank()`</summary>
+
+```{r make-trank}
+make_trank <- function(dat, bins = 20) {
+  dat <- dat %>% 
+    group_by(Chain) %>% 
+    mutate(iteration = 1:n()) %>% 
+    pivot_longer(-c(Chain, iteration),
+                 names_to = "parameter", values_to = "value") %>% 
+    group_by(parameter) %>% 
+    mutate(value_rank = row_number(value))
+  
+  bucket_counts <- dat %>% 
+    mutate(value_bucket = cut_interval(value_rank, n = bins,
+                                       labels = FALSE)) %>%
+    ungroup() %>% 
+    count(Chain, parameter, value_bucket)
+  
+  dat %>% 
+    ungroup() %>% 
+    select(Chain, iteration) %>% 
+    mutate(iter_bucket = cut_interval(iteration, n = bins,
+                                      labels = FALSE)) %>% 
+    left_join(bucket_counts, by = c("Chain", "iter_bucket" = "value_bucket")) %>% 
+    mutate(Chain = factor(Chain))
+}
+```
+
+</details>
+
+```{r e9e7-1}
+good_chain %>% 
+  mutate(Chain = str_replace_all(chain, "chain", ""),
+         Chain = as.integer(Chain)) %>% 
+  select(Chain, value) %>% 
+  make_trank(bins = 25) %>% 
+  ggplot(aes(x = iteration, y = n, color = Chain)) +
+  geom_line(show.legend = FALSE, size = 1) +
+  scale_color_okabeito() +
+  scale_x_continuous(breaks = waiver(), n.breaks = 6,
+                     labels = ~.x * 3) +
+  labs(x = "Rank", y = "Samples")
+```
+
+Now for the bad chain. We know from the trace plot that one chain was sampling values that were higher than the other two chains. This is reflected in the trace rank plot. We can see that the values with the highest ranks nearly all come from one chain, and that chain has none of the low ranks. This is the chains are clearly not mixed, and do not show a consistent number of samples across the bins.
+
+```{r e9e7-2}
+bad_chain %>% 
+  mutate(Chain = str_replace_all(chain, "chain", ""),
+         Chain = as.integer(Chain)) %>% 
+  select(Chain, value) %>% 
+  make_trank(bins = 25) %>% 
+  ggplot(aes(x = iteration, y = n, color = Chain)) +
+  geom_line(na.rm = TRUE, show.legend = FALSE, size = 1) +
+  scale_color_okabeito() +
+  scale_x_continuous(breaks = waiver(), n.breaks = 6,
+                     labels = ~.x * 3) +
+  labs(x = "Rank", y = "Samples")
+```
+
+
+:::question
+> **9M1.** Re-estimate the terrain reggedness model from the chapter, but now using a uniform prior for the standard deviation, `sigma`. The uniform prior should be `dunif(0,1)`. Use `ulam` to estimate the posterior. Does the different prior have any detectible influence on the posterior distribution of `sigma`? Why or why not?
+:::
+
+Something
+
+
+:::question
+> **9M2.** Modify the terrain ruggedness model again. This time, change the prior for `b[cid]` to `dexp(0,3)`. What does this do to the posterior distribution? Can you explain it?
+:::
+
+Something
+
+
+:::question
+> **9M3.** Re-estimate one of the Stan models from the chapter, but at different numbers of `warmup` iterations. Be sure to use the same number of sampling interations in each case. Compare the `n_eff` values. How much warmup is enough?
+:::
+
+Something
+
+
+:::{.question .code-question}
+> **9H1.** Run the model below and then inspect the posterior distribution and explain what it is accomplishing.
+
+```{r e9h1-inst, eval = FALSE}
+mp <- ulam(
+  alist(
+    a ~ dnorm(0, 1),
+    b ~ dcaucy(0, 1)
+  ), data = list(y = 1), chains = 1)
+```
+
+> Compare the samples for the parameters `a` and `b`. Can you explain the different trace plots? If you are unfamiliar with the Cauchy distribution, you should look it up. The key feature to attend to is that it has no expected value. Can you connect this fact to the trace plot?
+:::
+
+Something
+
+
+:::question
+> **9H2.** Recall the divorce rate example from Chapter 5. Repeat that analysis, using `ulam` this time, fitting models `m5.1`, `m5.2`, and `m5.3`. Use `compare` to compare the models on the basis of WAIC or PSIS. To use WAIC or PSIS with `ulam`, you need add the argument `log_lik=TRUE`. Explain the model comparison results.
+:::
+
+Something
+
+
+:::{.question .code-question}
+> **9H3.** Sometimes changing a prior for one parameter has unanticipated effects on other parameters. This is because when a parameter is highly correlated with another parameter in the posterior, the prior influences both parameters. Here's an example to work and think through.
+
+> Go back to the leg length example in Chapter 6 and use the code there to simulate height and leg lengths for 100 imagined individuals. Below is the model you fit before, resulting in a highly correlated posterior for the two beta parameters. This time, fit the model using `ulam`:
+
+```{r e9h3-inst-1, eval = FALSE}
+m5.8s <- ulam(
+  alist(
+    height ~ dnorm(mu, sigma),
+    mu <- a + bl * leg_left + br * leg_right ,
+    a ~ dnorm(10, 100),
+    bl ~ dnorm(2, 10),
+    br ~ dnorm(2, 10),
+    sigma ~ dexp(1)
+  ), data = d, chains = 4,
+  start = list(a =10 , bl = 0, br = 0.1, sigma = 1)
+)
+```
+
+> Compare the posterior distribution produced by the code above to the posterior distribution produced when you change the prior for `br` so that it is strictly positive:
+
+```{r e9h3-inst-2, eval = FALSE}
+m5.8s2 <- ulam(
+  alist(
+    height ~ dnorm(mu, sigma),
+    mu <- a + bl * leg_left + br * leg_right ,
+    a ~ dnorm(10, 100),
+    bl ~ dnorm(2, 10),
+    br ~ dnorm(2, 10),
+    sigma ~ dexp(1)
+  ), data = d, chains = 4,
+  constraints = list(br = "lower=0"),
+  start = list(a =10 , bl = 0, br = 0.1, sigma = 1)
+)
+```
+
+> Note the `constraints` list. What this does is constrain the prior distribution of `br` so that is has positive probability only above zero. In other words, that prior ensures that the posterior distribution for `br` will have no probability mass below zero. Compare the two posterior distributions for `m5.8s` and `m5.8s2`. What has changed in the posterior distribution of both beta parameters? Can you explain the change induced by the change in prior?
+:::
+
+Something
+
+
+:::question
+> **9H4.** For the two models fit in the previous problem, use WAIC or PSIS to compare the effective numbers of parameters for each model. You will need to use `log_lik=TRUE` to instruct `ulam` to compute the terms that both WAIC and PSIS need. Which model has more effective parameters? Why?
+:::
+
+Something
+
+
+:::question
+> **9H5.** Modify the Metropolis algorithm code from the chapter to handle the case that the island populations have a different distribution than the island labels. This means the island's number will not be the same as its population.
+:::
+
+Something
+
+
+:::question
+> **9H6.** Modify the Metropolis algorithm code from the chapter to write your own simple MCMC estimator for globe tossing data and model from Chapter 2.
+:::
+
+Something
+
+
+:::question
+> **9H7.** Can you write your own Hamiltonian Monte Carlo algorithm for the globe tossing data, using the R code in the chapter? You will have to write your own functions for the likelihood and gradient, but you can use the HMC2 function.
+:::
+
 
 ## Homework
 

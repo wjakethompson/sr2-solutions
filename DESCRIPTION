@@ -13,7 +13,6 @@ License: CC BY NC SA 4.0
 Depends:
   R (>= 4.0.0)
 Imports:
-  bayesplot,
   bookdown,
   brms,
   cmdstanr,
