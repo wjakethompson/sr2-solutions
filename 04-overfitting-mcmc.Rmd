@@ -1830,14 +1830,75 @@ mp <- ulam(
 > Compare the samples for the parameters `a` and `b`. Can you explain the different trace plots? If you are unfamiliar with the Cauchy distribution, you should look it up. The key feature to attend to is that it has no expected value. Can you connect this fact to the trace plot?
 :::
 
-Something
+This model is just sampling prior distributions. Let reproduce this using {brms}. To get prior samples, we set `sample_prior = "only"`. That, in combination with the non-linear syntax we've seen before, lets us duplicate the model from the question.
+
+```{r e9h1-1}
+mp <- brm(bf(1 ~ a + b, a ~ 1, b ~ 1, nl = TRUE), data = 1,
+          prior = c(prior(normal(0, 1), class = b, nlpar = a),
+                    prior(cauchy(0, 1), class = b, nlpar = b)),
+          iter = 2000, chains = 1, sample_prior = "only",
+          file = here("fits", "chp9", "b9h1-prior"))
+```
+
+Looking at the trace plots, we see that `a` is sampling as we would expect, given the prior, bouncing around between -3 and 3. The `b` parameter looks a little odd. However, this is normal for the Cauchy distribution. This distribution has an undefined mean and variance, with very heavy tails. Because of this, it will occasionally jump to extreme values.
+
+```{r e9h1-2}
+as_draws_df(mp, variable = "^b_", regex = TRUE) %>% 
+  as_tibble() %>% 
+  pivot_longer(starts_with("b_"), names_to = "param") %>% 
+  mutate(param = str_replace_all(param, "b_([ab])_Intercept", "\\1")) %>% 
+  ggplot(aes(x = .draw, y = value)) +
+  facet_wrap(~param, nrow = 1, scales = "free_y") +
+  geom_line(color = "#009FB7")
+```
 
 
 :::question
 > **9H2.** Recall the divorce rate example from Chapter 5. Repeat that analysis, using `ulam` this time, fitting models `m5.1`, `m5.2`, and `m5.3`. Use `compare` to compare the models on the basis of WAIC or PSIS. To use WAIC or PSIS with `ulam`, you need add the argument `log_lik=TRUE`. Explain the model comparison results.
 :::
 
-Something
+First, the code to reproduce the three models. Model `bm51` uses only median age at marriage to predict the divorce rate, `bm52` uses only marriage rate, and `bm53` uses both predictors.
+
+```{r e9h2-1}
+data("WaffleDivorce")
+
+waffle_dat <- WaffleDivorce %>% 
+  select(d = Divorce, m = Marriage, a = MedianAgeMarriage) %>% 
+  mutate(across(everything(), standardize))
+
+bm51 <- brm(d ~ 1 + a, data = waffle_dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp9", "b9h2-m51"))
+
+bm52 <- brm(d ~ 1 + m, data = waffle_dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp9", "b9h2-m52"))
+
+bm53 <- brm(d ~ 1 + m + a, data = waffle_dat, family = gaussian,
+            prior = c(prior(normal(0, 0.2), class = Intercept),
+                      prior(normal(0, 0.5), class = b),
+                      prior(exponential(1), class = sigma)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "chp9", "b9h2-m53"))
+
+bm51 <- add_criterion(bm51, criterion = c("waic", "loo"))
+bm52 <- add_criterion(bm52, criterion = c("waic", "loo"))
+bm53 <- add_criterion(bm53, criterion = c("waic", "loo"))
+```
+
+Now let's compare. With both the WAIC and PSIS-LOO, the first model with only age at marriage is preferred. However, the score for `bm53` is nearly the same. This indicates that the two models are not really being differentiated very well.
+
+```{r e9h2-2}
+loo_compare(bm51, bm52, bm53, criterion = "waic")
+
+loo_compare(bm51, bm52, bm53, criterion = "loo")
+```
 
 
 :::{.question .code-question}
@@ -1879,7 +1940,81 @@ m5.8s2 <- ulam(
 > Note the `constraints` list. What this does is constrain the prior distribution of `br` so that is has positive probability only above zero. In other words, that prior ensures that the posterior distribution for `br` will have no probability mass below zero. Compare the two posterior distributions for `m5.8s` and `m5.8s2`. What has changed in the posterior distribution of both beta parameters? Can you explain the change induced by the change in prior?
 :::
 
-Something
+Let's start by simulating the data we used for those models. As a reminder, there is a strong correlation between the lengths of the two legs.
+
+```{r e9h3-1}
+set.seed(909)
+
+n <- 100
+
+height <- rnorm(n, 10, 2) 
+leg_prop <- runif(n, 0.4, 0.5) 
+leg_left <- leg_prop * height + rnorm(n, 0, 0.02)
+leg_right <- leg_prop * height + rnorm(n, 0, 0.02)
+
+leg_dat <- tibble(height, leg_left, leg_right)
+
+cor(leg_dat$leg_left, leg_dat$leg_right)
+```
+
+Now let's fit the two models.
+
+```{r e9h3-2}
+bm58s <- brm(height ~ 1 + leg_left + leg_right, data = leg_dat,
+             family = gaussian,
+             prior = c(prior(normal(10, 100), class = Intercept),
+                       prior(normal(2, 10), class = b, coef = leg_left),
+                       prior(normal(2, 10), class = b, coef = leg_right),
+                       prior(exponential(1), class = sigma)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp9", "b9h3-m58s"))
+
+bm58s2 <- brm(bf(height ~ int + ll + lr,
+                 int ~ 1,
+                 ll ~ 0 + leg_left,
+                 lr ~ 0 + leg_right,
+                 nl = TRUE),
+              data = leg_dat, family = gaussian,
+              prior = c(prior(normal(10, 100), class = b, nlpar = int),
+                        prior(normal(2, 10), class = b, nlpar = ll),
+                        prior(normal(2, 10), class = b, lb = 0, nlpar = lr),
+                        prior(exponential(1), class = sigma)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp9", "b9h3-m58s2"))
+```
+
+To examine the posteriors, we'll first look at the correlations between parameters. In both models, there is a very strong negative correlation between $\beta_L$ and $\beta_R$. This makes sense given our data. Because the data are so strongly correlated, that they provide basically the same information. So if we take more information from the left leg (i.e., higher values of $\beta_L$), we necessarily must let less from teh right leg. This results in in the negative correlation.
+
+```{r e9h3-3}
+draws <- bind_rows(
+  as_draws_df(bm58s, variable = "b_leg.*", regex = TRUE) %>% 
+    as_tibble() %>% 
+    mutate(prior = "Unconstrained"),
+  as_draws_df(bm58s2, variable = "b_l[lr]_leg.*", regex = TRUE) %>% 
+    as_tibble() %>% 
+    rename(b_leg_left = b_ll_leg_left, b_leg_right = b_lr_leg_right) %>% 
+    mutate(prior = "Constrained")
+) %>% 
+  mutate(prior = fct_inorder(prior))
+
+ggplot(draws, aes(x = b_leg_right, y = b_leg_left)) +
+  facet_wrap(~prior, nrow = 1, scales = "free") +
+  geom_point(alpha = 0.2) +
+  labs(x = "&beta;<sub>R</sub>", y = "&beta;<sub>L</sub>")
+```
+
+However, looking at the actual distributions reveals in the impact of constraining one parameter to be positive. In the unconstrained model, the distributions are very similar. In the constrained model, $\beta_R$ takes only positive values, and the distributions are mirror images of each other. In order to preserve the negative correlation of the posterior, the change in prior for one parameter has cascaded into the other parameter.
+
+```{r e9h3-4}
+draws %>% 
+  pivot_longer(starts_with("b_"), names_to = "param") %>% 
+  ggplot(aes(x = value)) +
+  facet_wrap(~prior, nrow = 1) +
+  geom_density(aes(color = param), size = 1, key_glyph = "timeseries") +
+  scale_color_okabeito(labels = c("&beta;<sub>L</sub>", "&beta;<sub>R</sub>")) +
+  labs(x = "&beta;", y = "Density", color = "Parameter") +
+  theme(legend.text = element_markdown())
+```
 
 
 :::question
