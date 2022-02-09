@@ -1,7 +1,8 @@
 set.seed(2020)
 options(digits = 3,
         knitr.kable.NA = "",
-        brms.backend = "cmdstanr")
+        brms.backend = "cmdstanr",
+        brms.file_refit = "on_change")
 
 suppressPackageStartupMessages(library(rethinking))
 suppressPackageStartupMessages(library(brms))

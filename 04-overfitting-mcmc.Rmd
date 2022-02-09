@@ -1649,21 +1649,171 @@ bad_chain %>%
 > **9M1.** Re-estimate the terrain reggedness model from the chapter, but now using a uniform prior for the standard deviation, `sigma`. The uniform prior should be `dunif(0,1)`. Use `ulam` to estimate the posterior. Does the different prior have any detectible influence on the posterior distribution of `sigma`? Why or why not?
 :::
 
-Something
+We'll fit two models, first the model from the chapter that uses and exponential prior for sigma. Then the second model which will use the uniform prior.
+
+```{r e9m1-1, warning = FALSE}
+data(rugged)
+
+rugged_dat <- rugged %>%
+  as_tibble() %>%
+  select(country, rgdppc_2000, rugged, cont_africa) %>%
+  drop_na(rgdppc_2000) %>%
+  mutate(log_gdp = log(rgdppc_2000),
+         log_gdp_std = log_gdp / mean(log_gdp),
+         rugged_std = rugged / max(rugged),
+         rugged_std_cent = rugged_std - mean(rugged_std),
+         cid = factor(cont_africa, levels = c(1, 0),
+                      labels = c("African", "Not African")))
+
+b9m1_chp <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nl = TRUE),
+  data = rugged_dat, family = gaussian,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(normal(0, 0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(normal(0, 0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "chp9", "b9m1-chp.rds")
+)
+
+b9m1_uni <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nl = TRUE),
+  data = rugged_dat, family = gaussian,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(normal(0, 0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(normal(0, 0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(uniform(0, 1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  file = here("fits", "chp9", "b9m1-uni.rds")
+)
+```
+
+Now let's compare the posterior distributions. They are nearly identical. This is because we have enough data to get a good estimate of `sigma`, regardless of the prior. However, if `sigma` were greater than 1, the uniform prior would not give the same estimate, as that prior gives 0 probability to values outside of the [0, 1] interval.
+
+```{r e9m1-2}
+bind_rows(
+  as_draws_df(b9m1_chp, variable = "sigma") %>% 
+    as_tibble() %>% 
+    mutate(prior = "Exponential(1)"),
+  as_draws_df(b9m1_uni, variable = "sigma") %>% 
+    as_tibble() %>% 
+    mutate(prior = "Uniform(0, 1)")
+) %>% 
+  ggplot(aes(x = sigma, color = prior)) +
+  geom_density(size = 1, key_glyph = "timeseries") +
+  scale_color_okabeito() +
+  labs(x = "&sigma;", y = "Posterior Density", color = "Prior")
+```
 
 
 :::question
-> **9M2.** Modify the terrain ruggedness model again. This time, change the prior for `b[cid]` to `dexp(0,3)`. What does this do to the posterior distribution? Can you explain it?
+> **9M2.** Modify the terrain ruggedness model again. This time, change the prior for `b[cid]` to `dexp(0.3)`. What does this do to the posterior distribution? Can you explain it?
 :::
 
-Something
+First we'll fit the model with the new priors.
+
+```{r e9m2-1, warning = FALSE}
+b9m2_exp <- brm(
+  bf(log_gdp_std ~ 0 + a + b * rugged_std_cent,
+     a ~ 0 + cid,
+     b ~ 0 + cid,
+     nl = TRUE),
+  data = rugged_dat, family = gaussian,
+  prior = c(prior(normal(1, 0.1), class = b, coef = cidAfrican, nlpar = a),
+            prior(normal(1, 0.1), class = b, coef = cidNotAfrican, nlpar = a),
+            prior(exponential(0.3), class = b, coef = cidAfrican, nlpar = b),
+            prior(exponential(0.3), class = b, coef = cidNotAfrican, nlpar = b),
+            prior(exponential(1), class = sigma)),
+  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+  control = list(adapt_delta = 0.95, max_treedepth = 15),
+  file = here("fits", "chp9", "b9m2-exp.rds")
+)
+```
+
+Now let's compare the posterior distributions of the `beta` parameters. For the first, $\beta_{African}$, the posteriors are nearly identical. However, the posterior for $\beta_{Not African}$ is quite different. This is because the parameter wants to be negative, as it was in the original model. The new prior constrains the parameter to be positive, so we see all of the posterior density piled up right next to 0.
+
+```{r e9m2-2}
+bind_rows(
+  as_draws_df(b9m1_chp, variable = "b_b_.*", regex = TRUE) %>% 
+    as_tibble() %>% 
+    pivot_longer(starts_with("b_b_"), names_to = "parameter",
+                 values_to = "value") %>% 
+    mutate(prior = "Normal(0, 0.3)"),
+  as_draws_df(b9m2_exp, variable = "b_b_.*", regex = TRUE) %>% 
+    as_tibble() %>% 
+    pivot_longer(starts_with("b_b_"), names_to = "parameter",
+                 values_to = "value") %>% 
+    mutate(prior = "Exponential(0.3)")
+) %>% 
+  mutate(parameter = factor(parameter,
+                            levels = c("b_b_cidAfrican", "b_b_cidNotAfrican"),
+                            labels = c("&beta;<sub>African</sub>",
+                                       "&beta;<sub>Not African</sub>"))) %>% 
+  ggplot(aes(x = value, color = prior)) +
+  facet_wrap(~parameter, nrow = 1, scales = "free_y") + 
+  geom_density(size = 1, key_glyph = "timeseries") +
+  scale_color_okabeito(breaks = c("Normal(0, 0.3)", "Exponential(0.3)")) +
+  labs(x = "&beta;", y = "Posterior Density", color = "Prior")
+```
 
 
 :::question
 > **9M3.** Re-estimate one of the Stan models from the chapter, but at different numbers of `warmup` iterations. Be sure to use the same number of sampling interations in each case. Compare the `n_eff` values. How much warmup is enough?
 :::
 
-Something
+For simplicity, we'll use the same terrain-ruggedness example as the previous two problems. We'll investigate 7 different warm-up lengths, with the number of post-warmup samples fixed to 1,000.
+
+```{r e9m3-1, eval = !file.exists(here("fits", "chp9", "b9m3-sim.rds"))}
+warmup_length <- c(10, 25, 50, 100, 250, 500, 1000)
+
+b9m3_sim <- map_dfr(warmup_length,
+                    function(w) {
+                      mod <- brm(b9m1_chp$formula, data = b9m1_chp$data,
+                                 family = gaussian, prior = b9m1_chp$prior,
+                                 chains = 1, seed = 1234,
+                                 iter = w + 1000, warmup = w)
+                      
+                      mod_sum <- summary(mod)
+                      mod_sum$fixed %>% 
+                        bind_rows(mod_sum$spec_pars) %>% 
+                        rownames_to_column(var = "parameter") %>% 
+                        mutate(warmup = w, .before = 1) %>% 
+                        as_tibble() %>% 
+                        select(warmup, parameter, Bulk_ESS, Tail_ESS)
+                    }) %>% 
+  write_rds(here("fits", "chp9", "b9m3-sim.rds"))
+```
+
+```{r e9m3-1-read, eval = file.exists(here("fits", "chp9", "b9m3-sim.rds"))}
+b9m3_sim <- read_rds(here("fits", "chp9", "b9m3-sim.rds"))
+```
+
+With {brms}, rather than one measure of effective sample size (ESS), we get two measures, as described in @rhatess. Bulk ESS describes the mean of the distribution (i.e., the bulk), and Tail ESS describes the variance (i.e., the tails of the distribution). We can see that for this particular model, both the Bulk ESS and Tail ESS level off fairly quickly, meaning that not much warmup is needed in this particular case.
+
+```{r e9m3-2}
+b9m3_sim %>% 
+  pivot_longer(ends_with("_ESS"), names_to = "type", values_to = "value") %>% 
+  mutate(param_label = parameter,
+         param_label = str_replace_all(param_label, "a_cid(.*)$", "&alpha;<sub>\\1</sub>"),
+         param_label = str_replace_all(param_label, "b_cid(.*)$", "&beta;<sub>\\1</sub>"),
+         param_label = str_replace_all(param_label, "sigma", "<sub>&sigma;</sub>"),
+         type = str_replace_all(type, "_", " ")) %>% 
+  ggplot(aes(x = warmup, y = value, color = type)) +
+  facet_wrap(~param_label, ncol = 3) +
+  geom_line(size = 1) +
+  scale_color_okabeito() +
+  scale_x_comma() +
+  labs(x = "Warmup Iterations", y = "Effective Sample Size",
+       color = NULL)
+```
 
 
 :::{.question .code-question}
