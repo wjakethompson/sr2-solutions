@@ -1445,6 +1445,8 @@ sim_dat <- function(n = 100, bx = 0) {
 We'll test one example data set. We use the `sim_dat()` function we just created to generate a data set with 10 subjects and a positive relationship between $X$ and $Y$ of 0.3. 
 
 ```{r w3h4-2}
+set.seed(208)
+
 dat1 <- sim_dat(n = 10, bx = 0.3)
 
 mod1 <- brm(Y ~ 1 + X + S + A, data = dat1, family = gaussian,
