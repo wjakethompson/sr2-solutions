@@ -37,6 +37,7 @@ Imports:
   kableExtra,
   knitr,
   loo,
+  Matrix,
   patchwork,
   purrr,
   ragg,
