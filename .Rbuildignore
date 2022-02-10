@@ -1,5 +1,3 @@
-^renv$
-^renv\.lock$
 ^\.github$
 ^.*\.Rproj$
 ^\.Rproj\.user$
