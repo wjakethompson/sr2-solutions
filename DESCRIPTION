@@ -20,5 +20,3 @@ Imports:
   sessioninfo,
   splines,
   transformr
-Remotes:
-  wjakethompson/wjake
