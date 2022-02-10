@@ -1983,7 +1983,7 @@ bm58s2 <- brm(bf(height ~ int + ll + lr,
               file = here("fits", "chp9", "b9h3-m58s2"))
 ```
 
-To examine the posteriors, we'll first look at the correlations between parameters. In both models, there is a very strong negative correlation between $\beta_L$ and $\beta_R$. This makes sense given our data. Because the data are so strongly correlated, that they provide basically the same information. So if we take more information from the left leg (i.e., higher values of $\beta_L$), we necessarily must let less from teh right leg. This results in in the negative correlation.
+To examine the posteriors, we'll first look at the correlations between parameters. In both models, there is a very strong negative correlation between $\beta_L$ and $\beta_R$. This makes sense given our data. Because the data are so strongly correlated, that they provide basically the same information. So if we take more information from the left leg (i.e., higher values of $\beta_L$), we necessarily must let less from the right leg. This results in in the negative correlation.
 
 ```{r e9h3-3}
 draws <- bind_rows(
@@ -2021,26 +2021,211 @@ draws %>%
 > **9H4.** For the two models fit in the previous problem, use WAIC or PSIS to compare the effective numbers of parameters for each model. You will need to use `log_lik=TRUE` to instruct `ulam` to compute the terms that both WAIC and PSIS need. Which model has more effective parameters? Why?
 :::
 
-Something
+The number of effective parameters is give by the `p_waic` and `p_loo` columns, respectively. The unconstrained model (`bm58s`) has a large number of effective parameters, 3.2 compared to 2.6. This makes sense given our priors. The second model has a more informative prior, so the parameters are not able to move around as freely and the posterior as a smaller variance.
+
+```{r e9h4-1}
+bm58s <- add_criterion(bm58s, criterion = c("waic", "loo"))
+bm58s2 <- add_criterion(bm58s2, criterion = c("waic", "loo"))
+
+print(loo_compare(bm58s, bm58s2, criterion = "waic"), simplify = FALSE)
+
+print(loo_compare(bm58s, bm58s2, criterion = "loo"), simplify = FALSE)
+```
 
 
 :::question
 > **9H5.** Modify the Metropolis algorithm code from the chapter to handle the case that the island populations have a different distribution than the island labels. This means the island's number will not be the same as its population.
 :::
 
-Something
+In the original example, the population of each island was 1 to 10 in order. For this problem, we'll pick a random population order.
+
+```{r e9h5-1}
+set.seed(209)
+
+pop_size <- sample(1:10, size = 10, replace = FALSE)
+names(pop_size) <- paste("Island", 1:10)
+pop_size
+```
+
+Now we can repeat the simulation from the chapter. The function takes a current island position, `island`, and the popualtion of the island, and returns the next island. The guts of the function are the same as the `for` loop from the chapter.
+
+```{r e9h5-2}
+island_sim <- function(island, ..., island_pop) {
+  # flip coin to generate proposal
+  proposal <- island + (sample(c(-1L, 1L), size = 1))
+  
+  # loop when we reach the boundary
+  if (proposal < 1) proposal <- 10L
+  if (proposal > 10) proposal <- 1L
+  
+  # decide if we move
+  prob <- island_pop[proposal] / island_pop[island]
+  island <- ifelse(runif(1) < prob, proposal, island)
+  
+  return(island)
+}
+```
+
+We can then use `accumulate()` to run the function 100,000 times, passing the previous position to `island` each time. In the summary we can see the proportion of total visits that each island received (`visit_prop`) and the proportion of the total population that lives on each island (`pop_prop`). We can see that these two columns are nearly identical, so we are in fact visiting each island in proportion to the populations of the islands.
+
+```{r e9h5-3, cache = TRUE}
+visits <- accumulate(seq_len(1e6), island_sim, .init = 10L,
+                     island_pop = pop_size)
+
+tibble(island = visits) %>% 
+  count(island) %>% 
+  mutate(population = pop_size,
+         visit_prop = n / sum(n),
+         pop_prop = population / sum(population))
+```
 
 
 :::question
 > **9H6.** Modify the Metropolis algorithm code from the chapter to write your own simple MCMC estimator for globe tossing data and model from Chapter 2.
 :::
 
-Something
+Like in the previous problem, we'll start by writing a function for the simulation. This follows the same structure as the previous problem, but rather than moving based on the ratio island populations, we move based on the ratio of the likelihoods for our parameter estimate.
+
+```{r e9h6-1}
+globe_sim <- function(prop, ..., n, trials) {
+  # proposal value: random number +/-0.1 from current value of `prop`
+  proposal <- prop + runif(1, -0.1, 0.1)
+  
+  # reflect back when proposal is outside the [0,1] bounds of `prop`
+  if (proposal < 0) proposal <- abs(proposal)
+  if (proposal > 1) proposal <- 1 - (proposal - 1)
+  
+  # probability of current and proposed values
+  # uses uniform prior, but could change `dunif` to some other prior
+  prob_current <- dbinom(x = n, size = trials, prob = prop) * dunif(prop, 0, 1)
+  prob_proposal <- dbinom(x = n, size = trials, prob = proposal) * dunif(proposal, 0, 1)
+  
+  # accept proposal?
+  prob_accept <- prob_proposal / prob_current
+  prop <- ifelse(runif(1) < prob_accept, proposal, prop)
+  
+  return(prop)
+}
+```
+
+For fun, we'll generate three chains so that we can have some more interesting plots to look at. In the Chapter 2 example, we had 6 waters out of 9 total trials, so those values are passed to the `n` and `trials` arguments of the function we just created. Finally, I start each chain at a different value, with the hope that they all converge to the same are of the posterior.
+
+```{r e9h6-2, cache = TRUE}
+set.seed(209)
+
+chain1 <- accumulate(seq_len(1e4), globe_sim, .init = 0.2, n = 6, trials = 9)
+chain2 <- accumulate(seq_len(1e4), globe_sim, .init = 0.5, n = 6, trials = 9)
+chain3 <- accumulate(seq_len(1e4), globe_sim, .init = 0.8, n = 6, trials = 9)
+```
+
+Let's look at the trace rank plot for our chains. We see a fairly stable distribution within each chain, and good mixing between chains, which is exactly what we would want to see!
+
+```{r e9h6-3}
+bind_rows(tibble(Chain = 1L, p = chain1),
+          tibble(Chain = 2L, p = chain2),
+          tibble(Chain = 3L, p = chain3)) %>% 
+  make_trank(bins = 25) %>% 
+  ggplot(aes(x = iteration, y = n, color = Chain)) +
+  geom_line(show.legend = FALSE, size = 1) +
+  scale_color_okabeito() +
+  scale_x_continuous(breaks = waiver(), n.breaks = 6,
+                     labels = ~prettyNum(.x * 3, big.mark = ",")) +
+  labs(x = "Rank", y = "Samples")
+```
+
+```{r e9h6-4, include = FALSE}
+qi <- mean_qi(c(chain1, chain2, chain3), .width = 0.95)
+```
+
+The last step is to actually look at our estimate of the proportion of water. There's an expected value of `r round(qi$y, 2)`, with a 95% interval of `r round(qi$ymin, 2)` to `r round(qi$ymax, 2)`.
+
+```{r e9h6-5}
+mean_qi(c(chain1, chain2, chain3), .width = 0.95)
+```
 
 
 :::question
 > **9H7.** Can you write your own Hamiltonian Monte Carlo algorithm for the globe tossing data, using the R code in the chapter? You will have to write your own functions for the likelihood and gradient, but you can use the HMC2 function.
 :::
+
+There are two functions that we need to re-write if we're following the example from the book. `U_globe()` will be the log-probability of the data, and `U_globe_gradient()` will be the gradient. We'll start with `U_globe()`, which is very similar to what we created in the previous problem.
+
+```{r e9h7-1}
+U_globe <- function(q) {
+  U <- dbinom(y, size = n, prob = q, log = TRUE) +
+    dunif(q, 0, 1, log = TRUE)
+  return(-U)
+}
+```
+
+The gradient of the `U` function is given as
+
+$$
+\frac{\partial U(y|n,p)}{\partial p}
+$$
+If we solve this (I cheated and used Mathematica), we get the answer for our gradient:
+
+$$
+\frac{\partial \log U(y|n,p)}{\partial p} = \frac{y - np}{p(1-p)}
+$$
+
+In function form, we define `U_globe_gradient()` as:
+
+```{r e9h7-2}
+U_globe_gradient <- function(q) {
+  G <- (y - n * q) / (q * (1 - q))
+  return(-G)
+}
+```
+
+Finally, we plug our functions into a wrapper function that we can pass to `accumulate()`, and run 3 chains.
+
+```{r e9h7-3}
+globe_hmc <- function(Q, ..., y = 6, n = 9, step = 0.03, L = 10) {
+  Q <- HMC2(U_globe, U_globe_gradient, step, L, Q$q)
+}
+
+set.seed(209)
+
+y <- 6
+n <- 9
+
+chain1 <- accumulate(seq_len(1000), globe_hmc, .init = list(q = 0.2)) %>% 
+  keep(~"accept" %in% names(.x)) %>% 
+  map_dbl(~ifelse(.x$accept == 1, .x$q, NA_real_))
+chain2 <- accumulate(seq_len(1000), globe_hmc, .init = list(q = 0.5)) %>% 
+  keep(~"accept" %in% names(.x)) %>% 
+  map_dbl(~ifelse(.x$accept == 1, .x$q, NA_real_))
+chain3 <- accumulate(seq_len(1000), globe_hmc, .init = list(q = 0.8)) %>% 
+  keep(~"accept" %in% names(.x)) %>% 
+  map_dbl(~ifelse(.x$accept == 1, .x$q, NA_real_))
+```
+
+Once again, we can look at the trace rank plot. We still get good mixing and consistency, indicating that the chains are mixing well and sampling the same area of the posterior.
+
+```{r e9h7-4}
+bind_rows(tibble(Chain = 1L, p = chain1),
+          tibble(Chain = 2L, p = chain2),
+          tibble(Chain = 3L, p = chain3)) %>% 
+  make_trank(bins = 25) %>% 
+  ggplot(aes(x = iteration, y = n, color = Chain)) +
+  geom_line(show.legend = FALSE, size = 1) +
+  scale_color_okabeito() +
+  scale_x_continuous(breaks = waiver(), n.breaks = 6,
+                     labels = ~prettyNum(.x * 3, big.mark = ",")) +
+  labs(x = "Rank", y = "Samples")
+```
+
+```{r e9h7-5, include = FALSE}
+qi <- mean_qi(c(chain1, chain2, chain3), .width = 0.95, na.rm = TRUE)
+```
+
+Looking at our posterior, we ahve an expected value of `r round(qi$y, 2)`, with a 95% interval of `r round(qi$ymin, 2)` to `r round(qi$ymax, 2)`. This is very similar to what we achieved with the Metropolis algorithm.
+
+```{r e9h7-6}
+mean_qi(c(chain1, chain2, chain3), .width = 0.95, na.rm = TRUE)
+```
+
 
 
 ## Homework
