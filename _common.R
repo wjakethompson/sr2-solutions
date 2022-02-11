@@ -1,11 +1,13 @@
 set.seed(2020)
 options(digits = 3,
         knitr.kable.NA = "",
-        brms.backend = "cmdstanr")
+        brms.backend = "cmdstanr",
+        brms.file_refit = "on_change")
 
 suppressPackageStartupMessages(library(rethinking))
 suppressPackageStartupMessages(library(brms))
 suppressPackageStartupMessages(library(loo))
+suppressPackageStartupMessages(library(ggridges))
 suppressPackageStartupMessages(library(tidybayes))
 suppressPackageStartupMessages(library(ggdist))
 suppressPackageStartupMessages(library(tidyverse))
@@ -13,6 +15,7 @@ suppressPackageStartupMessages(library(wjake))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(geomtextpath))
+suppressPackageStartupMessages(library(ggtext))
 suppressPackageStartupMessages(library(dagitty))
 
 ggplot2::theme_set(wjake::theme_wjake(base_family = "Source Sans Pro"))

@@ -13,6 +13,7 @@ rmd_files: [
   "01-bayesian-inference.Rmd",
   "02-linear-models-causal-inf.Rmd",
   "03-causes-confounds-colliders.Rmd",
+  "04-overfitting-mcmc.Rmd",
   
   "11-References.Rmd"
 ]
