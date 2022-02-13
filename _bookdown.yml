@@ -14,6 +14,7 @@ rmd_files: [
   "02-linear-models-causal-inf.Rmd",
   "03-causes-confounds-colliders.Rmd",
   "04-overfitting-mcmc.Rmd",
+  "05-glm.Rmd",
   
   "11-References.Rmd"
 ]

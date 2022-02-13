@@ -15,6 +15,7 @@ suppressPackageStartupMessages(library(wjake))
 suppressPackageStartupMessages(library(here))
 suppressPackageStartupMessages(library(glue))
 suppressPackageStartupMessages(library(geomtextpath))
+suppressPackageStartupMessages(library(ggrepel))
 suppressPackageStartupMessages(library(ggtext))
 suppressPackageStartupMessages(library(dagitty))
 
@@ -23,6 +24,8 @@ ggplot2::theme_set(wjake::theme_wjake(base_family = "Source Sans Pro"))
 ggplot2::update_geom_defaults("text", list(family = "Source Sans Pro"))
 ggplot2::update_geom_defaults("label", list(family = "Source Sans Pro"))
 ggplot2::update_geom_defaults("textdensity", list(family = "Source Sans Pro"))
+ggplot2::update_geom_defaults("text_repel", list(family = "Source Sans Pro"))
+ggplot2::update_geom_defaults("label_repel", list(family = "Source Sans Pro"))
 
 knitr::opts_chunk$set(
   comment = "#>",

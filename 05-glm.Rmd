@@ -1,0 +1,192 @@
+# Generalized Linear Models
+
+The fifth week covers [Chapter 10 (Big Entropy and the Generalized Linear Model)](https://bookdown.org/content/4857/big-entropy-and-the-generalized-linear-model.html), and [Chapter 11 (God Spiked the Integers)](https://bookdown.org/content/4857/god-spiked-the-integers.html).
+
+## Lectures
+
+Lecture 9:
+
+```{r lecture-9, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/nPi5yGbfxuo")
+```
+
+Lecture 10:
+
+```{r lecture-10, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/YrwL6t0kW2I")
+```
+
+## Exercises
+
+### Chapter 10
+
+Chapter 10 is a conceptual chapter, so there are no exercises to complete.
+
+### Chapter 11
+
+
+
+## Homework
+
+:::question
+> **1.** The data in `data(NWOGrants)` are outcomes for scientific funding applications for the Netherlands Organization for Scientific Research (NWO) from 2010--2012 [see @vanderlee]. These data have a very similar structure to the UCBAdmit data discussed in Chapter 11. Draw a DAG for this sample and then use one or more binomial GLMs to estimate the TOTAL causal effect of gender on grant awards.
+:::
+
+First, let's take a look at the data. As the question identified, this data is nearly identical to the `UCBAdmit` data, with the exception that department has been replaced with discipline.
+
+```{r w5h1-1}
+data("NWOGrants")
+
+nwo_dat <- NWOGrants %>% 
+  mutate(gender = factor(gender, levels = c("m", "f")))
+
+nwo_dat
+```
+
+We'll denote gender as $G$, discipline as $D$, and award as $A$. Our DAG can then be defined as in the figure below. Gender influences both whether or not an award is given, as well as which discipline an individual might go into.
+
+```{r w5h1-2, out.width = "40%", echo = FALSE}
+library(ggdag)
+
+nwo_dag <- dagitty("dag { G -> D -> A <- G }")
+coordinates(nwo_dag) <- list(
+  x = c(G = 1, D = 2, A = 3),
+  y = c(G = 1, D = 2, A = 1)
+)
+
+tidy_dagitty(nwo_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+For the total effect, we don't need to condition on any other variables. We can confirm this with {dagitty}.
+
+```{r w5h1-3}
+library(dagitty)
+
+adjustmentSets(nwo_dag, exposure = "G", outcome = "A")
+```
+
+We can now fit our model.
+
+```{r w5h1-4}
+w5h1 <- brm(awards | trials(applications) ~ 0 + gender, data = nwo_dat,
+            family = binomial,
+            prior = prior(normal(0, 1.5), class = b),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw5", "w5h1"))
+
+summary(w5h1)
+```
+
+From the summary, it appears that females are less likely to get be awarded grants, but we need to compute the contrast to know for certain. The plot below shows the contrast for males compared to females. On average, males are favored by about 3 percentage points. The contrast is fairly reliably above 0, indicating some bias in favor of males.
+
+```{r w5h1-5}
+as_draws_df(w5h1) %>% 
+  mutate(diff_male = inv_logit_scaled(b_genderm) - inv_logit_scaled(b_genderf)) %>% 
+  ggplot(aes(x = diff_male)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97), fill = "#009FB7") +
+  labs(x = "&beta;<sub>M</sub> &minus; &beta;<sub>F</sub>", y = "Density")
+```
+
+
+:::question
+> **2.** Now estimate the DIRECT causal effect of gender on grant awards. Compute the average direct causal effect of gender, weighting each discipline in proportion to the number of applications in the sample. Refer to the marginal effect example in Lecture 9 for help.
+:::
+
+For the direct effect we need to condition on the discipline.
+
+```{r w5h2-1}
+adjustmentSets(nwo_dag, exposure = "G", outcome = "A", effect = "direct")
+```
+
+Let's fit the model, stratifying by both gender and discipline.
+
+```{r w5h2-2}
+w5h2 <- brm(bf(awards | trials(applications) ~ g + d + i,
+               g ~ 0 + gender,
+               d ~ 0 + discipline,
+               i ~ 0 + gender:discipline,
+               nl = TRUE), data = nwo_dat, family = binomial,
+            prior = c(prior(normal(0, 1.5), nlpar = g),
+                      prior(normal(0, 1.5), nlpar = d),
+                      prior(normal(0, 1.5), nlpar = i)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw5", "w5h2"))
+
+summary(w5h2)
+```
+
+Now let's compute the marginal effect. Overall, there is a slight bias toward males, who are on average about 1.5 percentage points more likely to be awarded a grant. The 89% interval is about &minus;0.12 to 0.12. Thus, overall, the advantages are relatively balanced, and after statistically removing the effect of discipline, there does not appear to be a strong effect of gender on the awarding of grants.
+
+```{r w5h2-3, cache = TRUE}
+apps_per_dept <- nwo_dat %>% 
+  group_by(discipline) %>% 
+  summarize(applications = sum(applications))
+
+# simulate as if all applications are from males
+male_dat <- apps_per_dept %>% 
+  mutate(gender = "m") %>% 
+  uncount(applications) %>% 
+  mutate(applications = 1L)
+
+# simulate as if all applications are from females
+female_dat <- apps_per_dept %>% 
+  mutate(gender = "f") %>% 
+  uncount(applications) %>% 
+  mutate(applications = 1L)
+
+marg_eff <- bind_rows(add_epred_draws(male_dat, w5h2),
+                      add_epred_draws(female_dat, w5h2)) %>% 
+  pivot_wider(names_from = "gender", values_from = ".epred") %>% 
+  mutate(diff = m - f)
+
+mean_qi(marg_eff$diff, .width = c(0.67, 0.89, 0.97))
+
+ggplot(marg_eff, aes(x = diff)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97), fill = "#009FB7") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(x = "Difference in Awards (Male - Female)", y = "Density")
+```
+
+
+:::question
+> **3.** Considering the total effect (problem 1) and direct effect (problem 2) of gender, what causes contribute to the average difference between women and men in award rate in this sample? It is not necessary to say whether or not there is evidence of discrimination. Simply explain how the direct effects you have estimated make sense (or not) of the total effect.
+:::
+
+The results from the first two problems indicate that 1) total effect of gender is that females are disadvantaged, but also that 2) the direct effect is a balanced disadvantage to both males and females depending on the discipline. This is because, in this data, females tended to apply slightly more to disciplines with lower overall award rates.
+
+The figure below shows, for each discipline, the proportion of female and male applications that were submitted. That is, of all applications submitted by females, just under 35% were submitted to the social sciences. Similarly, about 25% of male applications were to the social sciences. Thus, disciplines below the dashed line are those where a relatively larger proportion of females submitted applications. Finally, the size of the points represents the award rate for each discipline (i.e., granted awards out of total applications).
+
+```{r w5h3-1}
+nwo_dat %>% 
+  group_by(discipline) %>% 
+  summarize(f = sum(applications[which(gender == "f")]),
+            m = sum(applications[which(gender == "m")]),
+            total_apps = sum(applications),
+            total_awards = sum(awards)) %>% 
+  mutate(female_pct = f / sum(f),
+         male_pct = m / sum(m),
+         award_pct = total_awards / total_apps) %>% 
+  ggplot(aes(x = female_pct, y = male_pct)) +
+  geom_point(aes(size = award_pct, color = abs(female_pct - male_pct) > 0.05)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  geom_label_repel(data = ~filter(.x, abs(female_pct - male_pct) > 0.05),
+                   aes(label = discipline),
+                   max.overlaps = Inf, nudge_y = 0.03) +
+  scale_size(breaks = seq(0.1, 0.3, by = 0.04)) +
+  scale_color_manual(values = c("black", "#009FB7")) +
+  guides(color = "none") +
+  expand_limits(x = c(0, 0.35), y = c(0, 0.35)) +
+  coord_equal() +
+  labs(x = "Female Application Rate", y = "Male Application Rate",
+       size = "Award Rate") +
+  theme(legend.position = "right")
+```
+
+
+
