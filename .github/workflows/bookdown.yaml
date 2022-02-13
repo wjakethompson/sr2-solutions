@@ -38,8 +38,6 @@ jobs:
       
       - name: Install packages
         run: |
-          R -e 'install.packages("remotes")'
-          R -e 'remotes::install_version("renv", version = "0.15.2")'
           R -e 'renv::restore()'
       
       - name: Build site
