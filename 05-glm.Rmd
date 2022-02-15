@@ -162,6 +162,8 @@ The results from the first two problems indicate that 1) total effect of gender 
 
 The figure below shows, for each discipline, the proportion of female and male applications that were submitted. That is, of all applications submitted by females, just under 35% were submitted to the social sciences. Similarly, about 25% of male applications were to the social sciences. Thus, disciplines below the dashed line are those where a relatively larger proportion of females submitted applications. Finally, the size of the points represents the award rate for each discipline (i.e., granted awards out of total applications).
 
+Overall we see that disciplines above the dashed line (i.e., those where males were relatively more likely to apply) tended to have higher award rates than those below the dashed line. Thus, because females were relatively more likely to apply to disciplines with lower award rates, females were less likely overall to be awarded a grant.
+
 ```{r w5h3-1}
 nwo_dat %>% 
   group_by(discipline) %>% 
