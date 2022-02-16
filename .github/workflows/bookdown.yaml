@@ -39,6 +39,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt -y install libcurl4-openssl-dev
+          sudo apt -y install libharfbuzz-dev
+          sudo apt -y install libfribidi-dev
       
       - name: Install packages
         run: |

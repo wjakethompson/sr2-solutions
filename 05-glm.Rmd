@@ -24,6 +24,288 @@ Chapter 10 is a conceptual chapter, so there are no exercises to complete.
 
 ### Chapter 11
 
+:::question
+> **11E1.** If an event has probability 0.35, what are the log-odds of this event?
+:::
+
+The log-odds are given by the logit link:
+
+$$
+\log\frac{p}{1-p}
+$$
+
+In code:
+
+```{r e11e1-1}
+log(0.35 / (1 - 0.35))
+```
+
+
+:::question
+> **11E2.** If an event has log-odds 3.2, what is the probability of this event?
+:::
+
+To convert from log-odds to probability, we use the inverse logit, which is given by:
+
+$$
+\frac{\exp(\alpha)}{\exp(\alpha) + 1}
+$$
+In code:
+
+```{r e11e2-1}
+exp(3.2) / (exp(3.2) + 1)
+```
+
+
+:::question
+> **11E3.** Suppose that a coefficient in a logistic regression has value 1.7. What does this imply about the proportional change in odds of the outcome?
+:::
+
+We can calculate the proportional odds by exponentiating the coefficient.
+
+```{r e11e3-1}
+exp(1.7)
+```
+
+A proportional odds of about 5.5 means that each unit increase in the predictor multiplies the odds of the outcome occurring by 5.5.
+
+
+:::question
+> **11E4.** Why do Poisson regressions sometimes require the use of an *offset*? Provide an example.
+:::
+
+An offset is the duration that a count was accumulated during. If all of the observations were accumulated during the same observation periods, then an offset is not needed. However, if there are differences (e.g., some counts are weekly while others are daily), an offset is needed.
+
+As an example, say you were modeling how many houses Realtor sells. If some Realtors provide you data with weekly counts of houses sold, and some provide monthly data, you will need an offset to account for the fact that we expect larger counts from longer periods of time.
+
+:::question
+> **11M1.** As explained in the chapter, binomial data can be organized in aggregated and disaggregated forms, without any impact on inference. But the likelihood of the data does change when the data are converted between the two formats. Can you explain why?
+:::
+
+The likelihood of the aggregated binomial includes a multiplicative term to account for all the different ways that we could get the observed number of counts. For example, say we saw 2 success in 5 trials. In aggregated form, the likelihood hood is:
+
+$$
+\frac{5!}{2!(5-2)!}p^2(1-p)^{5-2}
+$$
+The fraction out front is the multiplicative term, accounting for all the ways we could see 2 successes out of five trials. In the long disaggregated format, the likelihood would only be:
+
+$$
+p^2(1-p)^{5-2}
+$$
+
+This is because we know exactly how we got 2 out 5 from the series of 1s and 0s. Because there is no multiplicative factor the likelihoods will be different. However, because that multiplicative factor is not a function of $p$, the posterior distributions, and therefore the inferences, are unaffected.
+
+
+:::question
+> **11M2.** If a coefficient in a Poisson regression has value 1.7, what does this imply about the change in the outcome?
+:::
+
+There is no straightforward answer. Poisson models typically use the log link. Therefore, a change in the outcome resulting from a 1.7 unit change in the predictor depends on the values of the other parameters, and the scale of the predictor. The best we can do is calculate a proportional change in the odds. Doing that, this question is the same as **11E3.**, and a 1.7 unit change in the predictor results in 5.5 times increase in the odds.
+
+
+:::question
+> **11M3.** Explain why the logit link is appropriate for a binomial generalized linear model.
+:::
+
+In binomial models, we need to map the continuous values from the linear model to the probability space constrained between 0 and 1. The logit link is on possible way to do this. Other link function can accomplish the same thing (e.g., the probit link), but any function that will map continuous values to a [0,1] bounded space will do the trick.
+
+
+:::question
+> **11M4.** Explain why the log link is appropriate for a Poisson generalized linear model.
+:::
+
+Similar to the previous question, we now need a function that maps the continuous linear model to a strictly positive space. The log link accomplishes this. The inverse of the log link is the exponential, and any value that is exponentiated will be positive.
+
+
+:::question
+> **11M5.** What would it imply to use a logit link for the mean of a Poisson generalized linear model? Can you think of a real research problem for which this would make sense?
+:::
+
+A logit link would imply a model with a known maximum count. Normally, this value is 1, but it could be any arbitrary number such as, where $M$ is the maximum count:
+
+$$
+\begin{align}
+  y_i &\sim \text{Poisson}(\mu_i) \\
+  \log\frac{\mu_i}{M - \mu_i} &= \alpha + \beta x_i
+\end{align}
+$$
+Usually, if there is a known maximum, it makes more sense to use a binomial model. However, if $M$ is very large such that you may never reach it, and the probability is low, this type of logit-Poisson could be used.
+
+
+:::question
+> **11M6.** State the constraints for which the binomial and Poisson distributions have maximum entropy. Are the constraints different at all for binomial and Poisson? Why or why not?
+:::
+
+The constraints for the binomial and Poisson are the same because the Poisson is the same as a binomial model where the number of trials is very large and the probability of observing the event is very low. The constraints are:
+
+1. Discrete binary outcomes
+2. Constant probability of the event across trials
+
+
+:::question
+> **11M7.** Use `quap` to construct a quadratic approximate posterior distribution for the chimpanzee model that includes a unique intercept for each action, `m11.4` (page 330). Compare the quadratic approximation to the posterior distribution produced instead from MCMC. Can you explain both the differences and the similarities between the approximate and the MCMC distributions? Relax the prior on the actor intercepts to Normal(0,10). Re-estimate the posterior using both `ulam` and `quap`. Do the difference increase or decrease? Why?
+:::
+
+We'll start by estimating `m11.4` with both `quap()` and `brm()`.
+
+```{r e11m7-1}
+data("chimpanzees")
+
+chimp_dat <- chimpanzees %>% 
+  mutate(treatment = 1 + prosoc_left + 2 * condition,
+         treatment = factor(treatment),
+         actor = factor(actor))
+
+dat_list <- list(pulled_left = chimp_dat$pulled_left,
+                 actor = as.integer(chimp_dat$actor),
+                 treatment = as.integer(chimp_dat$treatment))
+
+q11.4 <- quap(alist(pulled_left ~ dbinom(1, p),
+                     logit(p) <- a[actor] + b[treatment],
+                     a[actor] ~ dnorm(0, 1.5),
+                     b[treatment] ~ dnorm(0, 0.5)),
+               data = dat_list)
+
+b11.4 <- brm(bf(pulled_left ~ a + b,
+                a ~ 0 + actor,
+                b ~ 0 + treatment,
+                nl = TRUE), data = chimp_dat, family = bernoulli,
+             prior = c(prior(normal(0, 1.5), class = b, nlpar = a),
+                       prior(normal(0, 0.5), class = b, nlpar = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp11", "b11.4"))
+```
+
+Looking at the posterior distributions, the quadratic approximation and MCMC are very similar. The only parameter that shows a noticeable difference is Actor 2. Looking a little closer, we see that for Actor 2, MCMC results in a posterior shifted slightly to the right. This is because the MCMC posterior is slightly skewed, whereas the QUAP posterior is forced to be Gaussian. Therefore, more density is given to the lower tail and less to the upper tail than in the MCMC posterior.
+
+```{r e11m7-2}
+q_samp <- extract.samples(q11.4)
+
+q_draws <- bind_cols(
+  q_samp$a %>% 
+    as_tibble(.name_repair = ~paste0("b_a_actor", 1:ncol(q_samp$a))) %>% 
+    slice_sample(n = 8000) %>% 
+    rowid_to_column(var = ".draw"),
+  q_samp$b %>% 
+    as_tibble(.name_repair = ~paste0("b_b_treatment", 1:ncol(q_samp$b))) %>% 
+    slice_sample(n = 8000)
+) %>% 
+  pivot_longer(-.draw, names_to = "parameter", values_to = "QUAP")
+
+b_draws <- as_draws_df(b11.4) %>% 
+  as_tibble() %>% 
+  select(-lp__) %>% 
+  pivot_longer(cols = -c(.chain, .iteration, .draw),
+               names_to = "parameter", values_to = "MCMC")
+
+post_comp <- full_join(b_draws, q_draws, by = c(".draw", "parameter")) %>% 
+  pivot_longer(cols = c(MCMC, QUAP), names_to = "type") %>% 
+  mutate(parameter = str_replace_all(parameter, "b_[a|b]_([a-z]*)([0-9])",
+                                     "\\1 \\2"),
+         parameter = str_to_title(parameter))
+
+post_comp %>% 
+  ggplot(aes(x = value, color = type)) +
+  facet_wrap(~parameter, nrow = 3) +
+  geom_density(key_glyph = "timeseries") +
+  scale_color_okabeito() +
+  labs(x = "Value", y = "Density", color = NULL)
+```
+
+```{r e11m7-3}
+post_comp %>% 
+  filter(parameter == "Actor 2") %>% 
+  ggplot(aes(x = value, color = type)) +
+  geom_density(key_glyph = "timeseries") +
+  scale_color_okabeito() +
+  labs(x = "Actor 2", y = "Density", color = NULL)
+```
+
+Now let's modify our prior distributions. By loosening the prior, we're letting the actor intercepts take even more extreme values. This should have the effect of letting the posterior become even more skewed.
+
+```{r e11m7-4}
+q11.4_wide <- quap(alist(pulled_left ~ dbinom(1, p),
+                         logit(p) <- a[actor] + b[treatment],
+                         a[actor] ~ dnorm(0, 10),
+                         b[treatment] ~ dnorm(0, 0.5)),
+                   data = dat_list)
+
+b11.4_wide <- brm(bf(pulled_left ~ a + b,
+                     a ~ 0 + actor,
+                     b ~ 0 + treatment,
+                     nl = TRUE), data = chimp_dat, family = bernoulli,
+                  prior = c(prior(normal(0, 10), class = b, nlpar = a),
+                            prior(normal(0, 0.5), class = b, nlpar = b)),
+                  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                  file = here("fits", "chp11", "b11.4-wide"))
+```
+
+Let's look at Actor 2 again. We see that the MCMC posterior has much more skew now. However the QUAP posterior is still constrained to be Gaussian. In this case, QUAP is a pretty bad approximation of the true shape of the posterior.
+
+```{r e11m7-5}
+q_samp <- extract.samples(q11.4_wide)
+
+q_draws <- bind_cols(
+  q_samp$a %>% 
+    as_tibble(.name_repair = ~paste0("b_a_actor", 1:ncol(q_samp$a))) %>% 
+    slice_sample(n = 8000) %>% 
+    rowid_to_column(var = ".draw"),
+  q_samp$b %>% 
+    as_tibble(.name_repair = ~paste0("b_b_treatment", 1:ncol(q_samp$b))) %>% 
+    slice_sample(n = 8000)
+) %>% 
+  pivot_longer(-.draw, names_to = "parameter", values_to = "QUAP")
+
+b_draws <- as_draws_df(b11.4_wide) %>% 
+  as_tibble() %>% 
+  select(-lp__) %>% 
+  pivot_longer(cols = -c(.chain, .iteration, .draw),
+               names_to = "parameter", values_to = "MCMC")
+
+post_comp <- full_join(b_draws, q_draws, by = c(".draw", "parameter")) %>% 
+  pivot_longer(cols = c(MCMC, QUAP), names_to = "type") %>% 
+  mutate(parameter = str_replace_all(parameter, "b_[a|b]_([a-z]*)([0-9])",
+                                     "\\1 \\2"),
+         parameter = str_to_title(parameter))
+
+post_comp %>% 
+  filter(parameter == "Actor 2") %>% 
+  ggplot(aes(x = value, color = type)) +
+  geom_density(key_glyph = "timeseries") +
+  scale_color_okabeito() +
+  labs(x = "Actor 2", y = "Density", color = NULL)
+```
+
+
+:::question
+> **11M8.** Revisit the `data(Kline)` islands example. This time drop Hawaii from the sample and refit the models. What changes do you observe?
+:::
+
+First the data and fitting the same model from the chapter.
+
+```{r e11m8-1}
+data("Kline")
+
+kline_dat <- Kline %>% 
+  mutate(P = standardize(log(population)))
+
+no_hawaii <- filter(kline_dat, culture != "Hawaii")
+
+b11.10b <- brm(bf(total_tools ~ a + b * P,
+                  a ~ 0 + contact,
+                  b ~ 0 + contact,
+                  nl = TRUE), data = no_hawaii, family = poisson,
+               prior = c(prior(normal(3, 0.5), class = b, nlpar = a),
+                         prior(normal(0, 0.2), class = b, nlpar = b)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp11", "b11.10b"))
+
+summary(b11.10b)
+```
+
+In this model without Hawaii, the slopes (`b_*` parameters in the summary) are nearly identical. This is different than the chapter, where high and low contact had different slopes. Thus, it appears that Hawaii was driving the difference in slopes.
+
+
 
 
 ## Homework
