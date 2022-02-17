@@ -58,7 +58,9 @@ jobs:
           R -e 'renv::restore()'
       
       - name: Build site
-        run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+        run: |
+          Rscript -e 'cmdstanr::install_cmdstan()'
+          Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
       
       - name: Deploy to GitHub pages
         if: github.event_name != 'pull_request'
