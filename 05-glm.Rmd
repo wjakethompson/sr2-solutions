@@ -310,7 +310,61 @@ In this model without Hawaii, the slopes (`b_*` parameters in the summary) are n
 > **11H1.** Use WAIC or PSIS to compare the chimpanzee model that includes a unique intercept for each actor, `m11.4` (page 330), to the simpler models fit in the same section. Interpret the results.
 :::
 
+There are four models from the chapter that we need to replicate:
 
+```{r e11h1-1}
+data("chimpanzees")
+
+chimp_dat <- chimpanzees %>% 
+  mutate(treatment = 1 + prosoc_left + 2 * condition,
+         treatment = factor(treatment),
+         actor = factor(actor))
+
+b11.1 <- brm(bf(pulled_left ~ a,
+                a ~ 1,
+                nl = TRUE), data = chimp_dat, family = bernoulli,
+             prior = c(prior(normal(0, 10), class = b, nlpar = a)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp11", "b11.1"))
+
+b11.2 <- brm(bf(pulled_left ~ a + b,
+                a ~ 1,
+                b ~ 0 + treatment,
+                nl = TRUE), data = chimp_dat, family = bernoulli,
+             prior = c(prior(normal(0, 10), class = b, nlpar = a),
+                       prior(normal(0, 10), class = b, nlpar = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp11", "b11.2"))
+
+b11.3 <- brm(bf(pulled_left ~ a + b,
+                a ~ 1,
+                b ~ 0 + treatment,
+                nl = TRUE), data = chimp_dat, family = bernoulli,
+             prior = c(prior(normal(0, 1.5), class = b, nlpar = a),
+                       prior(normal(0, 0.5), class = b, nlpar = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp11", "b11.3"))
+
+b11.4 <- brm(bf(pulled_left ~ a + b,
+                a ~ 0 + actor,
+                b ~ 0 + treatment,
+                nl = TRUE), data = chimp_dat, family = bernoulli,
+             prior = c(prior(normal(0, 1.5), class = b, nlpar = a),
+                       prior(normal(0, 0.5), class = b, nlpar = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp11", "b11.4"))
+
+b11.1 <- add_criterion(b11.1, criterion = "loo")
+b11.2 <- add_criterion(b11.2, criterion = "loo")
+b11.3 <- add_criterion(b11.3, criterion = "loo")
+b11.4 <- add_criterion(b11.4, criterion = "loo")
+```
+
+Now we can compare using PSIS. The comparison shows pretty strong support for `b11.4`, which is the model with actor intercepts. Based on what we learned in the chapter, this makes sense. Most of the variation was across individual chimpanzees, rather than across treatments. Thus, adding actor information provides much better predictions.
+
+```{r e11h1-2}
+loo_compare(b11.1, b11.2, b11.3, b11.4)
+```
 
 
 :::question
