@@ -161,10 +161,10 @@ dat_list <- list(pulled_left = chimp_dat$pulled_left,
                  treatment = as.integer(chimp_dat$treatment))
 
 q11.4 <- quap(alist(pulled_left ~ dbinom(1, p),
-                     logit(p) <- a[actor] + b[treatment],
-                     a[actor] ~ dnorm(0, 1.5),
-                     b[treatment] ~ dnorm(0, 0.5)),
-               data = dat_list)
+                    logit(p) <- a[actor] + b[treatment],
+                    a[actor] ~ dnorm(0, 1.5),
+                    b[treatment] ~ dnorm(0, 0.5)),
+              data = dat_list)
 
 b11.4 <- brm(bf(pulled_left ~ a + b,
                 a ~ 0 + actor,
@@ -383,21 +383,103 @@ loo_compare(b11.1, b11.2, b11.3, b11.4)
 > where $y$ is the number of successful attempts, $n$ is the total number of attempts, $P$ is a dummy variable indicating whether or not the pirate had large body size, $V$ is a dummy variable indicating whether or not the victim had large body size, and finally $A$ is a dummy variable indicating whether or not the pirate was an adult. Fit the model above to the `eagles` data, using both `quap` and `ulam`. Is the quadratic approximation okay?
 :::
 
+First, the data:
 
+```{r e11h2-1, message = FALSE, warning = FALSE}
+data(eagles, package = "MASS")
+
+eagle_dat <- eagles %>% 
+  as_tibble() %>% 
+  mutate(pirateL = ifelse(P == "L", 1, 0),
+         victimL = ifelse(V == "L", 1, 0),
+         pirateA = ifelse(A == "A", 1, 0))
+```
+
+Now two models, the first with `quap()` and the second using {brms}. We can compare the parameter estimates using `precis()` for the QUAP model and `fixef()` for the {brms} model. Overall, the estimates are very similar. However, it should be noted that all of the {brms} parameters are slightly more extreme than the QUAP versions. This is because the MCMC posteriors do not have to be strictly Gaussian, and therefore can have a little more skew. If we used wider priors, the difference would be even more evident.
+
+```{r 11h2-2}
+eagle_quap <- quap(alist(y ~ dbinom(n, p),
+                         logit(p) <- a + bP * pirateL + bV * victimL + bA * pirateA,
+                         a ~ dnorm(0, 1.5),
+                         bP ~ dnorm(0, 1),
+                         bV ~ dnorm(0, 1),
+                         bA ~ dnorm(0, 1)),
+                   data = eagle_dat)
+
+eagle_brms <- brm(y | trials(n) ~ 1 + pirateL + victimL + pirateA,
+                  data = eagle_dat, family = binomial,
+                  prior = c(prior(normal(0, 1.5), class = Intercept),
+                            prior(normal(0, 1), class = b)),
+                  iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                  file = here("fits", "chp11", "b11h2-1"))
+
+precis(eagle_quap)
+
+fixef(eagle_brms, probs = c(.055, .945))
+```
 
 
 :::question
 >  (b) Now interpret the estimates. If the quadratic approximation turned out okay, then it's okay to use the `quap` estimates. Otherwise stick to `ulam` estimates. Then plot the posterior predictions. Compute and display both (1) the predicted **probability** of success and its 89% interval for each row (*i*) in the data, as well as (2) the predicted success **count** and its 89% interval. What different information does each type of posterior prediction provide?
 :::
 
+We'll use the MCMC estimates from {brms}. Starting with the intercept, this is the log-odds of a successful attempt when all of the predictors are 0 (i.e., a small non-adult pirate and small victim). Just under 60% of these attempts are expected to succeed.
 
+```{r 11h2-3}
+as_draws_df(eagle_brms, variable = "b_Intercept") %>% 
+  mutate(prob = inv_logit_scaled(b_Intercept)) %>% 
+  mean_hdi(prob, .width = 0.89)
+```
+
+The slopes are hard to interpret in isolation, because the impact of one variable depends on the other variables. The easiest way to interpret is to make the plot of the probabilities and expected counts. For each case type, we can see the probability of a successful attempt, and the number of expected counts. The difference is that the probabilities do not account for sample size. For example we can see that the SIS case (small immature pirate, small victim) has a relatively high expected probability of a successful attempt. However, because we see so few of those cases, the expected number of successful attempts is still very low. If you looked only at the probabilities, you might expect a lot of these cases. On the other hand, if you looked only at the expected counts, you might think that the probability of success is very low. They two outputs provide complementary information.
+
+```{r 11h2-4}
+eagle_dat %>% 
+  add_linpred_draws(eagle_brms) %>% 
+  mutate(prob = inv_logit_scaled(.linpred),
+         label = paste0(P, A, V)) %>% 
+  ggplot(aes(x = label, y = prob)) +
+  stat_pointinterval(aes(color = "Posterior"), .width = 0.89, size = 5) +
+  geom_point(data = eagle_dat, size = 2,
+             aes(x = paste0(P, A, V), y = y / n, color = "Observed")) +
+  scale_color_manual(values = c("Posterior" = "#009FB7",
+                                "Observed" = "#272727"),
+                     name = NULL) +
+  labs(x = "Case", y = "Probability")
+
+eagle_dat %>% 
+  add_epred_draws(eagle_brms) %>% 
+  mutate(label = paste0(P, A, V)) %>% 
+  ggplot(aes(x = label, y = .epred)) +
+  stat_pointinterval(aes(color = "Posterior"), .width = 0.89, size = 5) +
+  geom_point(data = eagle_dat, size = 2,
+             aes(x = paste0(P, A, V), y = y, color = "Observed")) +
+  scale_color_manual(values = c("Posterior" = "#009FB7",
+                                "Observed" = "#272727"),
+                     name = NULL) +
+  labs(x = "Case", y = "Successes")
+```
 
 
 :::question
 >  (c) Now try to improve the model. Consider an interaction between the pirate's size and age (immature or adult). Compare this model to the previous one, using WAIC. Interpret.
 :::
 
+First we'll fit the model with an interaction and add WAIC information to this model and our previous {brms} model. When we add the WAIC information, we get some warnings about `p_waic` values greater than 0.4. When we compare the WAIC values, we see that there is minimal difference, and the non-interaction model is preferred. Thus, we conclude that the interaction term does not have a large impact on the predictive power of the model.
 
+```{r 11h2-5}
+eagle_brms2 <- brm(y | trials(n) ~ 1 + pirateL * pirateA + victimL,
+                   data = eagle_dat, family = binomial,
+                   prior = c(prior(normal(0, 1.5), class = Intercept),
+                             prior(normal(0, 1), class = b)),
+                   iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                   file = here("fits", "chp11", "b11h2-2"))
+
+eagle_brms <- add_criterion(eagle_brms, criterion = "waic")
+eagle_brms2 <- add_criterion(eagle_brms2, criterion = "waic")
+
+loo_compare(eagle_brms, eagle_brms2, criterion = "waic")
+```
 
 
 :::question
@@ -406,28 +488,234 @@ loo_compare(b11.1, b11.2, b11.3, b11.4)
 >  (a) Model the relationship between density and percent cover, using a log-link (same as the example in the book and lecture). Use weakly informative priors of your choosing. Check the quadratic approximation again, by comparing `quap` to `ulam`. Then plot the expected counts and their 89% interval against percent cover. In which ways does the model do a good job? A bad job?
 :::
 
+We'll start by loading the data and standardizing the predictor variables. Then we can fit both the QUAP and MCMC models. Once again, we see some noticeable differences between the posteriors from the two estimation methods. So moving forward, we'll use the MCMC model.
 
+```{r e11h3-1}
+data("salamanders")
+
+salamander_dat <- salamanders %>% 
+  mutate(cov = standardize(PCTCOVER),
+         age = standardize(FORESTAGE))
+
+sal_quap <- quap(alist(SALAMAN ~ dpois(lambda),
+                       log(lambda) <- a + bC * cov,
+                       a ~ dnorm(0, 1),
+                       bC ~ dnorm(0, 0.5)),
+                 data = salamander_dat)
+
+sal_brms <- brm(SALAMAN ~ 1 + cov, data = salamander_dat, family = poisson,
+                prior = c(prior(normal(0, 1), class = Intercept),
+                          prior(normal(0, 0.5), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp11", "b11h3-1"))
+
+precis(sal_quap)
+
+fixef(sal_brms, probs = c(0.055, 0.945))
+```
+
+Now let's visualize the expected counts. It looks like the model does pretty well for low values of ground cover, but at high values, there is much more variance that might be expected.
+
+```{r e11h3-2, cache = TRUE}
+set.seed(219)
+
+epreds <- tibble(cov = seq(-2, 1.5, by = 0.05)) %>% 
+  add_epred_draws(sal_brms)
+
+preds <- tibble(cov = seq(-2, 1.5, by = 0.01)) %>% 
+  add_predicted_draws(sal_brms)
+
+ggplot() +
+  stat_lineribbon(data = preds, aes(x = cov, y = .prediction,
+                                    fill = "Prediction (89%)"),
+                  .width = c(0.89), size = 0) +
+  stat_lineribbon(data = epreds, aes(x = cov, y = .epred),
+                  .width = c(0.67, 0.89, 0.97), size = 0.5) +
+  geom_point(data = salamander_dat, aes(x = cov, y = SALAMAN)) +
+  scale_fill_manual(values = c("#F0F0F0", ramp_blue(seq(1, 0.2, length.out = 3))),
+                    breaks = c("Prediction (89%)", 0.67, 0.89, 0.97)) +
+  labs(x = "Ground cover (standardized)", y = "Observed Salamanders",
+       fill = "Interval")
+```
 
 
 :::question
 >  (b) Can you improve the model by using the other predictor, `FORESTAGE`? Try any models you think useful. Can you explain why `FORESTAGE` helps or does not help with prediction?
 :::
 
+Let's try adding age as a predictor. When we look at the output, we see that `age` doesn't add much of anything to the prediction. This is likely because ground cover is a pipe between forest age and the number of salamanders. That is, older forest have more ground cover, which is what leads to more salamanders.
+
+```{r e11h3-3}
+sal_brms2 <- brm(SALAMAN ~ 1 + cov + age, data = salamander_dat, family = poisson,
+                prior = c(prior(normal(0, 1), class = Intercept),
+                          prior(normal(0, 0.5), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp11", "b11h3-2"))
+
+summary(sal_brms2)
+```
+
+This is supported by next model. When we include only age, we see that age is a strong predictor of salamanders. It's only when we stratify by ground cover that forest age loses its predictive power. Thus, it seems that forest age is really just a useful proxy if we don't have actual ground cover data.
+
+```{r e11h3-4}
+sal_brms3 <- brm(SALAMAN ~ 1 + age, data = salamander_dat, family = poisson,
+                prior = c(prior(normal(0, 1), class = Intercept),
+                          prior(normal(0, 0.5), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp11", "b11h3-3"))
+
+summary(sal_brms3)
+```
 
 
 
 :::question
-> **11H4.** The data in `data(NWOGrants)` are outcomes for scientific funding applications for the Netherlands Organization for Scientific Research (NWO) from 2010--2012 [see @vanderlee for data and context]. These data have a very similar structure to the `UCBAdmit` data discussed in the chapter. I want you to consider a similar question: What are the total and indirect causal effects of gender on grant awards? Consider a mediation path (a pipe) through discipline. Draw the corresponding DAG and then use one or more binomial GLMs to answer the question. What is your causal interpretation? If NWO's goal is to equalize rates of funding between men and women, what type of intervention would be most effective?
+> **11H4.** The data in `data(NWOGrants)` are outcomes for scientific funding applications for the Netherlands Organization for Scientific Research (NWO) from 2010--2012 [see @vanderlee, for data and context]. These data have a very similar structure to the `UCBAdmit` data discussed in the chapter. I want you to consider a similar question: What are the total and direct causal effects of gender on grant awards? Consider a mediation path (a pipe) through discipline. Draw the corresponding DAG and then use one or more binomial GLMs to answer the question. What is your causal interpretation? If NWO's goal is to equalize rates of funding between men and women, what type of intervention would be most effective?
 :::
 
+Let's start with the DAG. We'll denote gender as $G$, discipline as $D$, and award as $A$. Our DAG can then be defined as in the figure below. Gender influences both whether or not an award is given, as well as which discipline an individual might go into.
 
+```{r e11h4-1, out.width = "40%", echo = FALSE}
+library(ggdag)
+
+nwo_dag <- dagitty("dag { G -> D -> A <- G }")
+coordinates(nwo_dag) <- list(
+  x = c(G = 1, D = 2, A = 3),
+  y = c(G = 1, D = 2, A = 1)
+)
+
+tidy_dagitty(nwo_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+To estimate the total and direct effects, we need two models. For the total effect, we condition only on gender. For the direct effect, we also condition on discipline.
+
+```{r e11h4-2}
+data("NWOGrants")
+
+nwo_dat <- NWOGrants %>% 
+  mutate(gender = factor(gender, levels = c("m", "f")))
+
+b11h4_total <- brm(awards | trials(applications) ~ 0 + gender, data = nwo_dat,
+                   family = binomial,
+                   prior = prior(normal(0, 1.5), class = b),
+                   iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                   file = here("fits", "chp11", "b11h4-total"))
+
+b11h4_direct <- brm(bf(awards | trials(applications) ~ g + d + i,
+                       g ~ 0 + gender,
+                       d ~ 0 + discipline,
+                       i ~ 0 + gender:discipline,
+                       nl = TRUE), data = nwo_dat, family = binomial,
+                    prior = c(prior(normal(0, 1.5), nlpar = g),
+                              prior(normal(0, 1.5), nlpar = d),
+                              prior(normal(0, 1.5), nlpar = i)),
+                    iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                    file = here("fits", "chp11", "b11h4-direct"))
+```
+
+Let's look at the difference between males and females in these different models. When looking at the total effect, we see that males are favored by approximately 3 percentage points.
+
+```{r e11h4-3}
+as_draws_df(b11h4_total) %>% 
+  mutate(diff_male = inv_logit_scaled(b_genderm) - inv_logit_scaled(b_genderf)) %>% 
+  ggplot(aes(x = diff_male)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97), fill = "#009FB7") +
+  labs(x = "&beta;<sub>M</sub> &minus; &beta;<sub>F</sub>", y = "Density")
+```
+
+When we condition on discipline, we see a slightly different story. The marginal effect of gender across disciplines shows that in some cases females are advantaged and in other cases disadvantaged. 
+
+```{r e11h4-4, cache = TRUE}
+apps_per_dept <- nwo_dat %>% 
+  group_by(discipline) %>% 
+  summarize(applications = sum(applications))
+
+# simulate as if all applications are from males
+male_dat <- apps_per_dept %>% 
+  mutate(gender = "m") %>% 
+  uncount(applications) %>% 
+  mutate(applications = 1L)
+
+# simulate as if all applications are from females
+female_dat <- apps_per_dept %>% 
+  mutate(gender = "f") %>% 
+  uncount(applications) %>% 
+  mutate(applications = 1L)
+
+marg_eff <- bind_rows(add_epred_draws(male_dat, b11h4_direct),
+                      add_epred_draws(female_dat, b11h4_direct)) %>% 
+  pivot_wider(names_from = "gender", values_from = ".epred") %>% 
+  mutate(diff = m - f)
+
+ggplot(marg_eff, aes(x = diff)) +
+  stat_halfeye(.width = c(0.67, 0.89, 0.97), fill = "#009FB7") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(x = "Difference in Awards (Male - Female)", y = "Density")
+```
+
+Together this indicates that women are relatively more likely to apply for grants in disciplines with lower award rates. Thus, overall women are awarded grants less often. However, within disciplines, there are advantages and disadvantages that tend to even out, at least in this data set. If we were trying to intervene, I would recommend encouraging women to apply for grants in disciplines for which women have relatively lower application rates, but for which there are higher award rates.
 
 
 :::question
 > **11H5.** Suppose that the NWO Grants sample has an unobserved confound that influences both choice of discipline and the probability of an award. One example of such a confound could be the career stage of each applicant. Suppose that in some disciplines, junior scholars apply for most of the grants. In other disciplines, scholars from all career stages compete. As a result, career stage influences discipline as well as the probability of being awarded a grant. Add these influences to your DAG from the previous problem. What happens now when you condition on discipline? Does it provide an un-confounded estimate of the direct path from gender to an award? Why or why not? Justify your answer with the backdoor criterion. If you have trouble thinking this though, try simulating fake data, assuming your DAG is true. Then analyze it using the model from the previous problem. What do you conclude? Is it possible for gender to have a real direct causal influence but for a regression conditioning on both gender and discipline to suggest zero influence?
 :::
 
+Here's our new DAG, where $S$ is the unobserved career stage. Now, $D$ is a collider. So if we condition on $D$ to get the direct effect, we open a backdoor through $S$ to $A$. This means it's not possible to accurately estimate the direct effect of gender on award decisions, using this DAG.
 
+```{r e11h5-1, out.width = "40%", echo = FALSE}
+library(ggdag)
+
+dag_coords <- tibble(name = c("G", "D", "A", "S"),
+                     x = c(1, 2, 3, 3),
+                     y = c(1, 2, 1, 2))
+
+dagify(A ~ G + D + S,
+       D ~ G + S,
+       coords = dag_coords) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_point(data = . %>% filter(name %in% c("S")),
+                 shape = 1, stroke = 2, color = "black") +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+We can run a quick simulation to demonstrate this. We'll generate a data set from this new DAG and estimate the direct effect model from the previous question.
+
+```{r e11h5-2-seed, include = FALSE}
+set.seed(1913)
+```
+
+```{r e11h5-2}
+n <- 1000
+g <- rbernoulli(n, p = 0.5)
+s <- rbernoulli(n, p = 0.5)
+d <- rbernoulli(n, p = inv_logit_scaled(2 * g - s))
+a <- rbernoulli(n, p = inv_logit_scaled(0 * g + d + s - 2))
+
+dat <- tibble(g, d, a) %>% 
+  mutate(across(everything(), as.integer),
+         across(everything(), as.factor))
+
+mod <- brm(a ~ 1 + d + g, data = dat, family = bernoulli,
+           prior = c(prior(normal(0, 1), class = Intercept),
+                     prior(normal(0, 1), class = b)),
+           iter = 4000, warmup = 2000, chains = 4, cores = 4,
+           file = here("fits", "chp11", "b11h5-sim"))
+
+as_draws_df(mod, variable = "b_g1") %>% 
+  mean_hdi(b_g1, .width = 0.89)
+```
+
+Here, even though we simulated 0 effect of gender on award status, there is a consistently positive relationship estimated by the model. This is because the collider has opened a non-causal path through career stage, inducing a relationship where in reality none exists. This illustrates that it's not possible to estimate a non-confounded estimate of the direct effect of gender, given just data on gender, discipline, and award status.
 
 
 :::question
@@ -436,15 +724,133 @@ loo_compare(b11.1, b11.2, b11.3, b11.4)
 >  (a) Model the number of observations of `social_learning` for each species as a function of the log brain size. Use a Poisson distribution for the `social_learning` outcome variable. Interpret the resulting posterior.
 :::
 
+As always, we'll start by prepping the data. In our first model, we are predicting social learning with the standardized log brain size.
+
+```{r e11h6-1}
+data("Primates301")
+
+primate_dat <- Primates301 %>% 
+  as_tibble() %>% 
+  select(social_learning, genus, species, brain, research_effort) %>% 
+  drop_na(everything()) %>% 
+  mutate(log_brain = standardize(log(brain)),
+         log_effort = log(research_effort)) %>% 
+  rowid_to_column()
+
+b11h6a <- brm(social_learning ~ 1 + log_brain, data = primate_dat,
+              family = poisson,
+              prior = c(prior(normal(0, 1), class = Intercept),
+                        prior(normal(0, 0.5), class = b)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp11", "b11h6a"))
+
+summary(b11h6a)
+```
+
+The summary indicates a strong positive relationship between social learning behaviors and brain size. We can check how good the predictions are by looking at the posterior predictive checks. Overall it doesn't look to bad, but there are definitely some places where we miss pretty badly.
+
+```{r e11h6-2}
+preds <- primate_dat %>% 
+  add_predicted_draws(b11h6a)
+
+preds %>% 
+  filter(rowid %in% 1:50) %>% 
+  ggplot(aes(x = rowid)) +
+  stat_pointinterval(aes(y = .prediction, color = "Posterior"), .width = 0.89) +
+  geom_point(data = filter(primate_dat, rowid %in% 1:50),
+             aes(y = social_learning, color = "Observed")) +
+  scale_color_manual(values = c("Posterior" = "#272727", "Observed" = "#009FB7")) +
+  expand_limits(y = c(0, 200)) +
+  labs(x = "Case", y = "Social Learning", color = NULL)
+
+preds %>% 
+  filter(rowid %in% 51:100) %>% 
+  ggplot(aes(x = rowid)) +
+  stat_pointinterval(aes(y = .prediction, color = "Posterior"), .width = 0.89) +
+  geom_point(data = filter(primate_dat, rowid %in% 51:100),
+             aes(y = social_learning, color = "Observed")) +
+  scale_color_manual(values = c("Posterior" = "#272727", "Observed" = "#009FB7")) +
+  expand_limits(y = c(0, 200)) +
+  labs(x = "Case", y = "Social Learning", color = NULL)
+
+preds %>% 
+  filter(rowid %in% 101:150) %>% 
+  ggplot(aes(x = rowid)) +
+  stat_pointinterval(aes(y = .prediction, color = "Posterior"), .width = 0.89) +
+  geom_point(data = filter(primate_dat, rowid %in% 101:150),
+             aes(y = social_learning, color = "Observed")) +
+  scale_color_manual(values = c("Posterior" = "#272727", "Observed" = "#009FB7")) +
+  expand_limits(y = c(0, 200)) +
+  labs(x = "Case", y = "Social Learning", color = NULL)
+```
+
 
 :::question
 >  (b) Some species are studied much more than others. So the number of reported instances of `social_learning` could be a product of research effort. Use the `research_effort` variable, specifically its logarithm, as an additional predictor variable. Interpret the coefficient for log `research_effort`. How does this model differ from the previous one?
 :::
 
+Let's add research effort to the model. We now see a slightly weaker relationship between brain size and social learning.
+
+```{r e11h6-3}
+b11h6b <- brm(social_learning ~ 1 + log_brain + log_effort, data = primate_dat,
+              family = poisson,
+              prior = c(prior(normal(0, 1), class = Intercept),
+                        prior(normal(0, 0.5), class = b)),
+              iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+              file = here("fits", "chp11", "b11h6b"))
+
+summary(b11h6b)
+```
+
+Where does this model perform better or worse than prior model? Let's look at the pointwise PSIS-LOO. Points on the right of the plot are those where the second model including research effort provides better predictions. Note that for the most part, these are those with the highest research effort.
+
+```{r e11h6-4}
+b11h6a <- add_criterion(b11h6a, criterion = "loo")
+b11h6b <- add_criterion(b11h6b, criterion = "loo")
+
+set.seed(220)
+
+bind_cols(
+  primate_dat,
+  as_tibble(b11h6a$criteria$loo$pointwise) %>% 
+    select(loo1 = elpd_loo),
+  as_tibble(b11h6b$criteria$loo$pointwise) %>% 
+    select(loo2 = elpd_loo)
+) %>% 
+  mutate(diff = loo2 - loo1) %>% 
+  ggplot(aes(x = diff, y = log_effort)) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_point() +
+  gghighlight(n = 1, diff > 15, label_key = genus, max_highlight = 10) +
+  labs(x = "LOO<sub>2</sub> - LOO<sub>1</sub>", y = "Research Effort (log)")
+```
+
 
 :::question
 >  (c) Draw a DAG to represent how you think the variables `social_learning`, `brain`, and `research_effort` interact. Justify the DAG with the measured associations in the two models above (and any other models you used).
 :::
+
+Here is the DAG I would predict based on the previous models, where $B$ is brain size, $E$ is research effort, and $S$ is social learning behaviors. Based on this DAG, brain size influences both research effort and social learning behaviors. Finally, although research effort doesn't actually influence social learning behaviors, it does influence the social learning variable, because if there is no effort, we won't observe anything (i.e., false 0s).
+
+```{r e11h6-5, out.width = "40%", echo = FALSE}
+library(ggdag)
+
+dag_coords <- tibble(name = c("B", "E", "S"),
+                     x = c(1, 2, 3),
+                     y = c(1, 2, 1))
+
+dagify(S ~ B + E,
+       E ~ B,
+       coords = dag_coords) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+This is consistent with our models. When we added research effort to the model, the effect of brain size decreased, which is consistent with effort being a pipe between brain size and social learning behaviors. Additionally, if scientists tend to study those primates with large brains, then that could lead to a exaggerated effect of brain size on social learning behaviors, which was observed in the first model.
 
 
 ## Homework
@@ -610,6 +1016,4 @@ nwo_dat %>%
        size = "Award Rate") +
   theme(legend.position = "right")
 ```
-
-
 
