@@ -5,10 +5,10 @@ library(tidyverse)
 
 if (!file.exists("bib/pkgs.bib")) file.create("bib/pkgs.bib")
 
-desc <- desc::description$new()
-deps <- desc$get_deps() %>% 
-  filter(package != "R") %>% 
-  pull(package)
+deps <- renv::dependencies() %>% 
+  pull(Package) %>% 
+  unique() %>% 
+  sort()
 
 pkgs <- unique(c(.packages(), deps))
 suppressWarnings(knitr::write_bib(pkgs, "bib/pkgs.bib"))

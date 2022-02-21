@@ -40,10 +40,10 @@ This project is licensed under a <a rel="license" href="http://creativecommons.o
 This project was built with:
 
 ```{r session-info}
-desc <- desc::description$new()
-deps <- desc$get_deps() %>% 
-  filter(package != "R") %>% 
-  pull(package)
+deps <- renv::dependencies() %>% 
+  distinct(Package) %>% 
+  arrange() %>% 
+  pull()
 
 sessioninfo::session_info(deps)
 ```

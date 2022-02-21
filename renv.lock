@@ -175,8 +175,14 @@
     "StanHeaders": {
       "Package": "StanHeaders",
       "Version": "2.21.0-7",
-      "Source": "Repository",
+      "Source": "CRAN",
       "Repository": "CRAN",
+      "RemoteType": "standard",
+      "RemotePkgRef": "StanHeaders",
+      "RemoteRef": "StanHeaders",
+      "RemoteRepos": "https://cran.rstudio.com/",
+      "RemotePkgPlatform": "macos",
+      "RemoteSha": "2.21.0-7",
       "Hash": "0459d4dd7a8c239be18469a30c23dd4b",
       "Requirements": [
         "RcppEigen",
@@ -983,14 +989,8 @@
     "evaluate": {
       "Package": "evaluate",
       "Version": "0.14",
-      "Source": "CRAN",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemotePkgRef": "evaluate",
-      "RemoteRef": "evaluate",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgPlatform": "macos",
-      "RemoteSha": "0.14",
       "Hash": "ec8ca05cffcc70569eaaad8469d2a3a7",
       "Requirements": []
     },
@@ -1665,14 +1665,8 @@
     "highr": {
       "Package": "highr",
       "Version": "0.9",
-      "Source": "CRAN",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemotePkgRef": "highr",
-      "RemoteRef": "highr",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgPlatform": "macos",
-      "RemoteSha": "0.9",
       "Hash": "8eb36c8125038e648e5d111c0d7b2ed4",
       "Requirements": [
         "xfun"
@@ -2032,14 +2026,8 @@
     "markdown": {
       "Package": "markdown",
       "Version": "1.1",
-      "Source": "CRAN",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemotePkgRef": "markdown",
-      "RemoteRef": "markdown",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgPlatform": "macos",
-      "RemoteSha": "1.1",
       "Hash": "61e4a10781dd00d7d81dd06ca9b94e95",
       "Requirements": [
         "mime",
@@ -2990,10 +2978,10 @@
     },
     "sf": {
       "Package": "sf",
-      "Version": "1.0-5",
+      "Version": "1.0-6",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "200bfddf8f0ca222a7edfd2d64425fb9",
+      "Hash": "9b7b141f7844870dda255584d62775a9",
       "Requirements": [
         "DBI",
         "Rcpp",

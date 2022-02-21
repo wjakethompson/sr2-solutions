@@ -22,6 +22,15 @@ jobs:
           r-version: '4.1.2'
           use-public-rspm: true
       
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          
+      - name: Setup R Java support
+        run: |
+          bash -c 'java -version && which java && echo $PATH && echo $JAVA_HOME'
+          echo export PATH=$PATH > reconf.sh; echo export JAVA_HOME=$JAVA_HOME >> reconf.sh; echo R CMD javareconf >> reconf.sh; sudo bash reconf.sh
+      
       - name: Cache Renv packages
         uses: actions/cache@main
         with:
@@ -39,13 +48,19 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt -y install libcurl4-openssl-dev
+          sudo apt -y install libharfbuzz-dev
+          sudo apt -y install libfribidi-dev
+          sudo apt -y install libudunits2-dev
+          sudo apt -y install libgdal-dev gdal-bin libproj-dev proj-data proj-bin libgeos-dev
       
       - name: Install packages
         run: |
           R -e 'renv::restore()'
       
       - name: Build site
-        run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+        run: |
+          Rscript -e 'cmdstanr::install_cmdstan()'
+          Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
       
       - name: Deploy to GitHub pages
         if: github.event_name != 'pull_request'
