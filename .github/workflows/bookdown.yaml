@@ -22,45 +22,20 @@ jobs:
           r-version: '4.1.2'
           use-public-rspm: true
       
-      - uses: actions/setup-java@v1
+      - uses: r-lib/actions/setup-renv@v2
         with:
-          java-version: 11
-          
-      - name: Setup R Java support
-        run: |
-          bash -c 'java -version && which java && echo $PATH && echo $JAVA_HOME'
-          echo export PATH=$PATH > reconf.sh; echo export JAVA_HOME=$JAVA_HOME >> reconf.sh; echo R CMD javareconf >> reconf.sh; sudo bash reconf.sh
-      
-      - name: Cache Renv packages
-        uses: actions/cache@main
-        with:
-          path: $HOME/.local/share/renv
-          key: r-${{ hashFiles('renv.lock') }}
-          restore-keys: r-
+          cache-version: 2
       
       - name: Cache bookdown results
-        uses: actions/cache@main
+        uses: actions/cache@v2
         with:
           path: _bookdown_files
           key: bookdown-${{ hashFiles('**/*Rmd') }}
           restore-keys: bookdown-
       
-      - name: Install dependencies
-        run: |
-          sudo apt -y install libcurl4-openssl-dev
-          sudo apt -y install libharfbuzz-dev
-          sudo apt -y install libfribidi-dev
-          sudo apt -y install libudunits2-dev
-          sudo apt -y install libgdal-dev gdal-bin libproj-dev proj-data proj-bin libgeos-dev
-      
-      - name: Install packages
-        run: |
-          R -e 'renv::restore()'
-      
       - name: Build site
-        run: |
-          Rscript -e 'cmdstanr::install_cmdstan()'
-          Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+        run: bookdown::render_book("index.Rmd", quiet = TRUE)
+        shell: Rscript {0}
       
       - name: Deploy to GitHub pages
         if: github.event_name != 'pull_request'
