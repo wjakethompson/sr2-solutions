@@ -16,3 +16,16 @@ exercises-2
 chapter-5
 chapter-6
 homework-2
+overfitting-mcmc
+lectures-3
+exercises-3
+chapter-7
+chapter-8
+chapter-9
+homework-3
+generalized-linear-models
+lectures-4
+exercises-4
+chapter-10
+chapter-11
+homework-4

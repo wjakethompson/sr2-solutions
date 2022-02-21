@@ -1476,6 +1476,8 @@ We'll test one example data set. We use the `sim_dat()` function we just created
 
 
 ```r
+set.seed(208)
+
 dat1 <- sim_dat(n = 10, bx = 0.3)
 
 mod1 <- brm(Y ~ 1 + X + S + A, data = dat1, family = gaussian,
@@ -1495,14 +1497,14 @@ summary(mod1, prob = 0.89)
 #> 
 #> Population-Level Effects: 
 #>           Estimate Est.Error l-89% CI u-89% CI Rhat Bulk_ESS Tail_ESS
-#> Intercept     0.00      0.07    -0.11     0.11 1.00     4872     3998
-#> X             0.37      0.28    -0.09     0.82 1.00     2809     3786
-#> S             0.75      0.15     0.51     0.98 1.00     3526     4020
-#> A            -0.14      0.23    -0.49     0.23 1.00     3348     4173
+#> Intercept     0.00      0.09    -0.14     0.14 1.00     5459     4269
+#> X             0.31      0.28    -0.13     0.75 1.00     4000     3847
+#> S             0.61      0.22     0.24     0.96 1.00     4549     4029
+#> A             0.05      0.22    -0.29     0.42 1.00     4558     4417
 #> 
 #> Family Specific Parameters: 
 #>       Estimate Est.Error l-89% CI u-89% CI Rhat Bulk_ESS Tail_ESS
-#> sigma     0.24      0.08     0.14     0.38 1.00     2994     3461
+#> sigma     0.31      0.10     0.19     0.48 1.00     3566     4676
 #> 
 #> Draws were sampled using sample(hmc). For each parameter, Bulk_ESS
 #> and Tail_ESS are effective sample size measures, and Rhat is the potential

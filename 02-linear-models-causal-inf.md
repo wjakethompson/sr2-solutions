@@ -249,6 +249,10 @@ b4.3 <- brm(height ~ 1 + weight_c, data = how_dat, family = gaussian,
                       prior(uniform(0, 50), class = sigma)),
             iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
             file = here("fits", "chp4", "b4.3-0"))
+#> Warning: It appears as if you have specified an upper bounded prior on a parameter that has no natural upper bound.
+#> If this is really what you want, please specify argument 'ub' of 'set_prior' appropriately.
+#> Warning occurred for prior 
+#> sigma ~ uniform(0, 50)
 
 as_draws_df(b4.3) %>%
   as_tibble() %>% 
@@ -271,6 +275,10 @@ b4.3_nc <- brm(height ~ 1 + weight, data = how_dat, family = gaussian,
                          prior(uniform(0, 50), class = sigma)),
                iter = 28000, warmup = 27000, chains = 4, cores = 4, seed = 1234,
                file = here("fits", "chp4", "b4.3_nc"))
+#> Warning: It appears as if you have specified an upper bounded prior on a parameter that has no natural upper bound.
+#> If this is really what you want, please specify argument 'ub' of 'set_prior' appropriately.
+#> Warning occurred for prior 
+#> sigma ~ uniform(0, 50)
 
 as_draws_df(b4.3_nc) %>%
   as_tibble() %>% 

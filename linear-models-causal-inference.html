@@ -18,9 +18,9 @@
 <meta name="twitter:description" content="The second week covers Chapter 4 (Geocentric Models).  2.1 Lectures Lecture 3:  Lecture 4:   2.2 Exercises  2.2.1 Chapter 4  4E1. In the model definition below, which line is the likelihood?...">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.11/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
-<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Fira%20Code-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Oxygen-0.4.0/font.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Fira%20Code-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Oxygen-0.4.0.9000/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
 <script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
@@ -49,6 +49,8 @@
 <li><a class="" href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></li>
 <li><a class="active" href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></li>
 <li><a class="" href="causes-confounds-colliders.html"><span class="header-section-number">3</span> Causes, Confounds &amp; Colliders</a></li>
+<li><a class="" href="overfitting-mcmc.html"><span class="header-section-number">4</span> Overfitting / MCMC</a></li>
+<li><a class="" href="generalized-linear-models.html"><span class="header-section-number">5</span> Generalized Linear Models</a></li>
 <li><a class="" href="references.html">References</a></li>
 </ul>
 
@@ -284,6 +286,10 @@ y_i &amp;\sim \text{Normal}(\mu,\sigma) \\
                       <span class="fu"><a href="https://rdrr.io/pkg/brms/man/set_prior.html">prior</a></span><span class="op">(</span><span class="fu">uniform</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, class <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span><span class="op">)</span>,
             iter <span class="op">=</span> <span class="fl">28000</span>, warmup <span class="op">=</span> <span class="fl">27000</span>, chains <span class="op">=</span> <span class="fl">4</span>, cores <span class="op">=</span> <span class="fl">4</span>, seed <span class="op">=</span> <span class="fl">1234</span>,
             file <span class="op">=</span> <span class="fu">here</span><span class="op">(</span><span class="st">"fits"</span>, <span class="st">"chp4"</span>, <span class="st">"b4.3-0"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Warning: It appears as if you have specified an upper bounded prior on a parameter that has no natural upper bound.</span>
+<span class="co">#&gt; If this is really what you want, please specify argument 'ub' of 'set_prior' appropriately.</span>
+<span class="co">#&gt; Warning occurred for prior </span>
+<span class="co">#&gt; sigma ~ uniform(0, 50)</span>
 
 <span class="fu"><a href="https://rdrr.io/pkg/brms/man/draws-brms.html">as_draws_df</a></span><span class="op">(</span><span class="va">b4.3</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
   <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
@@ -302,6 +308,10 @@ y_i &amp;\sim \text{Normal}(\mu,\sigma) \\
                          <span class="fu"><a href="https://rdrr.io/pkg/brms/man/set_prior.html">prior</a></span><span class="op">(</span><span class="fu">uniform</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">50</span><span class="op">)</span>, class <span class="op">=</span> <span class="va">sigma</span><span class="op">)</span><span class="op">)</span>,
                iter <span class="op">=</span> <span class="fl">28000</span>, warmup <span class="op">=</span> <span class="fl">27000</span>, chains <span class="op">=</span> <span class="fl">4</span>, cores <span class="op">=</span> <span class="fl">4</span>, seed <span class="op">=</span> <span class="fl">1234</span>,
                file <span class="op">=</span> <span class="fu">here</span><span class="op">(</span><span class="st">"fits"</span>, <span class="st">"chp4"</span>, <span class="st">"b4.3_nc"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; Warning: It appears as if you have specified an upper bounded prior on a parameter that has no natural upper bound.</span>
+<span class="co">#&gt; If this is really what you want, please specify argument 'ub' of 'set_prior' appropriately.</span>
+<span class="co">#&gt; Warning occurred for prior </span>
+<span class="co">#&gt; sigma ~ uniform(0, 50)</span>
 
 <span class="fu"><a href="https://rdrr.io/pkg/brms/man/draws-brms.html">as_draws_df</a></span><span class="op">(</span><span class="va">b4.3_nc</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
   <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> 
@@ -1550,7 +1560,7 @@ Code to reproduce
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-30.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-02-21.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

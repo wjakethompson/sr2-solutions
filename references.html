@@ -18,9 +18,9 @@
 <meta name="twitter:description" content="Barrett, M. (2021). ggdag: Analyze and create elegant directed acyclic graphs. https://github.com/malcolmbarrett/ggdag  Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models...">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.11/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
-<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Fira%20Code-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Oxygen-0.4.0/font.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Fira%20Code-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Oxygen-0.4.0.9000/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
 <script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
@@ -49,6 +49,8 @@
 <li><a class="" href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></li>
 <li><a class="" href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></li>
 <li><a class="" href="causes-confounds-colliders.html"><span class="header-section-number">3</span> Causes, Confounds &amp; Colliders</a></li>
+<li><a class="" href="overfitting-mcmc.html"><span class="header-section-number">4</span> Overfitting / MCMC</a></li>
+<li><a class="" href="generalized-linear-models.html"><span class="header-section-number">5</span> Generalized Linear Models</a></li>
 <li><a class="active" href="references.html">References</a></li>
 </ul>
 
@@ -85,11 +87,23 @@ Kale, A., Nguyen, F., Kay, M., &amp; Hullman, J. (2019). Hypothetical outcome pl
 <div id="ref-sr2" class="csl-entry">
 McElreath, R. (2020). <em>Statistical rethinking: A <span>Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (2nd ed.). Chapman &amp; Hall/CRC.
 </div>
+<div id="ref-nettle1998" class="csl-entry">
+Nettle, D. (1998). Explaining global patterns of language diversity. <em>Journal of Anthropological Archaeology</em>, <em>17</em>, 354–374. <a href="https://doi.org/10.1006/jaar.1998.0328">https://doi.org/10.1006/jaar.1998.0328</a>
+</div>
 <div id="ref-R-gganimate" class="csl-entry">
 Pedersen, T. L., &amp; Robinson, D. (2020). <em><span class="nocase">gganimate</span>: A grammar of animated graphics</em>. <a href="https://CRAN.R-project.org/package=gganimate">https://CRAN.R-project.org/package=gganimate</a>
 </div>
 <div id="ref-R-dagitty" class="csl-entry">
 Textor, J., van der Zander, B., &amp; Ankan, A. (2021). <em><span class="nocase">dagitty</span>: Graphical analysis of structural causal models</em>. <a href="https://CRAN.R-project.org/package=dagitty">https://CRAN.R-project.org/package=dagitty</a>
+</div>
+<div id="ref-vanderlee" class="csl-entry">
+van der Lee, R., &amp; Ellemers, N. (2015). Gender contributes to personal research funding success in <span>The Netherlands</span>. <em>Proceedings of the National Academy of Sciences</em>, <em>112</em>(40), 12349–12353. <a href="https://doi.org/10.1073/pnas.1510159112">https://doi.org/10.1073/pnas.1510159112</a>
+</div>
+<div id="ref-rhatess" class="csl-entry">
+Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., &amp; Bürkner, P.-C. (2021). Rank-normalization, folding, and localization: An improved <span class="math inline">\(\widehat{R}\)</span> for assessing convergence of MCMC. <em>Bayesian Analysis</em>, <em>16</em>(2), 667–718. <a href="https://doi.org/10.1214/20-BA1221">https://doi.org/10.1214/20-BA1221</a>
+</div>
+<div id="ref-bertalanffy" class="csl-entry">
+von Bertalanffy, L. (1934). Untersuchungen über die gesetzlichkeit des wachstums. <em>Wilhelm Roux’ Archiv Für Entwicklungsmechanik Der Organismen</em>, <em>131</em>(4), 613–652. <a href="https://doi.org/10.1007/BF00650112">https://doi.org/10.1007/BF00650112</a>
 </div>
 <div id="ref-R-tidyverse" class="csl-entry">
 Wickham, H. (2021). <em><span class="nocase">tidyverse</span>: Easily install and load the tidyverse</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
@@ -100,8 +114,14 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
 </div>
 
 </div>
+
+
+
+
+
+
   <div class="chapter-nav">
-<div class="prev"><a href="causes-confounds-colliders.html"><span class="header-section-number">3</span> Causes, Confounds &amp; Colliders</a></div>
+<div class="prev"><a href="generalized-linear-models.html"><span class="header-section-number">5</span> Generalized Linear Models</a></div>
 <div class="empty"></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
@@ -122,7 +142,7 @@ Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., G
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-30.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-02-21.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">

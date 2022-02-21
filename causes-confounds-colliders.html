@@ -18,9 +18,9 @@
 <meta name="twitter:description" content="The third week covers Chapter 5 (The Many Variables &amp; The Spurious Waffles) and Chapter 6 (The Haunted DAG &amp; The Causal Terror).  3.1 Lectures Lecture 5:  Lecture 6:   3.2 Exercises  3.2.1 Chapter...">
 <!-- JS --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://kit.fontawesome.com/6ecbd6c532.js" crossorigin="anonymous"></script><script src="libs/header-attrs-2.11/header-attrs.js"></script><script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="libs/bootstrap-4.6.0/bootstrap.min.css" rel="stylesheet">
-<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Fira%20Code-0.4.0/font.css" rel="stylesheet">
-<link href="libs/_Oxygen-0.4.0/font.css" rel="stylesheet">
+<script src="libs/bootstrap-4.6.0/bootstrap.bundle.min.js"></script><link href="libs/_Source%20Sans%20Pro-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Fira%20Code-0.4.0.9000/font.css" rel="stylesheet">
+<link href="libs/_Oxygen-0.4.0.9000/font.css" rel="stylesheet">
 <script src="libs/bs3compat-0.3.1/transition.js"></script><script src="libs/bs3compat-0.3.1/tabs.js"></script><script src="libs/bs3compat-0.3.1/bs3compat.js"></script><link href="libs/bs4_book-1.0.0/bs4_book.css" rel="stylesheet">
 <script src="libs/bs4_book-1.0.0/bs4_book.js"></script><script src="libs/kePrint-0.0.1/kePrint.js"></script><link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- CSS --><link rel="stylesheet" href="assets/style.css">
@@ -49,6 +49,8 @@
 <li><a class="" href="bayesian-inference.html"><span class="header-section-number">1</span> Bayesian Inference</a></li>
 <li><a class="" href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></li>
 <li><a class="active" href="causes-confounds-colliders.html"><span class="header-section-number">3</span> Causes, Confounds &amp; Colliders</a></li>
+<li><a class="" href="overfitting-mcmc.html"><span class="header-section-number">4</span> Overfitting / MCMC</a></li>
+<li><a class="" href="generalized-linear-models.html"><span class="header-section-number">5</span> Generalized Linear Models</a></li>
 <li><a class="" href="references.html">References</a></li>
 </ul>
 
@@ -1342,7 +1344,9 @@
 <span class="op">}</span></code></pre></div>
 <p>We’ll test one example data set. We use the <code>sim_dat()</code> function we just created to generate a data set with 10 subjects and a positive relationship between <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> of 0.3.</p>
 <div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dat1</span> <span class="op">&lt;-</span> <span class="fu">sim_dat</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10</span>, bx <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">208</span><span class="op">)</span>
+
+<span class="va">dat1</span> <span class="op">&lt;-</span> <span class="fu">sim_dat</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">10</span>, bx <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>
 
 <span class="va">mod1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/brms/man/brm.html">brm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="fl">1</span> <span class="op">+</span> <span class="va">X</span> <span class="op">+</span> <span class="va">S</span> <span class="op">+</span> <span class="va">A</span>, data <span class="op">=</span> <span class="va">dat1</span>, family <span class="op">=</span> <span class="va">gaussian</span>,
             prior <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/brms/man/set_prior.html">prior</a></span><span class="op">(</span><span class="fu">normal</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.2</span><span class="op">)</span>, class <span class="op">=</span> <span class="va">Intercept</span><span class="op">)</span>,
@@ -1361,14 +1365,14 @@
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Population-Level Effects: </span>
 <span class="co">#&gt;           Estimate Est.Error l-89% CI u-89% CI Rhat Bulk_ESS Tail_ESS</span>
-<span class="co">#&gt; Intercept     0.00      0.07    -0.11     0.11 1.00     4872     3998</span>
-<span class="co">#&gt; X             0.37      0.28    -0.09     0.82 1.00     2809     3786</span>
-<span class="co">#&gt; S             0.75      0.15     0.51     0.98 1.00     3526     4020</span>
-<span class="co">#&gt; A            -0.14      0.23    -0.49     0.23 1.00     3348     4173</span>
+<span class="co">#&gt; Intercept     0.00      0.09    -0.14     0.14 1.00     5459     4269</span>
+<span class="co">#&gt; X             0.31      0.28    -0.13     0.75 1.00     4000     3847</span>
+<span class="co">#&gt; S             0.61      0.22     0.24     0.96 1.00     4549     4029</span>
+<span class="co">#&gt; A             0.05      0.22    -0.29     0.42 1.00     4558     4417</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Family Specific Parameters: </span>
 <span class="co">#&gt;       Estimate Est.Error l-89% CI u-89% CI Rhat Bulk_ESS Tail_ESS</span>
-<span class="co">#&gt; sigma     0.24      0.08     0.14     0.38 1.00     2994     3461</span>
+<span class="co">#&gt; sigma     0.31      0.10     0.19     0.48 1.00     3566     4676</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; Draws were sampled using sample(hmc). For each parameter, Bulk_ESS</span>
 <span class="co">#&gt; and Tail_ESS are effective sample size measures, and Rhat is the potential</span>
@@ -1440,7 +1444,7 @@
 </div>
   <div class="chapter-nav">
 <div class="prev"><a href="linear-models-causal-inference.html"><span class="header-section-number">2</span> Linear Models &amp; Causal Inference</a></div>
-<div class="next"><a href="references.html">References</a></div>
+<div class="next"><a href="overfitting-mcmc.html"><span class="header-section-number">4</span> Overfitting / MCMC</a></div>
 </div></main><div class="col-md-3 col-lg-2 d-none d-md-block sidebar sidebar-chapter">
     <nav id="toc" data-toggle="toc" aria-label="On this page"><h2>On this page</h2>
       <ul class="nav navbar-nav">
@@ -1470,7 +1474,7 @@
 <footer class="bg-primary text-light mt-5"><div class="container"><div class="row">
 
   <div class="col-12 col-md-6 mt-3">
-    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-01-30.</p>
+    <p>"<strong>Statistical Rethinking: Solutions (2nd Edition)</strong>" was written by Jake Thompson. It was last built on 2022-02-21.</p>
   </div>
 
   <div class="col-12 col-md-6 mt-3">
