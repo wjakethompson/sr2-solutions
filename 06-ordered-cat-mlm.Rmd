@@ -20,6 +20,35 @@ knitr::include_url("https://www.youtube.com/embed/SocRgsf202M")
 
 ### Chapter 12
 
+:::question
+> **12E1.** What is the difference between an *ordered* categorical variable and an unordered one? Define and then give an example of each.
+:::
+
+Both ordered and unordered variables are constrained to discrete values. However, ordered variables have a fixed order to the magnitudes, although not necessarily a fixed distance between values. For example, education level (high school, undergraduate, postgraduate), population density (rural, suburban, urban), and socioeconomic status (low, high) could all be conceived of as. Unordered variables have no ordering. For example, gender (male, female, non-binary) and race (African American, Asian, White, etc.) have no ordering. That is, no categories is "more" or "greater" than another.
+
+
+:::question
+> **12E2.** What kind of link function does an ordered logistic regression employ? How does it differ from an ordinary logit link?
+:::
+
+
+
+
+:::question
+> **12E3.** When count data are zero-inflated, using a model that ignores zero-inflation will tend to induce which kind of inferential error?
+:::
+
+
+
+
+:::question
+> **12E4.** Over-dispersion is common in count data. Give an example of a natural process that might produce over-dispersed counts. Can you also give an example of a process that might produce *under*-dispersed counts?
+:::
+
+
+
+
+
 
 
 ## Homework
