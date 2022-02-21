@@ -810,6 +810,8 @@ b11h6b <- add_criterion(b11h6b, criterion = "loo")
 
 set.seed(220)
 
+library(gghighlight)
+
 bind_cols(
   primate_dat,
   as_tibble(b11h6a$criteria$loo$pointwise) %>% 
@@ -1017,3 +1019,87 @@ nwo_dat %>%
   theme(legend.position = "right")
 ```
 
+
+:::question
+> **4 - OPTIONAL CHALLENGE.** The data in `data(UFClefties)` are the outcomes of 205 Ultimate Fighting Championship (UFC) matches (see `?UFClefties` for details). It is widely believed that left-handed fighters (aka "Southpaws") have an advantage against right-handed fighters, and left-handed men are indeed over-represented among fighters (and fencers and tennis players) compared to the general population. Estimate the average advantage, if any, that a left-handed fighter has against right-handed fighters. Based upon your estimate, why do you think lefthanders are over-represented among UFC fighters?
+:::
+
+This question is more complicated that might first appear. This is because our data set is pre-conditioned on a collider. Let's draw a DAG to illustrate. In the DAG, $L$ is left-handedness, $W$ is win/lose, $Q$ is an indicator for whether or not someone has qualified for the UFC, and $A$ is the ability of the fighters. Looking at the DAG, our data is pre-conditioned on $Q$, that is, our data contains information only on fighters who qualified for the UFC. Thus, there is a backdoor path open from left-handedness to wins that is confounding the true relationship between left-handedness and winning.
+
+```{r w5h4-1, out.width = "40%", echo = FALSE}
+library(ggdag)
+
+ufc_dag <- dagitty("dag { L -> Q <- A -> W <- L }")
+coordinates(ufc_dag) <- list(
+  x = c(Q = 1, L = 2, A = 2, W = 3),
+  y = c(Q = 1, L = 1, A = 2, W = 1)
+)
+
+tidy_dagitty(ufc_dag) %>% 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_text(color = "black", size = 10) +
+  geom_dag_edges(edge_color = "black", edge_width = 2,
+                 arrow_directed = grid::arrow(length = grid::unit(15, "pt"),
+                                              type = "closed")) +
+  theme_void()
+```
+
+We can run a quick simulation to illustrate the problem. Let's simulate data where there are two ways to get into the UFC: 1) you are high ability, or 2) you have lower ability but are left handed, giving you a slight advantage. Thus, there are only high ability right-handed individuals, and both low and high ability left-handed individuals.
+
+```{r w5h4-2}
+set.seed(221)
+
+n <- 5000
+L <- as.integer(rbernoulli(n, 0.1))
+A <- rnorm(n)
+
+# qualify for UFC if high A, or lower A but left handed
+Q <- ifelse(A > 2 | (A > 1.25 & L == 1L), 1L, 0L)
+
+# filter to only qualified individuals
+ufc_fighters <- tibble(l = L, a = A, q = Q) %>% 
+  filter(q == 1L) %>% 
+  select(-q) %>% 
+  rowid_to_column(var = "fighter_id")
+
+# create data
+k <- 2.0    # importance of ability difference
+b <- 0.5    # left-handedness advantage
+
+ufc_sim <- 
+  tibble(fighter_1 = ufc_fighters$fighter_id[ufc_fighters$fighter_id %% 2 == 1],
+         fighter_2 = ufc_fighters$fighter_id[ufc_fighters$fighter_id %% 2 == 0]) %>% 
+  left_join(ufc_fighters, by = c("fighter_1" = "fighter_id")) %>% 
+  left_join(ufc_fighters, by = c("fighter_2" = "fighter_id")) %>% 
+  rename(l1 = l.x, a1 = a.x, l2 = l.y, a2 = a.y) %>% 
+  mutate(score1 = a1 + b * l1,
+         score2 = a2 + b * l2,
+         p = inv_logit(k * (score1 - score2)),
+         fighter1_win = as.integer(rbernoulli(1, p = p))) %>% 
+  select(fighter_1, fighter_2, l1, l2, fighter1_win)
+```
+
+Now let's fit the model and see the effect of left-handedness. Overall, we estimate a slight *disadvantage* of being left-handed, even though the data was simulated to have an advantage of 0.5. This is our collider bias in action.
+
+```{r w5h4-3}
+w5h4 <- brm(bf(fighter1_win ~ 0 + b * (l1 - l2),
+               b ~ 1,
+               nl = TRUE), data = ufc_sim, family = bernoulli,
+            prior = c(prior(normal(0, 0.5), class = b, nlpar = b)),
+            iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+            file = here("fits", "hw5", "w5h4"))
+
+as_draws_df(w5h4) %>% 
+  ggplot(aes(x = b_b_Intercept)) +
+  stat_halfeye(.width = 0.89, fill = "#009FB7") +
+  labs(x = "&beta;<sub>L</sub>", y = "Density")
+```
+
+If we want to close the backdoor path, we need to condition on fighter ability. Unfortunately we don't have ability estimates in our data. There are ways we could estimate this directly from the data using something like a [Bradley-Terry]() model or [Elo]() ratings, but we only have a limited number of matches for each of our fighters. The most matches we have for any one fighter is 5. This will make it hard to get reliable estimates of fighter ability with methods we've learned so far. This is prime case for multilevel models, but that will come in future weeks.
+
+```{r w5h4-4}
+data(UFClefties)
+
+tibble(fighter = c(UFClefties$fighter1, UFClefties$fighter2)) %>% 
+  count(fighter, sort = TRUE)
+```
