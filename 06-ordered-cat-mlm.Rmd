@@ -1,0 +1,25 @@
+# Ordered Categories and Multilevel Models {#week-6}
+
+The sixth week covers [Chapter 12 (Monsters and Mixtures)](https://bookdown.org/content/4857/monsters-and-mixtures.html) and [Chapter 13 (Models With Memory)](https://bookdown.org/content/4857/models-with-memory.html). Chapter 13 is also covered in [Week 7](#week-7), so those exercises are included in that week.
+
+## Lectures
+
+Lecture 11:
+
+```{r lecture-11, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/-397DMPooR8")
+```
+
+Lecture 12:
+
+```{r lecture-12, echo = FALSE, out.width = "100%"}
+knitr::include_url("https://www.youtube.com/embed/SocRgsf202M")
+```
+
+## Exercises
+
+### Chapter 12
+
+
+
+## Homework
