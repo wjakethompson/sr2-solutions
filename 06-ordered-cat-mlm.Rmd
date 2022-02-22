@@ -50,7 +50,67 @@ Over-dispersion occurs whenever there is variation in the rates. This could be c
 Under-dispersion is the opposite effect. This is when there is less variation than might be expected. This can occur when there is high auto-correlation between observed counts. Continuing with the restaurant theme, imagine we are estimating how many orders are filled an hour. It's plausible that the rate at which orders are filled would be partially dependent on how many orders are waiting to be filled (i.e., we might work faster if there are a lot of people waiting). In this type of queued-data model, the counts will be highly correlated, and my be under-dispersed.
 
 
+:::question
+> **12M1.** At a certain university, employees are annually rated from 1 to 4 on their productivity, with 1 being least productive and 4 most productive. In a certain department at this university in a certain year, the numbers of employees receiving each rating were (from 1 to 4): 12, 36, 7, 41. Compute the log cumulative odds of each rating.
+:::
+
+```{r e12m1-1}
+# raw counts
+counts <- c(12, 36, 7, 41)
+counts
+
+# raw proportions
+props <- counts / sum(counts)
+props
+
+# cumulative proportions
+cum_props <- cumsum(props)
+cum_props
+
+# cumulative log odds
+log(cum_props / (1 - cum_props))
+```
 
 
+:::question
+> **12M2.** Make a version of Figure 12.5 for the employee ratings data given just above.
+:::
+
+```{r e12m2-1}
+tibble(rating = c(1:4),
+       cum_props = cum_props,
+       start = lag(cum_props, default = 0)) %>% 
+  ggplot(aes(x = rating, y = cum_props)) +
+  geom_point(size = 3) +
+  geom_line() +
+  geom_segment(aes(x = rating, xend = rating, y = 0, yend = cum_props), size = 2) +
+  geom_segment(aes(x = rating + 0.05, xend = rating + 0.05,
+                   y = start, yend = cum_props),
+               color = "#009FB7", size = 2) +
+  geom_text(aes(x = rating + 0.1, y = (start + cum_props) / 2, label = rating),
+            color = "#009FB7", size = 4) +
+  labs(x = "Rating", y = "Cumulative proportion")
+```
+
+
+:::question
+> **12M3.** Can you modify the derivation of the zero-inflated Poisson distribution (ZIPoisson) from the chapter to construct a zero-inflated binomial distribution?
+:::
+
+Like the ZIPoisson, the ZIBinomial has two ways that we can observe a 0. There is a single probability that determines whether or not a 0 is observed in the first process, $p_0$. When a 0 is not observed from the first process, we still might observe a 0 from the binomial process. For the binomial, we'll define the probability of success as $q$, and have $n$ trials. Combining the two processes, the probability of any 0 is:
+
+$$
+\Pr(0|p_0,q,n)=p_0 + (1 - p_0)(1 - q)^n
+$$
+
+In word form, we get a 0 from process one with probability $p_0$. Then, if not from process one (i.e., $(1-p_0)$), we could observe a 0 from the binomial model. That is, the probability of not success is $(1-q)$, raised to the number of trials, $n$.
+
+Similarly, the probability of any non-zero observation is:
+
+$$
+\Pr(y|p_0,q,n) = (1-p_0)\frac{n!}{y!(n-y)!}q^y(1-q)^{n-y}
+$$
+
+This expression is the the binomial model, with $(1-p_0)$ appended to the front. That is, this is the binomial probability of observing a given value, times the probability that the first process didn't generate a 0.
 
 ## Homework
