@@ -31,21 +31,23 @@ Both ordered and unordered variables are constrained to discrete values. However
 > **12E2.** What kind of link function does an ordered logistic regression employ? How does it differ from an ordinary logit link?
 :::
 
-
+And ordered logistic regression uses the cumulative logit link function. Whereas the normal logit link can be used the represent a discrete probability of a single event, the cumulative logit link represents the cumulative probability of an event. That is, the linear model with the cumulative logit link function defines the log-odds of the the specified category *or lower*.
 
 
 :::question
 > **12E3.** When count data are zero-inflated, using a model that ignores zero-inflation will tend to induce which kind of inferential error?
 :::
 
-
+Ignoring zero-inflation will result in an underestimate of the event rate. If there are additional zeros, the mean will necessarily be lower. So if we treat the data as a single process, rather than multiple processes, we will estimate a lower mean rate.
 
 
 :::question
 > **12E4.** Over-dispersion is common in count data. Give an example of a natural process that might produce over-dispersed counts. Can you also give an example of a process that might produce *under*-dispersed counts?
 :::
 
+Over-dispersion occurs whenever there is variation in the rates. This could be common, for example, in restaurants. So you work at a large restaurant chain and are estimating the number of desserts sold across all of the franchises over the last month. The aggregated counts will likely be over-dispersed because some franchises sell more desserts than others (i.e., the average rate is not the same across franchises).
 
+Under-dispersion is the opposite effect. This is when there is less variation than might be expected. This can occur when there is high auto-correlation between observed counts. Continuing with the restaurant theme, imagine we are estimating how many orders are filled an hour. It's plausible that the rate at which orders are filled would be partially dependent on how many orders are waiting to be filled (i.e., we might work faster if there are a lot of people waiting). In this type of queued-data model, the counts will be highly correlated, and my be under-dispersed.
 
 
 
