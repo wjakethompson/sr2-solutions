@@ -113,4 +113,220 @@ $$
 
 This expression is the the binomial model, with $(1-p_0)$ appended to the front. That is, this is the binomial probability of observing a given value, times the probability that the first process didn't generate a 0.
 
+
+:::{.question .code-question}
+> **12H1.** In 2014, a paper was published that was entitled "Female hurricanes are deadlier than male hurricanes." As the title suggests, the paper claimed that hurricanes with female names have caused greater loss of life, and the explanation given is that people unconsciously rate female hurricanes as less dangerous and so are less likely to evacuate. Statisticians severely criticized the paper after publication. Here, you'll explore the complete data used in the paper and consider the hypothesis that hurricanes with female names are deadlier. Load the data with:
+
+```{r e12h1-inst, message = FALSE}
+library(rethinking)
+data(Hurricanes)
+```
+
+> Acquaint yourself with the columns by inspecting the help `?Hurricanes`. In this problem, you'll focus on predicting `deaths` using `femininity` as a predictor. You can use `quap` or `ulam`. Compare the model to an intercept-only Poisson model of `deaths`. How strong is the association between femininity of name and deaths? Which storms does the model fit (retrodict) well? Which storms does it fit poorly?
+:::
+
+Let's start by loading the data and doing from prior predictive simulations. For our priors, we'll use a $\text{Normal}(1, 1)$ for the intercept, and a $\text{Normal}(0, 1)$ for the slope of femininity. This results in a relatively low number of deaths on average, which is consistent with what we know about most hurricanes. There are a few lines with slopes so large as to not be very plausible. We could tighten the slope prior, but for now this is probably sufficient.
+
+```{r e12h1-1}
+hurr_dat <- Hurricanes %>% 
+  as_tibble() %>% 
+  mutate(femininity_std = standardize(femininity))
+
+b12h1_p <- brm(deaths ~ 1 + femininity_std, data = hurr_dat, family = poisson,
+               prior = c(prior(normal(1, 1), class = Intercept),
+                         prior(normal(0, 1), class = b)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               sample_prior = "only", file = here("fits", "chp12", "b12h1-p"))
+
+tibble(femininity_std = seq(-2, 2, length.out = 100)) %>% 
+  add_epred_draws(b12h1_p, ndraws = 50) %>% 
+  ggplot(aes(x = femininity_std, y = .epred, group = .draw)) +
+  geom_line(alpha = 0.4) +
+  coord_cartesian(ylim = c(0, 500)) +
+  labs(x = "Name femininity (standardized)", y = "Deaths")
+```
+
+Now let's fit our intercept-only model and the model that include femininity. In the summary for `b12h1`, we see that there is fairly moderate positive relationship between name femininity and deaths. When we compare the models, we see that the model including femininity is preferred; however, the standard error of the difference between the model is about 3 times large than the difference so PSIS isn't really able to differentiate the models very well. Additionally, we get some warninging about some very large Pareto values.
+
+```{r e12h1-2, message = FALSE}
+b12h1_i <- brm(deaths ~ 1, data = hurr_dat, family = poisson,
+               prior = c(prior(normal(1, 1), class = Intercept)),
+               iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+               file = here("fits", "chp12", "b12h1-i"))
+
+b12h1 <- brm(deaths ~ 1 + femininity_std, data = hurr_dat, family = poisson,
+             prior = c(prior(normal(1, 1), class = Intercept),
+                       prior(normal(0, 1), class = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp12", "b12h1"))
+
+b12h1_i <- add_criterion(b12h1_i, criterion = "loo")
+b12h1 <- add_criterion(b12h1, criterion = "loo")
+
+loo_compare(b12h1_i, b12h1)
+
+summary(b12h1)
+```
+
+Let's look at the model predictions to see what is going on. You can't see it, but there is a very narrow compatibility interval around the fitted line. The grey sampling distribution is at least visible, but that is also quite narrow. Overall, it appears that there are a few very extreme storms with high femininity names that are driving the trend, and also likely leading to our high Pareto warnings. We can see that there is a lot of over-dispersion, so we'll need a more flexible model to really understand what is happening in this data.
+
+```{r e12h1-3}
+full_join(
+  tibble(femininity_std = seq(-2, 1.5, length.out = 100)) %>% 
+    add_epred_draws(b12h1),
+  tibble(femininity_std = seq(-2, 1.5, length.out = 100)) %>% 
+    add_predicted_draws(b12h1),
+  by = c("femininity_std", ".row", ".chain", ".iteration", ".draw")
+) %>% 
+  ggplot(aes(x = femininity_std)) +
+  stat_lineribbon(aes(y = .prediction), .width = 0.89, size = 0,
+                  fill = "grey80") +
+  stat_lineribbon(aes(y = .epred), .width = c(0.67, 0.89, 0.97), size = 0.5) +
+  geom_point(data = hurr_dat, aes(x = femininity_std, y = deaths)) +
+  scale_fill_manual(values = ramp_blue(seq(1, 0.2, length.out = 3)),
+                    breaks = c(0.67, 0.89, 0.97)) +
+  scale_x_continuous(breaks = seq(-2, 1.5, by = 0.5)) +
+  labs(x = "Name Femininity (standardized)", y = "Deaths", fill = "Interval")
+```
+
+
+:::question
+> **12H2.** Counts are nearly always over-dispersed relative to Poisson. So fit a gamma-Poisson (aka negative-binomial) model to predict `deaths` using `femininity`. Show that the over-dispersed model no longer shows as precise a positive association between femininity and deaths, with an 89% interval that overlaps zero. Can you explain why the association diminished in strength?
+:::
+
+Here's out we fit the gamma-Poisson model in {brms}. It looks exactly the same as model `b12h1`, except now instead of `family = poisson` we use `family = negbinomial`.
+
+```{r e12h2-1}
+b12h2 <- brm(deaths ~ 1 + femininity_std, data = hurr_dat, family = negbinomial,
+             prior = c(prior(normal(1, 1), class = Intercept),
+                       prior(normal(0, 1), class = b)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp12", "b12h2"))
+
+summary(b12h2, prob = 0.89)
+```
+
+As indicated in the question, the 89% interval for `femininity_std` does indeed overlap 0. Let's directly compare the parameter estimates from the two models. We can see that the point estimates for the Intercept and slope for femininity are almost the same in both models, but there is much more uncertainty in the negative binomial.
+
+```{r e12h2-2}
+b12h1_params <- as_draws_df(b12h1) %>% 
+  as_tibble() %>% 
+  select(b_Intercept, b_femininity_std) %>% 
+  pivot_longer(everything(), names_to = "parameter", values_to = "value") %>% 
+  group_by(parameter) %>% 
+  mean_hdi(.width = 0.89) %>% 
+  mutate(model = "Poisson")
+
+b12h2_params <- as_draws_df(b12h2) %>% 
+  as_tibble() %>% 
+  select(b_Intercept, b_femininity_std, shape) %>% 
+  pivot_longer(everything(), names_to = "parameter", values_to = "value") %>% 
+  group_by(parameter) %>% 
+  mean_hdi(.width = 0.89) %>% 
+  mutate(model = "Negative Binomial")
+
+bind_rows(b12h1_params, b12h2_params) %>% 
+  mutate(parameter = factor(parameter,
+                            levels = c("b_Intercept", "b_femininity_std",
+                                       "shape"),
+                            labels = c("Intercept",
+                                       "&beta;<sub>Femininity</sub>",
+                                       "Shape")),
+         model = fct_inorder(model)) %>% 
+  ggplot(aes(x = value, y = fct_rev(model))) +
+  facet_wrap(~parameter, nrow = 1) +
+  geom_pointinterval(aes(xmin = .lower, xmax = .upper)) +
+  labs(x = "Parameter value", y = NULL)
+```
+
+Why more uncertainty? Because each hurricane can now have its own expected death rate. That is, given a femininity score, there is a distribution of gamma distributions that the death rate can be sampled from. For example, here are the distributions of gamma distributions for 3 values of femininity. Because any combination of intercept and slope values can now produce many different death rates, more values of the intercept and slope are plausible. This is what results in the wider posterior intervals in the negative binomial model.
+
+```{r e12h2-3}
+dists <- as_draws_df(b12h2) %>% 
+  as_tibble() %>% 
+  select(.chain, .iteration, .draw, b_Intercept, b_femininity_std, shape) %>% 
+  filter(.draw %in% sample(1:n(), size = 100)) %>% 
+  mutate(fem = -1) %>% 
+  complete(nesting(.chain, .iteration, .draw, b_Intercept, b_femininity_std,
+                   shape), fem = c(-1, 0, 1)) %>% 
+  select(b_Intercept, b_femininity_std, shape, fem) %>% 
+  pmap_dfr(function(b_Intercept, b_femininity_std, shape, fem) {
+    tibble(x = 0:70) %>% 
+      mutate(y = dgamma2(x, mu = exp(b_Intercept + b_femininity_std * fem),
+                         scale = shape),
+             fem_score = glue("Femininity = {fem}"))
+  }, .id = ".draw")
+
+ggplot(dists, aes(x = x, y = y, group = .draw)) +
+  facet_wrap(~fem_score, nrow = 1) +
+  geom_line(alpha = 0.2) +
+  labs(x = "Deaths", y = "Density")
+```
+
+Finally, let's look at the prediction for this model. A little better, but still pretty bad overall.
+
+```{r e12h2-4}
+full_join(
+  tibble(femininity_std = seq(-2, 1.5, length.out = 100)) %>% 
+    add_epred_draws(b12h2),
+  tibble(femininity_std = seq(-2, 1.5, length.out = 100)) %>% 
+    add_predicted_draws(b12h2),
+  by = c("femininity_std", ".row", ".chain", ".iteration", ".draw")
+) %>% 
+  ggplot(aes(x = femininity_std)) +
+  stat_lineribbon(aes(y = .prediction), .width = 0.89, size = 0,
+                  fill = "grey80") +
+  stat_lineribbon(aes(y = .epred), .width = c(0.67, 0.89, 0.97), size = 0.5) +
+  geom_point(data = hurr_dat, aes(x = femininity_std, y = deaths)) +
+  scale_fill_manual(values = ramp_blue(seq(1, 0.2, length.out = 3)),
+                    breaks = c(0.67, 0.89, 0.97)) +
+  scale_x_continuous(breaks = seq(-2, 1.5, by = 0.5)) +
+  labs(x = "Name Femininity (standardized)", y = "Deaths", fill = "Interval")
+```
+
+
+:::question
+> **12H3.** In the data, there are two measures of a hurricane’s potential to cause death: `damage_norm` and `min_pressure.` Consult `?Hurricanes` for their meanings. It makes some sense to imagine that femininity of a name matters more when the hurricane is itself deadly. This implies an interaction between `femininity` and either or both of `damage_norm` and `min_pressure`. Fit a series of models evaluating these interactions. Interpret and compare the models. In interpreting the estimates, it may help to generate counterfactual predictions contrasting hurricanes with masculine and feminine names. Are the effect sizes plausible?
+:::
+
+
+
+
+:::question
+> **12H4.** In the original hurricanes paper, storm damage (`damage_norm`) was used directly. This assumption implies that mortality increases exponentially with a linear increase in storm strength, because a Poisson regression uses a log link. So it’s worth exploring an alternative hypothesis: that the logarithm of storm strength is what matters. Explore this by using the logarithm of `damage_norm` as a predictor. Using the best model structure from the previous problem, compare a model that uses `log(damage_norm)` to a model that uses `damage_norm` directly. Compare their PSIS/WAIC values as well as their implied predictions. What do you conclude?
+:::
+
+
+
+
+:::question
+> **12H5.** One hypothesis from developmental psychology, usually attributed to Carol Gilligan, proposes that women and men have different average tendencies in moral reasoning. Like most hypotheses in social psychology, it is descriptive, not causal. The notion is that women are more concerned with care (avoiding harm), while men are more concerned with justice and rights. Evaluate this hypothesis, using the `Trolley` data, supposing that `contact` provides a proxy for physical harm. Are women more or less bothered by contact than are men, in these data? Figure out the model(s) that is needed to address this question.
+:::
+
+
+
+
+:::question
+> **12H6.** The data in `data(Fish)` are records of visits to a national park. See `?Fish` for details. The question of interest is how many fish an average visitor takes per hour, when fishing. The problem is that not everyone tried to fish, so the `fish_caught` numbers are zero-inflated. As with the monks example in the chapter, there is a process that determines who is fishing (working) and another process that determines fish per hour (manuscripts per day), conditional on fishing (working). We want to model both. Otherwise we’ll end up with an underestimate of rate of fish extraction from the park.
+
+> You will model these data using zero-inflated Poisson GLMs. Predict `fish_caught` as a function of any of the other variables you think are relevant. One thing you must do, however, is use a proper Poisson offset/exposure in the Poisson portion of the zero-inflated model. Then use the `hours` variable to construct the offset. This will adjust the model for the differing amount of time individuals spent in the park.
+:::
+
+
+
+
+:::question
+> **12H7.** In the trolley data---`data(Trolley)`---we saw how education level (modeled as an ordered category) is associated with responses. But is this association causal? One plausible confound is that education is also associated with age, through a causal process: People are older when they finish school than when they begin it. Reconsider the Trolley data in this light. Draw a DAG that represents hypothetical causal relationships among response, education, and age. Which statical model or models do you need to evaluate the causal influence of education on responses? Fit these models to the trolley data. What do you conclude about the causal relationships among these three variables?
+:::
+
+
+
+
+:::question
+> **12H8.** Consider one more variable in the trolley data: Gender. Suppose that gender might influence education as well as response directly. Draw the DAG now that includes response, education, age, and gender. Using only the DAG, is it possible that the inferences from **12H7** above are confounded by gender? If so, define any additional models you need to infer the causal influence of education on response. What do you conclude?
+:::
+
+
+
+
 ## Homework
