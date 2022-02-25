@@ -15,6 +15,7 @@ rmd_files: [
   "03-causes-confounds-colliders.Rmd",
   "04-overfitting-mcmc.Rmd",
   "05-glm.Rmd",
+  "06-ordered-cat-mlm.Rmd",
   
   "11-References.Rmd"
 ]
