@@ -130,7 +130,12 @@ Let's start by loading the data and doing from prior predictive simulations. For
 ```{r e12h1-1}
 hurr_dat <- Hurricanes %>% 
   as_tibble() %>% 
-  mutate(femininity_std = standardize(femininity))
+  mutate(femininity_std = standardize(femininity),
+         min_pressure_std = standardize(min_pressure),
+         damage_norm_std = standardize(damage_norm),
+         damage_norm_log_std = standardize(log(damage_norm)),
+         fem_discrete = case_when(femininity_std < 0 ~ "Masculine",
+                                  TRUE ~ "Feminine"))
 
 b12h1_p <- brm(deaths ~ 1 + femininity_std, data = hurr_dat, family = poisson,
                prior = c(prior(normal(1, 1), class = Intercept),
@@ -214,7 +219,7 @@ b12h1_params <- as_draws_df(b12h1) %>%
   select(b_Intercept, b_femininity_std) %>% 
   pivot_longer(everything(), names_to = "parameter", values_to = "value") %>% 
   group_by(parameter) %>% 
-  mean_hdi(.width = 0.89) %>% 
+  mean_qi(.width = 0.89) %>% 
   mutate(model = "Poisson")
 
 b12h2_params <- as_draws_df(b12h2) %>% 
@@ -222,7 +227,7 @@ b12h2_params <- as_draws_df(b12h2) %>%
   select(b_Intercept, b_femininity_std, shape) %>% 
   pivot_longer(everything(), names_to = "parameter", values_to = "value") %>% 
   group_by(parameter) %>% 
-  mean_hdi(.width = 0.89) %>% 
+  mean_qi(.width = 0.89) %>% 
   mutate(model = "Negative Binomial")
 
 bind_rows(b12h1_params, b12h2_params) %>% 
@@ -289,14 +294,123 @@ full_join(
 > **12H3.** In the data, there are two measures of a hurricane’s potential to cause death: `damage_norm` and `min_pressure.` Consult `?Hurricanes` for their meanings. It makes some sense to imagine that femininity of a name matters more when the hurricane is itself deadly. This implies an interaction between `femininity` and either or both of `damage_norm` and `min_pressure`. Fit a series of models evaluating these interactions. Interpret and compare the models. In interpreting the estimates, it may help to generate counterfactual predictions contrasting hurricanes with masculine and feminine names. Are the effect sizes plausible?
 :::
 
+For this question, we'll fit two interaction models: one with `min_pressure` and one with `damage_norm`. We'll start with `min_pressure`, and we'll continue to use the negative binomial model, given the findings of the last question. In the model summary, we see that `min_pressure` has a negative coefficient. This makes sense, given that hurricanes actually get stronger as the minimum pressure drops. So we might expect higher pressure (i.e., an increase in `min_pressure`) to lead to weaker storms, and therefore fewer deaths.
 
+```{r e12h3-1}
+b12h3_mp <- brm(deaths ~ 1 + femininity_std * min_pressure_std,
+                data = hurr_dat, family = negbinomial,
+                prior = c(prior(normal(1, 1), class = Intercept),
+                          prior(normal(0, 1), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp12", "b12h3-mp"))
+
+summary(b12h3_mp)
+```
+
+The interaction for generalized models is tricky to interpret on its own, so we'll plot out the predictions to get a sense of what the model is doing. We see that this plot is showing the opposite of the trend implied by the paper. That is, for the most dangerous storm (i.e., those with the lowest pressure), it appears that having a masculine name leads to more deaths than a feminine name. However, we should note that the 89% intervals for both of the trends are overlapping a significant amount, so there isn't much evidence of a meaningful interaction here.
+
+```{r e12h3-2, cache = TRUE}
+crossing(min_pressure_std = seq(-3, 2, length.out = 100),
+         femininity_std = c(-1, 1)) %>% 
+  add_epred_draws(b12h3_mp) %>% 
+  mean_qi(.width = 0.89) %>% 
+  mutate(femininity_std = factor(femininity_std,
+                                 labels = c("Masculine", "Feminine")),
+         across(c(.epred, .lower, .upper), ~sqrt(.x))) %>% 
+  ggplot(aes(x = min_pressure_std)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper, fill = femininity_std),
+              alpha = 0.4, show.legend = FALSE) +
+  geom_line(aes(y = .epred, color = femininity_std), size = 1) +
+  geom_point(data = hurr_dat,
+             aes(y = sqrt(deaths), color = fem_discrete)) +
+  scale_fill_okabeito() +
+  scale_color_okabeito(labels = c("Masculine", "Feminine")) +
+  labs(x = "Minimum pressure (standardized)", y = "Deaths (sqrt)",
+       color = NULL)
+```
+
+Now for the other interaction, that of `damage_norm`.
+
+```{r e12h3-3}
+b12h3_dn <- brm(deaths ~ 1 + femininity_std * damage_norm_log_std,
+                data = hurr_dat, family = negbinomial,
+                prior = c(prior(normal(1, 1), class = Intercept),
+                          prior(normal(0, 1), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp12", "b12h3-dn"))
+
+summary(b12h3_dn)
+```
+
+Once we have added property damage to the model, we see that there is almost no effect of name femininity. Let's again look at some counterfactual predictions. This actually shows the relationship implied by the paper. That is, as damage increases, feminine-named storms have more deaths. However, again, there is very little difference between the feminine and masculine names.
+
+```{r e12h3-4, cache = TRUE}
+crossing(damage_norm_log_std = seq(-3.5, 2, length.out = 100),
+         femininity_std = c(-1, 1)) %>% 
+  add_epred_draws(b12h3_dn) %>% 
+  mean_qi(.width = 0.89) %>% 
+  mutate(femininity_std = factor(femininity_std,
+                                 labels = c("Masculine", "Feminine")),
+         across(c(.epred, .lower, .upper), ~sqrt(.x))) %>% 
+  ggplot(aes(x = damage_norm_log_std)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper, fill = femininity_std),
+              alpha = 0.4, show.legend = FALSE) +
+  geom_line(aes(y = .epred, color = femininity_std), size = 1) +
+  geom_point(data = hurr_dat,
+             aes(y = sqrt(deaths), color = fem_discrete)) +
+  scale_fill_okabeito() +
+  scale_color_okabeito(labels = c("Masculine", "Feminine")) +
+  labs(x = "Property Damage (log, standardized)", y = "Deaths (sqrt)",
+       color = NULL)
+```
+
+Overall, from this question and the previous, there doesn't appear to be a strong relationship between name femininity and deaths, or any significant interactions. Rather, the trends are driven by a few extreme storms which just happened to have feminine names. Sometimes things really are just random, especially in small samples!
 
 
 :::question
 > **12H4.** In the original hurricanes paper, storm damage (`damage_norm`) was used directly. This assumption implies that mortality increases exponentially with a linear increase in storm strength, because a Poisson regression uses a log link. So it’s worth exploring an alternative hypothesis: that the logarithm of storm strength is what matters. Explore this by using the logarithm of `damage_norm` as a predictor. Using the best model structure from the previous problem, compare a model that uses `log(damage_norm)` to a model that uses `damage_norm` directly. Compare their PSIS/WAIC values as well as their implied predictions. What do you conclude?
 :::
 
+The previous problem used the log-standardized `damage_norm`, we we'll fit the non-log version here.
 
+```{r e12h4-1}
+b12h4_dn <- brm(deaths ~ 1 + femininity_std * damage_norm_std,
+                data = hurr_dat, family = negbinomial,
+                prior = c(prior(normal(1, 1), class = Intercept),
+                          prior(normal(0, 1), class = b)),
+                iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+                file = here("fits", "chp12", "b12h4-dn"))
+
+b12h3_dn <- add_criterion(b12h3_dn, criterion = "loo")
+b12h4_dn <- add_criterion(b12h4_dn, criterion = "loo")
+
+loo_compare(b12h3_dn, b12h4_dn)
+```
+
+Comparing the two models, we see that PSIS pretty strongly prefers the log-standardized version. Why? Let's plot the predictions for non-log model. Because we don't take the log, `damage_norm` scale multiplicatively, and predicted deaths increase quickly. The result is that we completely miss the most damaging storms (e.g., Donna, Andrew, and Sandy) in order to fit the less damaging storms, which make up most of the sample.
+
+```{r e12h4-2, cache = TRUE}
+crossing(damage_norm_std = seq(-0.75, 5.5, length.out = 30),
+         femininity_std = c(-1, 1)) %>% 
+  add_epred_draws(b12h4_dn) %>% 
+  mean_qi(.width = 0.89) %>% 
+  mutate(femininity_std = factor(femininity_std,
+                                 labels = c("Masculine", "Feminine")),
+         across(c(.epred, .lower, .upper), ~sqrt(.x))) %>% 
+  ggplot(aes(x = damage_norm_std)) +
+  geom_ribbon(aes(ymin = .lower, ymax = .upper, fill = femininity_std),
+              alpha = 0.4, show.legend = FALSE) +
+  geom_line(aes(y = .epred, color = femininity_std), size = 1) +
+  geom_point(data = hurr_dat,
+             aes(y = sqrt(deaths), color = fem_discrete)) +
+  geom_text_repel(data = filter(hurr_dat, damage_norm_std > 3),
+                  aes(y = sqrt(deaths), label = name)) +
+  coord_cartesian(ylim = c(0, 20)) +
+  scale_fill_okabeito() +
+  scale_color_okabeito(labels = c("Masculine", "Feminine")) +
+  labs(x = "Property Damage (standardized)", y = "Deaths (sqrt)",
+       color = NULL)
+```
 
 
 :::question
