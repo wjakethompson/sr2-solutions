@@ -417,7 +417,41 @@ crossing(damage_norm_std = seq(-0.75, 5.5, length.out = 30),
 > **12H5.** One hypothesis from developmental psychology, usually attributed to Carol Gilligan, proposes that women and men have different average tendencies in moral reasoning. Like most hypotheses in social psychology, it is descriptive, not causal. The notion is that women are more concerned with care (avoiding harm), while men are more concerned with justice and rights. Evaluate this hypothesis, using the `Trolley` data, supposing that `contact` provides a proxy for physical harm. Are women more or less bothered by contact than are men, in these data? Figure out the model(s) that is needed to address this question.
 :::
 
+We have to make extensive use of the non-linear {brms} syntax for this one if we want to use gender as an index variable. There are two parameters that are of primary interest to us in the model summary. First is `a_Intercept`, which is the main effect of being female on the cumulative log-odds, and `bC_maleFemale`, which is the interaction of being both female and in a contact scenario.
 
+The main effect is negative, indicating that overall, females were more likely to give items lower ratings. However, the interaction effect is actually less negative for female than the corresponding parameter for males (`bC_maleMale`). This means that in terms of the contact effect by gender, the data indicates that males were more bothered than females.
+
+```{r e12h5-1}
+data(Trolley)
+
+trolley_dat <- Trolley %>% 
+  as_tibble() %>% 
+  mutate(female = 1L - male,
+         female = factor(female, levels = c(0, 1), labels = c("Male", "Female")),
+         male = factor(male, levels = c(0, 1), labels = c("Female", "Male")))
+
+b12h5 <- brm(bf(response ~ 1 + a * female + (bA * action) + (bC * contact) +
+                  (bI * intention) + (bIA * intention * action) +
+                  (bIC * intention * contact),
+                a ~ 1,
+                bA ~ 0 + male,
+                bC ~ 0 + male,
+                bI ~ 0 + male,
+                bIA ~ 0 + male,
+                bIC ~ 0 + male,
+                nl = TRUE), data = trolley_dat, family = cumulative,
+             prior = c(prior(normal(0, 1.5), class = Intercept),
+                       prior(normal(0, 0.5), class = b, nlpar = a),
+                       prior(normal(0, 0.5), class = b, nlpar = bA),
+                       prior(normal(0, 0.5), class = b, nlpar = bC),
+                       prior(normal(0, 0.5), class = b, nlpar = bI),
+                       prior(normal(0, 0.5), class = b, nlpar = bIA),
+                       prior(normal(0, 0.5), class = b, nlpar = bIC)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp12", "b12h5"))
+
+summary(b12h5)
+```
 
 
 :::question
@@ -426,6 +460,25 @@ crossing(damage_norm_std = seq(-0.75, 5.5, length.out = 30),
 > You will model these data using zero-inflated Poisson GLMs. Predict `fish_caught` as a function of any of the other variables you think are relevant. One thing you must do, however, is use a proper Poisson offset/exposure in the Poisson portion of the zero-inflated model. Then use the `hours` variable to construct the offset. This will adjust the model for the differing amount of time individuals spent in the park.
 :::
 
+```{r e12h6-1}
+data(Fish)
+
+fish_dat <- Fish %>% 
+  as_tibble() %>% 
+  mutate(loghours = log(hours))
+
+b12h6 <- brm(bf(fish_caught ~ 1 + persons + child + offset(loghours),
+                zi ~ 1 +persons + child),
+             data = fish_dat, family = zero_inflated_poisson,
+             prior = c(prior(normal(0, 1), class = Intercept),
+                       prior(normal(0, 1), class = Intercept, dpar = zi),
+                       prior(normal(0, 0.5), class = b),
+                       prior(normal(0, 0.5), class = b, dpar = zi)),
+             iter = 4000, warmup = 2000, chains = 4, cores = 4, seed = 1234,
+             file = here("fits", "chp12", "b12h6"))
+
+summary(b12h6)
+```
 
 
 
