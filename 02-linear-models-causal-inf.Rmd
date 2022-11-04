@@ -531,7 +531,7 @@ b4h3 <- brm(height ~ 1 + log_weight_c, data = full_how, family = gaussian,
 summary(b4h3)
 ```
 
-Conditional on the data and the model, the intercept estimate of ` sprintf("%0.1f", summary(b4h3)[["fixed"]]["Intercept", "Estimate"])` represents the predicted average height for an individual with an average log-weight (log-kg). The $\beta$ estimate of ` sprintf("%0.1f", summary(b4h3)[["fixed"]]["log_weight_c", "Estimate"])` represents the average expected increase in height associated with an one-unit increase in weight (log-kg).
+Conditional on the data and the model, the intercept estimate of `r sprintf("%0.1f", summary(b4h3)[["fixed"]]["Intercept", "Estimate"])` represents the predicted average height for an individual with an average log-weight (log-kg). The $\beta$ estimate of `r sprintf("%0.1f", summary(b4h3)[["fixed"]]["log_weight_c", "Estimate"])` represents the average expected increase in height associated with an one-unit increase in weight (log-kg).
 
 :::question
 > (b) Begin with this plot: `plot( height ~ weight , data = Howell1 )`. Then use samples from the quadratic approximate posterior of the model in (a) to superimpose on the plot: (1) the predicted mean height as a function of weight, (2) the 97% interval for the mean, and (3) the 97% interval for predicted heights.
