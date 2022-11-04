@@ -479,6 +479,7 @@ summary(b4h2)
 :::
 
 ```{r e4h2-3, message = FALSE}
+library(modelr)
 mod_fits <- tibble(weight = seq_range(young_how$weight, 100)) %>% 
   mutate(weight_c = weight - mean(young_how$weight)) %>%
   add_epred_draws(b4h2) %>%
